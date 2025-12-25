@@ -100,7 +100,26 @@ The system is designed to be **understandable, testable, and maintainable**, eve
 
 ### Quick Setup
 
-```bash
+
 git clone <repository-url>
 cd SubTrackPay
 docker-compose up --build
+
+
+---
+
+## Wiki Table of Contents
+
+All engineering documentation, planning artifacts, and design decisions are maintained in the GitHub Wiki.
+
+- [Project Overview](https://github.com/Ava-Samimi/SubTrackPay/wiki/Project-Overview)
+- [Architecture & Design](https://github.com/Ava-Samimi/SubTrackPay/wiki/Architecture-&-Design)
+- [Personas](https://github.com/Ava-Samimi/SubTrackPay/wiki/Personas)
+- [Risk Management](https://github.com/Ava-Samimi/SubTrackPay/wiki/Risk-Management)
+- [Agile Planning & Estimation](https://github.com/Ava-Samimi/SubTrackPay/wiki/Agile-Planning-&-Estimation)
+- [Testing Plan & Continuous Integration](https://github.com/Ava-Samimi/SubTrackPay/wiki/Testing-Plan-&-Continuous-Integration)
+- [Metrics, Logging & Empirical Data](https://github.com/Ava-Samimi/SubTrackPay/wiki/Metrics,-Logging-&-Empirical-Data)
+- [Competition & Novelty](https://github.com/Ava-Samimi/SubTrackPay/wiki/Competition-&-Novelty)
+- [Security](https://github.com/Ava-Samimi/SubTrackPay/wiki/Security)
+- [Legal & Ethical Issues](https://github.com/Ava-Samimi/SubTrackPay/wiki/Legal-&-Ethical-Issues)
+- [Iteration & Release Notes](https://github.com/Ava-Samimi/SubTrackPay/wiki/Iteration-&-Release-Notes)
