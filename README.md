@@ -114,6 +114,10 @@ All engineering documentation, planning artifacts, and design decisions are main
 
 - [Project Overview](https://github.com/Ava-Samimi/SubTrackPay/wiki/Project-Overview)
 - [Architecture & Design](https://github.com/Ava-Samimi/SubTrackPay/wiki/Architecture-&-Design)
+- [Diagrams](https://github.com/Ava-Samimi/SubTrackPay/wiki/Diagrams)
+  - [Architecture Diagram](https://github.com/Ava-Samimi/SubTrackPay/wiki/Diagrams#architecture-diagram)
+  - [Entity–Relationship Diagram](https://github.com/Ava-Samimi/SubTrackPay/wiki/Diagrams#entity–relationship-diagram)
+  - [Class Diagram](https://github.com/Ava-Samimi/SubTrackPay/wiki/Diagrams#class-diagram)
 - [Personas](https://github.com/Ava-Samimi/SubTrackPay/wiki/Personas)
 - [Risk Management](https://github.com/Ava-Samimi/SubTrackPay/wiki/Risk-Management)
 - [Agile Planning & Estimation](https://github.com/Ava-Samimi/SubTrackPay/wiki/Agile-Planning-&-Estimation)
