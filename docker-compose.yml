@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16
+    container_name: billing_db
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: billing
+    ports:
+      - "5432:5432"
+    volumes:
+      - billing_db_data:/var/lib/postgresql/data
+
+  api:
+    build: ./server
+    container_name: billing_api
+    environment:
+      DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+
+  web:
+    build: ./client
+    container_name: billing_web
+    environment:
+      VITE_API_URL: http://localhost:3001
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  billing_db_data:
