@@ -117,9 +117,13 @@ This project is containerized with **Docker Compose** to ensure consistent setup
 
 ### Login
 ![Login screen](docs/mockup/Login.png)
+### Customer
 ![Customer screen](docs/mockup/Customer.png)
+### Payment
 ![Payment screen](docs/mockup/Payment.png)
+### Subscription
 ![Subscription screen](docs/mockup/Subscription.png)
+### Package
 ![Package screen](docs/mockup/Package.png)
 
 ---
