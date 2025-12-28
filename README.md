@@ -134,3 +134,10 @@ This project is containerized with **Docker Compose** to ensure consistent setup
 - [Data Model](docs/Data-Model.md)
 - [Planned Features & System Evolution](docs/Planned-Features.md)
 
+## CONTRIBUTORS
+
+| Name                   | Student ID | GitHub                                          |
+| ---------------------- | ---------- | ----------------------------------------------- |
+| Ava Samimi             | 40048117   | [Ava-Samimi](https://github.com/Ava-Samimi )    |
+| Mustafa Mohamed        | 40201893   | [Mustafa-M422](https://github.com/Mustafa-M422) |
+
