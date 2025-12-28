@@ -1,12 +1,17 @@
 # Subscription & Billing Tracker
 
-SubTrackPay – Capstone ReaDme
+## SubTrackPay – Capstone ReaDme
 SOEN 490 – Capstone Software Engineering Project
 Concordia University
 
-Team Members
-Ava Samimi — 40048117
-Mostafa Mohamed — 40201893
+## CONTRIBUTORS
+
+| Name                   | Student ID | GitHub                                          |
+| ---------------------- | ---------- | ----------------------------------------------- |
+| Ava Samimi             | 40048117   | [Ava-Samimi](https://github.com/Ava-Samimi )    |
+| Mustafa Mohamed        | 40201893   | [Mustafa-M422](https://github.com/Mustafa-M422) |
+
+
 
 ---
 
