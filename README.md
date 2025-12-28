@@ -151,10 +151,5 @@ This project is containerized with **Docker Compose** to ensure consistent setup
 
 ---
 
-## CONTRIBUTORS
 
-| Name                   | Student ID | GitHub                                          |
-| ---------------------- | ---------- | ----------------------------------------------- |
-| Ava Samimi             | 40048117   | [Ava-Samimi](https://github.com/Ava-Samimi )    |
-| Mustafa Mohamed        | 40201893   | [Mustafa-M422](https://github.com/Mustafa-M422) |
 
