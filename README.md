@@ -106,6 +106,40 @@ This project is containerized with **Docker Compose** to ensure consistent setup
 
 ---
 
+## QUALITY ASSURANCE: LINTING, TESTING, AND CONTINOUS INTEGRATION
+This project includes automated quality checks to keep the codebase consistent, readable, and reliable as it grows.
+
+## ESLint (Linting)
+**ESLint** is a static code analysis tool that scans JavaScript/React source files and reports issues such as:
+- syntax mistakes and potential runtime bugs
+- unused variables/imports
+- inconsistent or risky coding patterns
+- style and best-practice violations (based on configured rules)
+
+Linting runs on both the **server** and **client** to enforce consistent code quality and catch common problems early—before they become bugs.
+
+## Jest (Automated Testing)
+**Jest** is the unit/integration testing framework used in this project.
+It allows us to write automated tests that verify expected behavior and prevent regressions when code changes.
+
+- **Server tests** use **Jest + Supertest** to test HTTP endpoints (e.g., the `/api/health` route) without needing to manually run the app.
+- **Client tests** use **Jest + React Testing Library** to validate that React components render and behave as expected.
+
+Automated tests provide confidence that features continue working as new changes are introduced.
+
+## GitHub Actions CI (Continuous Integration)
+The project uses **GitHub Actions** to run a Continuous Integration (CI) pipeline on every push and pull request.
+The CI workflow automatically:
+1. installs dependencies
+2. runs ESLint (lint checks)
+3. runs Jest tests (server + client)
+4. builds the React app to ensure production builds succeed
+
+If any step fails, the workflow fails, signaling that the code must be fixed before it can be safely merged.
+This ensures every change is validated by the same set of checks and helps maintain a stable main branch.
+
+---
+
 ## PROJECT DIRECTION
 
 - CRUD foundation will be established for each entity (Customer, Packages, Subscriptions, Payments)
