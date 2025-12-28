@@ -1,5 +1,15 @@
 # Subscription & Billing Tracker
 
+SubTrackPay – Capstone ReaDme
+SOEN 490 – Capstone Software Engineering Project
+Concordia University
+
+Team Members
+Ava Samimi — 40048117
+Mostafa Mohamed — 40201893
+
+---
+
 <!-- Badges -->
 ![Node.js](https://img.shields.io/badge/Node.js-000000?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white)
