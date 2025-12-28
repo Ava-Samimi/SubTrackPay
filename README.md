@@ -134,6 +134,8 @@ This project is containerized with **Docker Compose** to ensure consistent setup
 - [Data Model](docs/Data-Model.md)
 - [Planned Features & System Evolution](docs/Planned-Features.md)
 
+---
+
 ## CONTRIBUTORS
 
 | Name                   | Student ID | GitHub                                          |
