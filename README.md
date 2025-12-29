@@ -177,6 +177,24 @@ This ensures every change is validated by the same set of checks and helps maint
 
 ---
 
+# Legal & Ethical Issues
+
+## Licensing
+- Source code is released under the MIT License
+
+## Liability Disclaimer
+The software is provided "AS IS", without warranty of any kind.
+
+## Privacy
+- No real financial or banking data is used
+- Synthetic data is used for testing and demos
+- All data is stored locally
+
+## Ethics
+The project avoids invasive data collection and prioritizes user transparency.
+
+---
+
 ## DOCUMENTATION
 - [Home](docs/Home.md)
 - [Architecture Overview](docs/Architecture-Overview.md)
