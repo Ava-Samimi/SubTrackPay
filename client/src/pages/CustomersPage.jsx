@@ -11,8 +11,8 @@ export default function CustomersPage() {
   const customers = [
     {
       id: "C001",
-      name: "Alice Martin",
-      email: "alice.martin@example.com",
+      name: "John Doe",
+      email: "john.doec@example.com",
       phone: "514-555-0101",
       createdAt: "2025-12-01",
     },
@@ -20,22 +20,22 @@ export default function CustomersPage() {
       id: "C002",
       name: "John Doe",
       email: "john.doec@example.com",
-      phone: "438-555-0112",
-      createdAt: "2025-12-10",
+      phone: "514-555-0101",
+      createdAt: "2025-12-01",
     },
     {
       id: "C003",
-      name: "Sam Dupont",
-      email: "sam.dupont@example.com",
-      phone: "418-555-0199",
-      createdAt: "2025-12-18",
+      name: "John Doe",
+      email: "john.doec@example.com",
+      phone: "514-555-0101",
+      createdAt: "2025-12-01",
     },
     {
-      id: "C004",
-      name: "Mina Chen",
-      email: "mina.chen@example.com",
-      phone: "647-555-0147",
-      createdAt: "2025-12-22",
+      id: "C001",
+      name: "John Doe",
+      email: "john.doec@example.com",
+      phone: "514-555-0101",
+      createdAt: "2025-12-01",
     },
   ];
 
@@ -59,17 +59,17 @@ export default function CustomersPage() {
             />
 
             <div className="customers-label">Name</div>
-            <input className="customers-input" value="Bojan Babic" readOnly />
+            <input className="customers-input" value="Jon Doe" readOnly />
 
             <div className="customers-label">Email</div>
             <input
               className="customers-input"
-              value="bojan.babic@example.com"
+              value="john.doec@example.com"
               readOnly
             />
 
             <div className="customers-label">Phone</div>
-            <input className="customers-input" value="438-555-0112" readOnly />
+            <input className="customers-input" value="514-555-0101" readOnly />
 
             <button className="customers-bigbtn" type="button" onClick={noop}>
               Save
