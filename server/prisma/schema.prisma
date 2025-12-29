@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+}
+
+enum PaymentStatus {
+  DUE
+  PAID
+  FAILED
+  VOID
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+
+  // CRUD-friendly:
+  name      String
+  email     String?  @unique
+  phone     String?
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Package {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  monthlyPrice Int
+  annualPrice  Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id           String             @id @default(uuid())
+  customerId   String
+  packageId    String
+  billingCycle BillingCycle
+  status       SubscriptionStatus @default(ACTIVE)
+  startDate    DateTime           @default(now())
+  endDate      DateTime?
+  priceCents   Int
+
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  package      Package  @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  payments     Payment[]
+
+  @@index([customerId])
+  @@index([packageId])
+  @@unique([customerId, packageId])
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  subscriptionId String
+
+  amountCents    Int
+  dueDate        DateTime
+  paidAt         DateTime?
+  status         PaymentStatus @default(DUE)
+
+  periodStart    DateTime
+  periodEnd      DateTime
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([status, dueDate])
+  @@unique([subscriptionId, periodStart, periodEnd])
+}
