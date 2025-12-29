@@ -77,7 +77,7 @@ docker compose up --build -d
 
 ## DESCRIPTION
 
-**Subscription & Billing Tracker** is a full-stack web application that helps manage recurring services and their billing lifecycle. It centralizes the data model around **Customers**, **Packages/Services**, **Subscriptions**, and **Payments**, making it easy to track who is subscribed to what, what billing plan they are on (**monthly / annual**), and whether each expected payment has been completed (**paid / unpaid**).
+**Subscription & Billing Tracker** is a full-stack web application that helps a streaming company manage recurring services, products for future clients with their billing lifecycle, subscritions, payments and future channels purchases. It centralizes the data model around **Customers**, **Packages/Services**, **Subscriptions**, and **Payments**, making it easy to track who is subscribed to what, what billing plan they are on (**monthly / annual**), and whether each expected payment has been completed (**paid / unpaid**).
 
 The system is built with a clear separation between a **Node.js + Express REST API** and a **React (Vite) frontend**, backed by a **PostgreSQL** database using **Prisma** for migrations and typed database access. The goal is to provide a realistic production-style project structure with clean CRUD endpoints, validation, and predictable local setup through **Docker Compose**.
 
