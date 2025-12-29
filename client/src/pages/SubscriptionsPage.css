@@ -1,0 +1,240 @@
+/* client/src/pages/SubscriptionsPage.css */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.subscriptions-page {
+  min-height: 100vh;
+  background: #000;
+  color: #cfcfcf;
+  padding: 20px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.subscriptions-error {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #ff6b6b;
+  border-radius: 10px;
+  color: #ffb3b3;
+  background: rgba(255, 0, 0, 0.08);
+}
+
+/* two-column layout */
+.subscriptions-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* LEFT (sticky) */
+.subscriptions-left {
+  background: #cfcfd3;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: #111;
+
+  position: sticky;
+  top: 18px;
+  align-self: start;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.subscriptions-left-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.subscriptions-formcard {
+  background: #dedee3;
+  border-radius: 16px;
+  padding: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+.subscriptions-label {
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.subscriptions-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+}
+
+.subscriptions-input-readonly {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  outline: none;
+  font-size: 14px;
+  background: #f3f3f3;
+  color: #444;
+}
+
+.subscriptions-bigbtn {
+  margin-top: 18px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #000;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.subscriptions-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.subscriptions-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #f6f6f6;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.subscriptions-btn-delete {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #ffe7e7;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.subscriptions-tip {
+  opacity: 0.8;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* RIGHT */
+.subscriptions-right {
+  padding: 6px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* NAVBAR ABOVE LIST */
+.subscriptions-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.subscriptions-navbtn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(57, 255, 20, 0.35);
+  background: #000;
+  color: #39ff14;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subscriptions-navbtn:hover {
+  filter: brightness(1.1);
+}
+
+.subscriptions-navbtn-active {
+  background: #39ff14;
+  color: #000;
+  border-color: #39ff14;
+}
+
+.subscriptions-navbtn-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Table */
+.subscriptions-header {
+  background: #000;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 90px minmax(180px, 1fr) minmax(160px, 1fr) 140px 120px;
+  gap: 12px;
+  color: #39ff14;
+  font-weight: 800;
+  align-items: center;
+  border: 1px solid rgba(57, 255, 20, 0.25);
+  min-width: 720px;
+}
+
+.subscriptions-row {
+  margin-top: 10px;
+  background: #cfcfcf;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 90px minmax(180px, 1fr) minmax(160px, 1fr) 140px 120px;
+  gap: 12px;
+  align-items: center;
+  color: #222;
+  cursor: pointer;
+  min-width: 720px;
+}
+
+.subscriptions-row-active {
+  outline: 2px solid #39ff14;
+  box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.15);
+}
+
+/* Multi-selected highlight */
+.subscriptions-row-selected {
+  outline: 3px solid #000;
+  box-shadow: inset 0 0 0 2px #39ff14;
+}
+
+.subscriptions-muted {
+  margin-top: 14px;
+  color: #aaa;
+}
+
+@media (max-width: 900px) {
+  .subscriptions-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .subscriptions-left {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
