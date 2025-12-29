@@ -1,4 +1,3 @@
-// client/src/pages/customers/CustomersPage.jsx
 import React from "react";
 import "./CustomersPage.css";
 
@@ -8,40 +7,45 @@ export default function CustomersPage() {
     e.stopPropagation();
   };
 
+  // Hard-coded navigation (full page reload)
+  const go = (path) => {
+    window.location.href = `http://127.0.0.1:5173${path}`;
+  };
+
   const customers = [
     {
       id: "C001",
       name: "John Doe",
-      email: "john.doec@example.com",
+      email: "john.doe@example.com",
       phone: "514-555-0101",
       createdAt: "2025-12-01",
     },
     {
       id: "C002",
-      name: "John Doe",
-      email: "john.doec@example.com",
-      phone: "514-555-0101",
-      createdAt: "2025-12-01",
+      name: "Client A",
+      email: "client.a@example.com",
+      phone: "438-555-0112",
+      createdAt: "2025-12-10",
     },
     {
       id: "C003",
-      name: "John Doe",
-      email: "john.doec@example.com",
-      phone: "514-555-0101",
-      createdAt: "2025-12-01",
+      name: "Client B",
+      email: "client.b@example.com",
+      phone: "418-555-0199",
+      createdAt: "2025-12-18",
     },
     {
-      id: "C001",
-      name: "John Doe",
-      email: "john.doec@example.com",
-      phone: "514-555-0101",
-      createdAt: "2025-12-01",
+      id: "C004",
+      name: "Client C",
+      email: "client.c@example.com",
+      phone: "647-555-0147",
+      createdAt: "2025-12-22",
     },
   ];
 
   // purely visual styling (hardcoded)
-  const selectedCustomerId = "C002";
-  const selectedIds = new Set(["C001"]);
+  const selectedCustomerId = "C001";
+  const selectedIds = new Set(["C002"]);
 
   return (
     <div className="customers-page">
@@ -52,19 +56,15 @@ export default function CustomersPage() {
 
           <div className="customers-formcard">
             <div className="customers-label">Customer ID</div>
-            <input
-              className="customers-input-readonly"
-              value="C002"
-              readOnly
-            />
+            <input className="customers-input-readonly" value="C001" readOnly />
 
             <div className="customers-label">Name</div>
-            <input className="customers-input" value="Jon Doe" readOnly />
+            <input className="customers-input" value="John Doe" readOnly />
 
             <div className="customers-label">Email</div>
             <input
               className="customers-input"
-              value="john.doec@example.com"
+              value="john.doe@example.com"
               readOnly
             />
 
@@ -96,46 +96,41 @@ export default function CustomersPage() {
 
         {/* RIGHT */}
         <main className="customers-right">
-          {/* NAVBAR (hard-coded, no routing) */}
+          {/* NAVBAR (hard-coded navigation) */}
           <div className="customers-navbar">
             <div className="customers-navgroup">
               <button
                 className="customers-navbtn customers-navbtn-active"
                 type="button"
-                onClick={noop}
+                onClick={() => go("/customers")}
               >
                 Customers
               </button>
 
-              <button className="customers-navbtn" type="button" onClick={noop}>
+              <button
+                className="customers-navbtn"
+                type="button"
+                onClick={() => go("/packages")}
+              >
                 Packages
               </button>
 
-              <button className="customers-navbtn" type="button" onClick={noop}>
+              <button
+                className="customers-navbtn"
+                type="button"
+                onClick={() => go("/subscriptions")}
+              >
                 Subscriptions
               </button>
 
-              <button className="customers-navbtn" type="button" onClick={noop}>
+              <button
+                className="customers-navbtn"
+                type="button"
+                onClick={() => go("/payments")}
+              >
                 Payments
               </button>
-
-              <button
-                className="customers-navbtn customers-navbtn-disabled"
-                type="button"
-                onClick={noop}
-                aria-disabled="true"
-              >
-                Stats
-              </button>
             </div>
-
-            <button
-              className="customers-navbtn customers-listbtn"
-              type="button"
-              onClick={noop}
-            >
-              List Mode
-            </button>
           </div>
 
           {/* TABLE HEADER */}
