@@ -10,21 +10,21 @@ export default function PackagesPage() {
   const packages = [
     {
       id: "P001",
-      name: "SportsTV",
+      name: "Basic Plan",
       price: "$9.99",
       billing: "Monthly",
       createdAt: "2025-11-15",
     },
     {
       id: "P002",
-      name: "TMN",
+      name: "Pro Plan",
       price: "$29.99",
       billing: "Monthly",
       createdAt: "2025-12-01",
     },
     {
       id: "P003",
-      name: "NewsCTV",
+      name: "Enterprise",
       price: "$299.00",
       billing: "Yearly",
       createdAt: "2025-12-20",
