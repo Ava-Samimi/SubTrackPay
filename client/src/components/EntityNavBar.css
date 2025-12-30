@@ -1,0 +1,47 @@
+.entity-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.entity-navgroup {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.entity-navbtn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(57, 255, 20, 0.35);
+  background: #000;
+  color: #39ff14;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.entity-navbtn:hover {
+  filter: brightness(1.1);
+}
+
+.entity-navbtn.active {
+  background: #39ff14;
+  color: #000;
+  border-color: #39ff14;
+}
+
+.entity-navbtn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.entity-listbtn {
+  margin-left: auto;
+}
