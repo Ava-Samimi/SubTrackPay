@@ -12,4 +12,4 @@ build
 .DS_Store
 
 # prisma (optional: you can choose to commit migrations later)
-server/prisma/migrations
+#server/prisma/migrations
