@@ -2,13 +2,26 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install
+# Needed for:
+# - waiting for Postgres: nc -z db 5432
+# - docker-compose healthcheck: nc -z localhost 3001
+RUN apk add --no-cache netcat-openbsd
 
+# Install dependencies first (better caching)
+COPY package*.json ./
+RUN npm ci
+
+# Copy Prisma schema + migrations, then app source
 COPY prisma ./prisma
-RUN npx prisma generate
-
 COPY src ./src
 
+# Generate Prisma client at build time (fast startup)
+RUN npm run prisma:generate
+
 EXPOSE 3001
-CMD ["node", "src/index.js"]
+
+# On container start:
+# 1) wait for Postgres (service name "db")
+# 2) apply migrations (deploy)
+# 3) start API
+CMD sh -c 'until nc -z db 5432; do echo "Waiting for Postgres..."; sleep 1; done; npm run prisma:migrate:deploy; npm run start'
