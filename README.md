@@ -42,7 +42,7 @@ Concordia University
 
 - Open **PowerShell** (recommended) or **Command Prompt**, then run:
 ```bash
-git clone <YOUR_REPO_URL> billing-app
+git clone https://github.com/Ava-Samimi/SubTrackPay.git billing-app
 cd billing-app
 ```
 
