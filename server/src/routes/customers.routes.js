@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
     res.json(customers);
-  } catch (e) {
+  } catch (_e) {
     res.status(500).json({ error: "Failed to fetch customers" });
   }
 });
@@ -24,7 +24,7 @@ router.get("/:id", async (req, res) => {
     const customer = await prisma.customer.findUnique({ where: { id } });
     if (!customer) return res.status(404).json({ error: "Customer not found" });
     res.json(customer);
-  } catch (e) {
+  } catch (_e) {
     res.status(500).json({ error: "Failed to fetch customer" });
   }
 });
@@ -49,7 +49,7 @@ router.post("/", async (req, res) => {
     });
 
     res.status(201).json(created);
-  } catch (e) {
+  } catch (_e) {
     // common: unique email violation
     res.status(400).json({ error: "Failed to create customer (maybe duplicate email)" });
   }
@@ -79,7 +79,7 @@ router.put("/:id", async (req, res) => {
     });
 
     res.json(updated);
-  } catch (e) {
+  } catch (_e) {
     res.status(400).json({ error: "Failed to update customer (maybe duplicate email)" });
   }
 });
@@ -94,7 +94,7 @@ router.delete("/:id", async (req, res) => {
 
     await prisma.customer.delete({ where: { id } });
     res.status(204).send();
-  } catch (e) {
+  } catch (_e) {
     res.status(400).json({ error: "Failed to delete customer" });
   }
 });
