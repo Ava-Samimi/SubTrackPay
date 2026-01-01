@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useListMode } from "../../../hooks/useListMode.js";
 import {
   listSubscriptions,
@@ -60,18 +60,18 @@ export function useSubscriptionsPage() {
 
   const list = useListMode();
 
-  async function loadAllSubscriptions() {
+  const loadAllSubscriptions = useCallback(async () => {
     const data = await listSubscriptions();
     setItems(data);
-  }
+  }, []);
 
-  async function loadLookups() {
+  const loadLookups = useCallback(async () => {
     const [cs, ps] = await Promise.all([listCustomers(), listPackages()]);
     setCustomers(cs);
     setPackages(ps);
-  }
+  }, []);
 
-  async function loadAll() {
+  const loadAll = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -81,11 +81,11 @@ export function useSubscriptionsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [loadLookups, loadAllSubscriptions]);
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [loadAll]);
 
   function resetForm() {
     setEditingId(null);
@@ -110,10 +110,10 @@ export function useSubscriptionsPage() {
 
     // set queries to friendly labels
     const c = customers.find((x) => x.id === item.customerId);
-    setCustomerQuery(c ? (c.name || c.email || "") : "");
+    setCustomerQuery(c ? c.name || c.email || "" : "");
 
     const p = packages.find((x) => x.id === item.packageId);
-    setPackageQuery(p ? (p.name || "") : "");
+    setPackageQuery(p ? p.name || "" : "");
 
     setBillingCycle(item.billingCycle || "MONTHLY");
     setStatus(item.status || "ACTIVE");

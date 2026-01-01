@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./CustomersPage.css";
 import { useCustomersPage } from "./hooks/useCustomersPage.js";

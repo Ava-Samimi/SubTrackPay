@@ -19,7 +19,7 @@ export function useCustomersActions(state, loadAll) {
     // list mode
     listMode,
     setListMode,
-    selectedIds,
+    selectedIds: _selectedIds, // intentionally unused for now
     setSelectedIds,
 
     name,

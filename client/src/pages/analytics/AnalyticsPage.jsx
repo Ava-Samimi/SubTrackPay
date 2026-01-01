@@ -1,4 +1,3 @@
-import React from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
 import "../shared/EntityPage.css";
 
