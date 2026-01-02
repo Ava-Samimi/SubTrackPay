@@ -88,6 +88,16 @@ This project is containerized with **Docker Compose** to ensure consistent setup
 
 ---
 
+## RELEASE 1 FEATURES (SO FAR)
+
+- CRUD functions for CUSTOMER, PACKAGE, SUBSCRIPTION and PAYMENT
+- Login authentication through Firebase (to be done)
+- React Interaction with elements on the CRUD pages: selecting a subset from the list (to be completed)
+- Ability to send the chosen datasets by user to the Analytics page for processing (to be completed)
+- Several Python scripts to be ran in the background collecting the needed data from DB (to be done)
+
+---
+
 ## TECH STACK (subject to evolution)
 
 ### Backend
