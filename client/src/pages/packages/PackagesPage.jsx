@@ -3,6 +3,13 @@ import EntityNavBar from "../../components/EntityNavBar.jsx";
 import "../shared/EntityPage.css";
 import { usePackagesPage } from "./hooks/usePackagesPage.js";
 
+function pkgLabel(p) {
+  const id = p?.packageID;
+  const m = p?.monthlyCost ?? "-";
+  const a = p?.annualCost ?? "-";
+  return `Pkg #${String(id ?? "").slice(0, 4)} (M: ${m} / A: ${a})`;
+}
+
 export default function PackagesPage() {
   const {
     items,
@@ -11,21 +18,17 @@ export default function PackagesPage() {
     editingId,
     isEditing,
 
-    name,
-    setName,
-    monthlyPrice,
-    setMonthlyPrice,
-    annualPrice,
-    setAnnualPrice,
+    monthlyCost,
+    setMonthlyCost,
+    annualCost,
+    setAnnualCost,
 
     loadAll,
     resetForm,
     selectRow,
     submit,
 
-    // now works for:
-    // - edit mode delete (current editingId)
-    // - list mode delete (selectedIds)
+    // edit delete OR list delete
     removeSelected,
 
     shortId,
@@ -36,10 +39,8 @@ export default function PackagesPage() {
   const blackoutLeft = list.listMode;
 
   const selectedLabels = useMemo(() => {
-    const map = new Map(items.map((x) => [String(x.id), x.name || "(no name)"]));
-    return (list.selectedIds || [])
-      .map((id) => map.get(String(id)))
-      .filter(Boolean);
+    const map = new Map(items.map((x) => [String(x.packageID), pkgLabel(x)]));
+    return (list.selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
   }, [items, list.selectedIds]);
 
   return (
@@ -53,32 +54,24 @@ export default function PackagesPage() {
 
           {!blackoutLeft ? (
             <form className="entity-card" onSubmit={submit}>
-              <div className="entity-label">name</div>
-              <input
-                className="entity-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Pro Plan"
-              />
-
-              <div className="entity-label">monthlyPrice</div>
+              <div className="entity-label">monthlyCost</div>
               <input
                 className="entity-input"
                 type="number"
-                step="0.01"
-                value={monthlyPrice}
-                onChange={(e) => setMonthlyPrice(e.target.value)}
-                placeholder="e.g. 9.99"
+                step="1"
+                value={monthlyCost}
+                onChange={(e) => setMonthlyCost(e.target.value)}
+                placeholder="e.g. 10"
               />
 
-              <div className="entity-label">annualPrice</div>
+              <div className="entity-label">annualCost</div>
               <input
                 className="entity-input"
                 type="number"
-                step="0.01"
-                value={annualPrice}
-                onChange={(e) => setAnnualPrice(e.target.value)}
-                placeholder="e.g. 99.99"
+                step="1"
+                value={annualCost}
+                onChange={(e) => setAnnualCost(e.target.value)}
+                placeholder="e.g. 100"
               />
 
               <button className="entity-btn-big" type="submit">
@@ -109,9 +102,7 @@ export default function PackagesPage() {
             </form>
           ) : (
             <div className="entity-card">
-              <div className="entity-selected-title">
-                Selected packages ({list.selectedCount})
-              </div>
+              <div className="entity-selected-title">Selected packages ({list.selectedCount})</div>
 
               {selectedLabels.length === 0 ? (
                 <div style={{ opacity: 0.8 }}>Click rows to select/deselect.</div>
@@ -149,9 +140,9 @@ export default function PackagesPage() {
 
           <div className="entity-header" style={{ gridTemplateColumns: "70px 1fr 140px 140px" }}>
             <div>#</div>
-            <div>name</div>
-            <div>monthly</div>
-            <div>annual</div>
+            <div>package</div>
+            <div>monthlyCost</div>
+            <div>annualCost</div>
           </div>
 
           {loading ? (
@@ -159,23 +150,22 @@ export default function PackagesPage() {
           ) : items.length === 0 ? (
             <div className="entity-muted">No packages yet.</div>
           ) : (
-            items.map((p) => (
-              <div
-                key={p.id}
-                className={`entity-row ${list.isSelected(String(p.id)) ? "selected" : ""}`}
-                style={{ gridTemplateColumns: "70px 1fr 140px 140px" }}
-                onClick={() =>
-                  list.listMode
-                    ? list.toggleRowSelection(String(p.id))
-                    : selectRow(p)
-                }
-              >
-                <div>{shortId(p.id)}</div>
-                <div>{p.name || "-"}</div>
-                <div>{p.monthlyPrice ?? "-"}</div>
-                <div>{p.annualPrice ?? "-"}</div>
-              </div>
-            ))
+            items.map((p) => {
+              const id = p.packageID;
+              return (
+                <div
+                  key={id}
+                  className={`entity-row ${list.isSelected(String(id)) ? "selected" : ""}`}
+                  style={{ gridTemplateColumns: "70px 1fr 140px 140px" }}
+                  onClick={() => (list.listMode ? list.toggleRowSelection(String(id)) : selectRow(p))}
+                >
+                  <div>{shortId(id)}</div>
+                  <div>{pkgLabel(p)}</div>
+                  <div>{p.monthlyCost ?? "-"}</div>
+                  <div>{p.annualCost ?? "-"}</div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
