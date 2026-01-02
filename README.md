@@ -25,6 +25,7 @@ Concordia University
 ![Docker](https://img.shields.io/badge/Docker-000000?logo=docker&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-000000?logo=githubactions&logoColor=white)
 ![Jest](https://img.shields.io/badge/Jest-000000?logo=jest&logoColor=white)
+![Firebase Auth](https://img.shields.io/badge/Firebase%20Auth-000000?logo=firebase&logoColor=white)
 
 ---
 
