@@ -6,26 +6,20 @@ import { usePaymentsPage } from "./hooks/usePaymentsPage.js";
 export default function PaymentsPage() {
   const {
     items,
-    subscriptions, // ✅ NEW: used to populate the dropdown
+    subscriptions,
     loading,
     error,
     editingId,
     isEditing,
 
-    subscriptionId,
-    setSubscriptionId,
-    amountCents,
-    setAmountCents,
+    subscriptionID,
+    setSubscriptionID,
     dueDate,
     setDueDate,
     paidAt,
     setPaidAt,
     status,
     setStatus,
-    periodStart,
-    setPeriodStart,
-    periodEnd,
-    setPeriodEnd,
 
     loadAll,
     resetForm,
@@ -41,9 +35,12 @@ export default function PaymentsPage() {
 
   const selectedLabels = useMemo(() => {
     const map = new Map(
-      items.map((p) => [p.id, `PAY ${shortId(p.id)} • sub ${shortId(p.subscriptionId)} • ${p.status}`])
+      items.map((p) => [
+        String(p.paymentID),
+        `PAY ${shortId(p.paymentID)} • sub ${shortId(p.subscriptionID)} • ${p.status}`,
+      ])
     );
-    return list.selectedIds.map((id) => map.get(id)).filter(Boolean);
+    return (list.selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
   }, [items, list.selectedIds, shortId]);
 
   return (
@@ -56,27 +53,19 @@ export default function PaymentsPage() {
 
           {!blackoutLeft ? (
             <form className="entity-card" onSubmit={submit}>
-              {/* ✅ CHANGED: subscriptionId is now a dropdown */}
-              <div className="entity-label">subscriptionId</div>
+              <div className="entity-label">subscription</div>
               <select
                 className="entity-select"
-                value={subscriptionId}
-                onChange={(e) => setSubscriptionId(e.target.value)}
+                value={subscriptionID}
+                onChange={(e) => setSubscriptionID(e.target.value)}
               >
                 <option value="">-- select subscription --</option>
                 {(subscriptions || []).map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {shortId(s.id)}
+                  <option key={s.subscriptionID} value={s.subscriptionID}>
+                    {shortId(s.subscriptionID)}
                   </option>
                 ))}
               </select>
-
-              <div className="entity-label">amountCents</div>
-              <input
-                className="entity-input"
-                value={amountCents}
-                onChange={(e) => setAmountCents(e.target.value)}
-              />
 
               <div className="entity-label">dueDate</div>
               <input
@@ -92,6 +81,7 @@ export default function PaymentsPage() {
                 type="date"
                 value={paidAt}
                 onChange={(e) => setPaidAt(e.target.value)}
+                placeholder="optional"
               />
 
               <div className="entity-label">status</div>
@@ -101,22 +91,6 @@ export default function PaymentsPage() {
                 <option value="FAILED">FAILED</option>
                 <option value="VOID">VOID</option>
               </select>
-
-              <div className="entity-label">periodStart</div>
-              <input
-                className="entity-input"
-                type="date"
-                value={periodStart}
-                onChange={(e) => setPeriodStart(e.target.value)}
-              />
-
-              <div className="entity-label">periodEnd</div>
-              <input
-                className="entity-input"
-                type="date"
-                value={periodEnd}
-                onChange={(e) => setPeriodEnd(e.target.value)}
-              />
 
               <button className="entity-btn-big" type="submit">
                 {isEditing ? "Update" : "Create"}
@@ -158,12 +132,12 @@ export default function PaymentsPage() {
         <div className="entity-right">
           <EntityNavBar listEnabled={listEnabled} listMode={list.listMode} onToggleList={list.toggleListMode} />
 
-          <div className="entity-header" style={{ gridTemplateColumns: "70px 140px 120px 110px 110px" }}>
+          <div className="entity-header" style={{ gridTemplateColumns: "70px 140px 110px 110px 110px" }}>
             <div>#</div>
             <div>subscription</div>
-            <div>amount</div>
             <div>status</div>
             <div>due</div>
+            <div>paid</div>
           </div>
 
           {loading ? (
@@ -171,20 +145,23 @@ export default function PaymentsPage() {
           ) : items.length === 0 ? (
             <div className="entity-muted">No payments yet.</div>
           ) : (
-            items.map((p) => (
-              <div
-                key={p.id}
-                className={`entity-row ${list.isSelected(p.id) ? "selected" : ""}`}
-                style={{ gridTemplateColumns: "70px 140px 120px 110px 110px" }}
-                onClick={() => (list.listMode ? list.toggleRowSelection(p.id) : selectRow(p))}
-              >
-                <div>{shortId(p.id)}</div>
-                <div>{shortId(p.subscriptionId)}</div>
-                <div>{p.amountCents}</div>
-                <div>{p.status}</div>
-                <div>{p.dueDate ? String(p.dueDate).slice(0, 10) : ""}</div>
-              </div>
-            ))
+            items.map((p) => {
+              const id = p.paymentID;
+              return (
+                <div
+                  key={id}
+                  className={`entity-row ${list.isSelected(String(id)) ? "selected" : ""}`}
+                  style={{ gridTemplateColumns: "70px 140px 110px 110px 110px" }}
+                  onClick={() => (list.listMode ? list.toggleRowSelection(String(id)) : selectRow(p))}
+                >
+                  <div>{shortId(id)}</div>
+                  <div>{shortId(p.subscriptionID)}</div>
+                  <div>{p.status}</div>
+                  <div>{p.dueDate ? String(p.dueDate).slice(0, 10) : ""}</div>
+                  <div>{p.paidAt ? String(p.paidAt).slice(0, 10) : "-"}</div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

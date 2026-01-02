@@ -18,6 +18,27 @@ function dateToInput(d) {
   return String(d).slice(0, 10);
 }
 
+function customerLabel(c) {
+  const fn = (c?.firstName || "").trim();
+  const ln = (c?.lastName || "").trim();
+  const name = `${fn} ${ln}`.trim();
+  return name || c?.email || "";
+}
+
+function packageLabel(p) {
+  if (!p) return "";
+  return `Pkg ${shortId(p.packageID)} • M ${p.monthlyCost} • A ${p.annualCost}`;
+}
+
+function toIntOrNaN(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return NaN;
+  const n = Number(s);
+  if (!Number.isFinite(n)) return NaN;
+  if (!Number.isInteger(n)) return NaN;
+  return n;
+}
+
 export function useSubscriptionsPage() {
   const [items, setItems] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -26,12 +47,12 @@ export function useSubscriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(null); // subscriptionID (number)
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
-  // ✅ stored IDs (what the API needs)
-  const [customerId, setCustomerId] = useState("");
-  const [packageId, setPackageId] = useState("");
+  // ✅ stored IDs (what the API needs) — ints
+  const [customerID, setCustomerID] = useState(null);
+  const [packageID, setPackageID] = useState(null);
 
   // ✅ typed text shown in the input
   const [customerQuery, setCustomerQuery] = useState("");
@@ -41,34 +62,34 @@ export function useSubscriptionsPage() {
   const [status, setStatus] = useState("ACTIVE");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [priceCents, setPriceCents] = useState("");
+  const [price, setPrice] = useState("");
 
   const selectedItem = useMemo(
-    () => items.find((x) => x.id === editingId) || null,
+    () => items.find((x) => x.subscriptionID === editingId) || null,
     [items, editingId]
   );
 
-  // for showing "current selection" label even if query changes
   const selectedCustomer = useMemo(
-    () => customers.find((c) => c.id === customerId) || null,
-    [customers, customerId]
+    () => customers.find((c) => c.customerID === customerID) || null,
+    [customers, customerID]
   );
+
   const selectedPackage = useMemo(
-    () => packages.find((p) => p.id === packageId) || null,
-    [packages, packageId]
+    () => packages.find((p) => p.packageID === packageID) || null,
+    [packages, packageID]
   );
 
   const list = useListMode();
 
   const loadAllSubscriptions = useCallback(async () => {
     const data = await listSubscriptions();
-    setItems(data);
+    setItems(Array.isArray(data) ? data : []);
   }, []);
 
   const loadLookups = useCallback(async () => {
     const [cs, ps] = await Promise.all([listCustomers(), listPackages()]);
-    setCustomers(cs);
-    setPackages(ps);
+    setCustomers(Array.isArray(cs) ? cs : []);
+    setPackages(Array.isArray(ps) ? ps : []);
   }, []);
 
   const loadAll = useCallback(async () => {
@@ -90,8 +111,8 @@ export function useSubscriptionsPage() {
   function resetForm() {
     setEditingId(null);
 
-    setCustomerId("");
-    setPackageId("");
+    setCustomerID(null);
+    setPackageID(null);
     setCustomerQuery("");
     setPackageQuery("");
 
@@ -99,47 +120,49 @@ export function useSubscriptionsPage() {
     setStatus("ACTIVE");
     setStartDate("");
     setEndDate("");
-    setPriceCents("");
+    setPrice("");
   }
 
   function selectRow(item) {
-    setEditingId(item.id);
+    setEditingId(item.subscriptionID);
 
-    setCustomerId(item.customerId || "");
-    setPackageId(item.packageId || "");
+    setCustomerID(item.customerID ?? null);
+    setPackageID(item.packageID ?? null);
 
-    // set queries to friendly labels
-    const c = customers.find((x) => x.id === item.customerId);
-    setCustomerQuery(c ? c.name || c.email || "" : "");
+    // Prefer included objects from API (we set include in the backend)
+    const c = item.customer || customers.find((x) => x.customerID === item.customerID);
+    setCustomerQuery(c ? customerLabel(c) : "");
 
-    const p = packages.find((x) => x.id === item.packageId);
-    setPackageQuery(p ? p.name || "" : "");
+    const p = item.package || packages.find((x) => x.packageID === item.packageID);
+    setPackageQuery(p ? packageLabel(p) : "");
 
     setBillingCycle(item.billingCycle || "MONTHLY");
     setStatus(item.status || "ACTIVE");
     setStartDate(dateToInput(item.startDate));
     setEndDate(dateToInput(item.endDate));
-    setPriceCents(String(item.priceCents ?? ""));
+    setPrice(String(item.price ?? ""));
   }
 
   // ✅ when picking from autocomplete
   function pickCustomer(c) {
-    setCustomerId(c.id);
-    setCustomerQuery(c.name || c.email || "");
+    setCustomerID(c.customerID);
+    setCustomerQuery(customerLabel(c));
   }
+
   function pickPackage(p) {
-    setPackageId(p.id);
-    setPackageQuery(p.name || "");
+    setPackageID(p.packageID);
+    setPackageQuery(packageLabel(p));
   }
 
   // ✅ if user edits query manually after selecting, keep ID unless they clear
   function onCustomerQueryChange(txt) {
     setCustomerQuery(txt);
-    if (!txt.trim()) setCustomerId("");
+    if (!txt.trim()) setCustomerID(null);
   }
+
   function onPackageQueryChange(txt) {
     setPackageQuery(txt);
-    if (!txt.trim()) setPackageId("");
+    if (!txt.trim()) setPackageID(null);
   }
 
   async function submit(e) {
@@ -148,19 +171,21 @@ export function useSubscriptionsPage() {
 
     setError("");
 
+    const priceInt = toIntOrNaN(price);
+
     const payload = {
-      customerId: String(customerId || "").trim(),
-      packageId: String(packageId || "").trim(),
+      customerID,
+      packageID,
       billingCycle,
-      status,
+      status, // required by schema
       startDate: startDate ? new Date(startDate).toISOString() : undefined,
       endDate: endDate ? new Date(endDate).toISOString() : null,
-      priceCents: Number(priceCents),
+      price: priceInt,
     };
 
-    if (!payload.customerId) return setError("Pick a customer from the list.");
-    if (!payload.packageId) return setError("Pick a package from the list.");
-    if (Number.isNaN(payload.priceCents)) return setError("priceCents must be a number");
+    if (!payload.customerID) return setError("Pick a customer from the list.");
+    if (!payload.packageID) return setError("Pick a package from the list.");
+    if (Number.isNaN(payload.price)) return setError("price must be an integer");
 
     try {
       if (isEditing) await updateSubscription(editingId, payload);
@@ -174,6 +199,7 @@ export function useSubscriptionsPage() {
   }
 
   async function removeSelected() {
+    // keep your old behavior: only delete in edit mode (not list mode)
     if (!editingId || list.listMode) return;
     setError("");
     try {
@@ -196,9 +222,6 @@ export function useSubscriptionsPage() {
     isEditing,
     selectedItem,
 
-    customerId,
-    packageId,
-
     customerQuery,
     packageQuery,
     onCustomerQueryChange,
@@ -217,8 +240,8 @@ export function useSubscriptionsPage() {
     setStartDate,
     endDate,
     setEndDate,
-    priceCents,
-    setPriceCents,
+    price,
+    setPrice,
 
     loadAll,
     resetForm,

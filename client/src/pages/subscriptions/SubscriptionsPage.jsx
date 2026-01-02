@@ -4,6 +4,20 @@ import AutocompleteInput from "../../components/AutocompleteInput.jsx";
 import "../shared/EntityPage.css";
 import { useSubscriptionsPage } from "./hooks/useSubscriptionsPage.js";
 
+function customerLabel(c) {
+  const fn = (c?.firstName || "").trim();
+  const ln = (c?.lastName || "").trim();
+  const name = `${fn} ${ln}`.trim();
+  return name || "(no name)";
+}
+
+function packageLabel(p) {
+  const m = p?.monthlyCost ?? "-";
+  const a = p?.annualCost ?? "-";
+  const id = p?.packageID ?? "";
+  return `Pkg ${String(id).slice(0, 4)} • M ${m} • A ${a}`;
+}
+
 export default function SubscriptionsPage() {
   const {
     items,
@@ -32,8 +46,8 @@ export default function SubscriptionsPage() {
     setStartDate,
     endDate,
     setEndDate,
-    priceCents,
-    setPriceCents,
+    price,
+    setPrice,
 
     loadAll,
     resetForm,
@@ -50,11 +64,11 @@ export default function SubscriptionsPage() {
   const selectedLabels = useMemo(() => {
     const map = new Map(
       items.map((s) => [
-        s.id,
-        `SUB ${shortId(s.id)} • ${shortId(s.customerId)} → ${shortId(s.packageId)}`,
+        String(s.subscriptionID),
+        `SUB ${shortId(s.subscriptionID)} • C ${shortId(s.customerID)} → P ${shortId(s.packageID)}`,
       ])
     );
-    return list.selectedIds.map((id) => map.get(id)).filter(Boolean);
+    return (list.selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
   }, [items, list.selectedIds, shortId]);
 
   return (
@@ -72,8 +86,8 @@ export default function SubscriptionsPage() {
                 value={customerQuery}
                 onChange={onCustomerQueryChange}
                 items={customers}
-                getKey={(c) => c.id}
-                getLabel={(c) => c.name || "(no name)"}
+                getKey={(c) => c.customerID}
+                getLabel={(c) => customerLabel(c)}
                 getMeta={(c) => c.email || ""}
                 onPick={pickCustomer}
                 placeholder="Start typing customer name..."
@@ -81,26 +95,25 @@ export default function SubscriptionsPage() {
               />
               {selectedCustomer && (
                 <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
-                  Selected: <b>{selectedCustomer.name || "(no name)"}</b> • {selectedCustomer.email}
+                  Selected: <b>{customerLabel(selectedCustomer)}</b> • {selectedCustomer.email || "-"}
                 </div>
               )}
 
-              <div className="entity-label">package (type name)</div>
+              <div className="entity-label">package</div>
               <AutocompleteInput
                 value={packageQuery}
                 onChange={onPackageQueryChange}
                 items={packages}
-                getKey={(p) => p.id}
-                getLabel={(p) => p.name || "(no name)"}
-                getMeta={(p) => `M ${p.monthlyPrice} • A ${p.annualPrice}`}
+                getKey={(p) => p.packageID}
+                getLabel={(p) => packageLabel(p)}
+                getMeta={(p) => `M ${p.monthlyCost} • A ${p.annualCost}`}
                 onPick={pickPackage}
-                placeholder="Start typing package name..."
+                placeholder="Pick a package..."
                 disabled={packages.length === 0}
               />
               {selectedPackage && (
                 <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
-                  Selected: <b>{selectedPackage.name}</b> • monthly {selectedPackage.monthlyPrice} • annual{" "}
-                  {selectedPackage.annualPrice}
+                  Selected: <b>{packageLabel(selectedPackage)}</b>
                 </div>
               )}
 
@@ -123,8 +136,8 @@ export default function SubscriptionsPage() {
               <div className="entity-label">endDate</div>
               <input className="entity-input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
 
-              <div className="entity-label">priceCents</div>
-              <input className="entity-input" value={priceCents} onChange={(e) => setPriceCents(e.target.value)} />
+              <div className="entity-label">price</div>
+              <input className="entity-input" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="integer (e.g. 999)" />
 
               <button className="entity-btn-big" type="submit">
                 {isEditing ? "Update" : "Create"}
@@ -166,7 +179,7 @@ export default function SubscriptionsPage() {
         <div className="entity-right">
           <EntityNavBar listEnabled={listEnabled} listMode={list.listMode} onToggleList={list.toggleListMode} />
 
-          <div className="entity-header" style={{ gridTemplateColumns: "70px 120px 120px 110px 110px 110px" }}>
+          <div className="entity-header" style={{ gridTemplateColumns: "70px 220px 220px 110px 110px 110px" }}>
             <div>#</div>
             <div>customer</div>
             <div>package</div>
@@ -180,21 +193,27 @@ export default function SubscriptionsPage() {
           ) : items.length === 0 ? (
             <div className="entity-muted">No subscriptions yet.</div>
           ) : (
-            items.map((s) => (
-              <div
-                key={s.id}
-                className={`entity-row ${list.isSelected(s.id) ? "selected" : ""}`}
-                style={{ gridTemplateColumns: "70px 120px 120px 110px 110px 110px" }}
-                onClick={() => (list.listMode ? list.toggleRowSelection(s.id) : selectRow(s))}
-              >
-                <div>{shortId(s.id)}</div>
-                <div>{shortId(s.customerId)}</div>
-                <div>{shortId(s.packageId)}</div>
-                <div>{s.billingCycle}</div>
-                <div>{s.status}</div>
-                <div>{s.priceCents}</div>
-              </div>
-            ))
+            items.map((s) => {
+              const id = s.subscriptionID;
+              const c = s.customer;
+              const p = s.package;
+
+              return (
+                <div
+                  key={id}
+                  className={`entity-row ${list.isSelected(String(id)) ? "selected" : ""}`}
+                  style={{ gridTemplateColumns: "70px 220px 220px 110px 110px 110px" }}
+                  onClick={() => (list.listMode ? list.toggleRowSelection(String(id)) : selectRow(s))}
+                >
+                  <div>{shortId(id)}</div>
+                  <div>{c ? customerLabel(c) : shortId(s.customerID)}</div>
+                  <div>{p ? packageLabel(p) : shortId(s.packageID)}</div>
+                  <div>{s.billingCycle}</div>
+                  <div>{s.status}</div>
+                  <div>{s.price}</div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

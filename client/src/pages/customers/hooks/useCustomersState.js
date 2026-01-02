@@ -7,20 +7,22 @@ export function useCustomersState() {
   const [error, setError] = useState("");
 
   // normal edit-mode selection
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(null); // customerID (number) or null
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
   // ✅ list mode (multi-select)
   const [listMode, setListMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]); // array of customer ids
+  const [selectedIds, setSelectedIds] = useState([]); // array of customerID numbers
   const selectedCount = selectedIds.length;
 
-  const [name, setName] = useState("");
+  // Form fields (new schema)
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [ccExpiration, setCcExpiration] = useState(""); // string input (YYYY-MM-DD or blank)
 
   const selectedCustomer = useMemo(
-    () => customers.find((c) => c.id === editingId) || null,
+    () => customers.find((c) => c.customerID === editingId) || null,
     [customers, editingId]
   );
 
@@ -46,11 +48,14 @@ export function useCustomersState() {
     setSelectedIds,
     selectedCount,
 
-    name,
-    setName,
+    // form fields
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
     email,
     setEmail,
-    phone,
-    setPhone,
+    ccExpiration,
+    setCcExpiration,
   };
 }

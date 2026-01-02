@@ -3,6 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import "./CustomersPage.css";
 import { useCustomersPage } from "./hooks/useCustomersPage.js";
 
+function fullName(c) {
+  const fn = (c?.firstName || "").trim();
+  const ln = (c?.lastName || "").trim();
+  const name = `${fn} ${ln}`.trim();
+  return name || "(no name)";
+}
+
 export default function CustomersPage() {
   const location = useLocation();
 
@@ -21,12 +28,14 @@ export default function CustomersPage() {
     selectedIds,
     selectedCount,
 
-    name,
-    setName,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
     email,
     setEmail,
-    phone,
-    setPhone,
+    ccExpiration,
+    setCcExpiration,
 
     loadAll,
     resetForm,
@@ -38,15 +47,14 @@ export default function CustomersPage() {
 
     fmtDate,
     shortId,
+    fmtCcExp, // ✅ we’ll add this helper in the hook
   } = useCustomersPage();
 
-  // List is always visible but disabled when no customers
   const listButtonEnabled = customers.length > 0;
   const blackoutLeft = listMode;
 
-  // Names array derived from selectedIds
   const selectedNames = useMemo(() => {
-    const map = new Map(customers.map((c) => [c.id, c.name || c.email || "(no name)"]));
+    const map = new Map(customers.map((c) => [c.customerID, fullName(c) || c.email || "(no name)"]));
     return selectedIds.map((id) => map.get(id)).filter(Boolean);
   }, [customers, selectedIds]);
 
@@ -63,12 +71,20 @@ export default function CustomersPage() {
 
           {!blackoutLeft ? (
             <form className="customers-formcard" onSubmit={submitForm}>
-              <div className="customers-label">name</div>
+              <div className="customers-label">first name</div>
               <input
                 className="customers-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="John"
+              />
+
+              <div className="customers-label">last name</div>
+              <input
+                className="customers-input"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Doe"
               />
 
               <div className="customers-label">email</div>
@@ -79,18 +95,18 @@ export default function CustomersPage() {
                 placeholder="jdoe@gmail.com"
               />
 
-              <div className="customers-label">phone</div>
+              <div className="customers-label">cc expiration</div>
               <input
                 className="customers-input"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="514..."
+                value={ccExpiration}
+                onChange={(e) => setCcExpiration(e.target.value)}
+                placeholder="YYYY-MM-DD (or blank)"
               />
 
               <div className="customers-label"># of subs</div>
               <input
                 className="customers-input-readonly"
-                value={selectedCustomer ? String(subCounts[selectedCustomer.id] || 0) : ""}
+                value={selectedCustomer ? String(subCounts[selectedCustomer.customerID] || 0) : ""}
                 readOnly
               />
 
@@ -127,7 +143,6 @@ export default function CustomersPage() {
           ) : (
             <div className="customers-formcard">
               <div className="customers-selected-box">
-                {/* ✅ NEW: Create Analysis button ABOVE selected list */}
                 <div style={{ marginBottom: 12 }}>
                   <button
                     type="button"
@@ -140,7 +155,6 @@ export default function CustomersPage() {
                       cursor: selectedCount === 0 ? "not-allowed" : "pointer",
                     }}
                     onClick={() => {
-                      // Later: navigate to /analytics with selectedIds, or POST to API
                       alert(`Create Analysis for: ${selectedCount} customers`);
                     }}
                   >
@@ -148,9 +162,7 @@ export default function CustomersPage() {
                   </button>
                 </div>
 
-                <div className="customers-selected-title">
-                  Selected customers ({selectedCount})
-                </div>
+                <div className="customers-selected-title">Selected customers ({selectedCount})</div>
 
                 {selectedNames.length === 0 ? (
                   <div style={{ color: "rgba(231,255,224,0.75)" }}>
@@ -166,9 +178,7 @@ export default function CustomersPage() {
                   </div>
                 )}
 
-                <div className="customers-selected-hint">
-                  Click a highlighted row again to deselect it.
-                </div>
+                <div className="customers-selected-hint">Click a highlighted row again to deselect it.</div>
               </div>
             </div>
           )}
@@ -176,7 +186,6 @@ export default function CustomersPage() {
 
         {/* RIGHT */}
         <div className="customers-right">
-          {/* ✅ NAVBAR ABOVE LIST */}
           <div className="customers-navbar">
             <div className="customers-navgroup">
               <Link
@@ -203,7 +212,6 @@ export default function CustomersPage() {
               >
                 Payments
               </Link>
-              {/* If you already added Analytics to navbar elsewhere, add it here too */}
               <Link
                 className={`customers-navbtn ${isActiveRoute("/analytics") ? "customers-navbtn-active" : ""}`}
                 to="/analytics"
@@ -212,7 +220,6 @@ export default function CustomersPage() {
               </Link>
             </div>
 
-            {/* LIST button on far right */}
             <button
               type="button"
               className={[
@@ -236,6 +243,7 @@ export default function CustomersPage() {
             <div>name</div>
             <div>email</div>
             <div>member since</div>
+            <div>cc exp</div>
             <div># of subs</div>
           </div>
 
@@ -245,28 +253,30 @@ export default function CustomersPage() {
             <div className="customers-muted">No customers yet.</div>
           ) : (
             customers.map((c) => {
-              const active = c.id === editingId;
-              const selected = selectedIds.includes(c.id);
+              const id = c.customerID;
+              const active = id === editingId;
+              const selected = selectedIds.includes(id);
 
               return (
                 <div
-                  key={c.id}
+                  key={id}
                   className={[
                     "customers-row",
                     active ? "customers-row-active" : "",
                     selected ? "customers-row-selected" : "",
                   ].join(" ")}
                   onClick={() => {
-                    if (listMode) toggleRowSelection(c.id);
+                    if (listMode) toggleRowSelection(id);
                     else selectCustomerRow(c);
                   }}
                   title={listMode ? "Click to select/deselect" : "Click to edit"}
                 >
-                  <div style={{ opacity: 0.9 }}>{shortId(c.id)}</div>
-                  <div>{c.name || "-"}</div>
+                  <div style={{ opacity: 0.9 }}>{shortId(id)}</div>
+                  <div>{fullName(c)}</div>
                   <div>{c.email || "-"}</div>
                   <div>{fmtDate(c.createdAt)}</div>
-                  <div>{subCounts[c.id] || 0}</div>
+                  <div>{fmtCcExp(c.ccExpiration)}</div>
+                  <div>{subCounts[id] || 0}</div>
                 </div>
               );
             })

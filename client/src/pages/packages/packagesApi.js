@@ -6,7 +6,6 @@ async function req(path, options = {}) {
     ...options,
   });
 
-  // Handle errors first (try JSON, fallback to text)
   if (!res.ok) {
     const ctErr = res.headers.get("content-type") || "";
     if (ctErr.includes("application/json")) {
@@ -21,10 +20,8 @@ async function req(path, options = {}) {
     throw new Error(txt || `HTTP ${res.status}`);
   }
 
-  // ✅ Handle empty body (common for DELETE 204)
   if (res.status === 204) return null;
 
-  // ✅ Only parse JSON if it exists and is JSON
   const ct = res.headers.get("content-type") || "";
   if (!ct.includes("application/json")) return null;
 
