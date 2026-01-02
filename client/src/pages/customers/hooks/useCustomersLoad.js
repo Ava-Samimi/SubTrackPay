@@ -9,8 +9,11 @@ export function useCustomersLoad(state) {
     setError("");
     try {
       const [cust, subs] = await Promise.all([listCustomers(), listSubscriptions()]);
-      setCustomers(cust);
-      setSubCounts(buildSubCounts(subs));
+      const customers = Array.isArray(cust) ? cust : [];
+      const subscriptions = Array.isArray(subs) ? subs : [];
+
+      setCustomers(customers);
+      setSubCounts(buildSubCounts(subscriptions));
     } catch (e) {
       setError(e?.message || "Failed to fetch");
     } finally {

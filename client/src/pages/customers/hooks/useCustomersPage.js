@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useCustomersState } from "./useCustomersState.js";
 import { useCustomersLoad } from "./useCustomersLoad.js";
 import { useCustomersActions } from "./useCustomersActions.js";
-import { fmtDate, shortId } from "./customersFormat.js";
+import { fmtDate, fmtCcExp, shortId } from "./customersFormat.js";
 
 export function useCustomersPage() {
   const state = useCustomersState();
@@ -19,6 +19,7 @@ export function useCustomersPage() {
     ...actions,
     loadAll,
     fmtDate,
+    fmtCcExp,
     shortId,
   };
 }

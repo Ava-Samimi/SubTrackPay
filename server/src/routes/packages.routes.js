@@ -1,95 +1,113 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../prisma.js";
 
 const router = Router();
-const prisma = new PrismaClient();
+
+function toIntOrNull(value) {
+  const n = Number(value);
+  return Number.isInteger(n) ? n : null;
+}
 
 // LIST
-router.get("/", async (req, res) => {
+router.get("/", async (_req, res) => {
   try {
-    const rows = await prisma.package.findMany({ orderBy: { createdAt: "desc" } });
+    // No createdAt in Package model anymore, so order by primary key desc.
+    const rows = await prisma.package.findMany({
+      orderBy: { packageID: "desc" },
+    });
     res.json(rows);
-  } catch {
+  } catch (_e) {
     res.status(500).json({ error: "Failed to fetch packages" });
   }
 });
 
 // READ ONE
 router.get("/:id", async (req, res) => {
+  const packageID = toIntOrNull(req.params.id);
+  if (packageID === null) return res.status(400).json({ error: "Invalid package id" });
+
   try {
-    const row = await prisma.package.findUnique({ where: { id: req.params.id } });
+    const row = await prisma.package.findUnique({ where: { packageID } });
     if (!row) return res.status(404).json({ error: "Package not found" });
     res.json(row);
-  } catch {
+  } catch (_e) {
     res.status(500).json({ error: "Failed to fetch package" });
   }
 });
 
 // CREATE
 router.post("/", async (req, res) => {
-  const { name, monthlyPrice, annualPrice } = req.body ?? {};
-  if (!name || typeof name !== "string" || !name.trim()) {
-    return res.status(400).json({ error: "name is required" });
+  const { monthlyCost, annualCost } = req.body ?? {};
+
+  const m = toIntOrNull(monthlyCost);
+  const a = toIntOrNull(annualCost);
+
+  if (m === null || m < 0) {
+    return res.status(400).json({ error: "monthlyCost must be a non-negative integer" });
   }
-  if (!Number.isInteger(monthlyPrice) || monthlyPrice < 0) {
-    return res.status(400).json({ error: "monthlyPrice must be a non-negative integer" });
-  }
-  if (!Number.isInteger(annualPrice) || annualPrice < 0) {
-    return res.status(400).json({ error: "annualPrice must be a non-negative integer" });
+  if (a === null || a < 0) {
+    return res.status(400).json({ error: "annualCost must be a non-negative integer" });
   }
 
   try {
     const created = await prisma.package.create({
-      data: { name: name.trim(), monthlyPrice, annualPrice },
+      data: { monthlyCost: m, annualCost: a },
     });
     res.status(201).json(created);
-  } catch {
-    res.status(400).json({ error: "Failed to create package (maybe duplicate name)" });
+  } catch (_e) {
+    res.status(400).json({ error: "Failed to create package" });
   }
 });
 
 // UPDATE
 router.put("/:id", async (req, res) => {
-  const { name, monthlyPrice, annualPrice } = req.body ?? {};
+  const packageID = toIntOrNull(req.params.id);
+  if (packageID === null) return res.status(400).json({ error: "Invalid package id" });
 
-  if (name !== undefined && (typeof name !== "string" || !name.trim())) {
-    return res.status(400).json({ error: "name cannot be empty" });
+  const { monthlyCost, annualCost } = req.body ?? {};
+
+  const m = monthlyCost === undefined ? undefined : toIntOrNull(monthlyCost);
+  const a = annualCost === undefined ? undefined : toIntOrNull(annualCost);
+
+  if (m !== undefined && (m === null || m < 0)) {
+    return res.status(400).json({ error: "monthlyCost must be a non-negative integer" });
   }
-  if (monthlyPrice !== undefined && (!Number.isInteger(monthlyPrice) || monthlyPrice < 0)) {
-    return res.status(400).json({ error: "monthlyPrice must be a non-negative integer" });
-  }
-  if (annualPrice !== undefined && (!Number.isInteger(annualPrice) || annualPrice < 0)) {
-    return res.status(400).json({ error: "annualPrice must be a non-negative integer" });
+  if (a !== undefined && (a === null || a < 0)) {
+    return res.status(400).json({ error: "annualCost must be a non-negative integer" });
   }
 
   try {
-    const exists = await prisma.package.findUnique({ where: { id: req.params.id } });
+    const exists = await prisma.package.findUnique({ where: { packageID } });
     if (!exists) return res.status(404).json({ error: "Package not found" });
 
     const updated = await prisma.package.update({
-      where: { id: req.params.id },
+      where: { packageID },
       data: {
-        name: name !== undefined ? name.trim() : undefined,
-        monthlyPrice,
-        annualPrice,
+        monthlyCost: m,
+        annualCost: a,
       },
     });
+
     res.json(updated);
-  } catch {
-    res.status(400).json({ error: "Failed to update package (maybe duplicate name)" });
+  } catch (_e) {
+    res.status(400).json({ error: "Failed to update package" });
   }
 });
 
 // DELETE
 router.delete("/:id", async (req, res) => {
+  const packageID = toIntOrNull(req.params.id);
+  if (packageID === null) return res.status(400).json({ error: "Invalid package id" });
+
   try {
-    const exists = await prisma.package.findUnique({ where: { id: req.params.id } });
+    const exists = await prisma.package.findUnique({ where: { packageID } });
     if (!exists) return res.status(404).json({ error: "Package not found" });
 
-    await prisma.package.delete({ where: { id: req.params.id } });
+    await prisma.package.delete({ where: { packageID } });
     res.status(204).send();
-  } catch {
-    res.status(400).json({ error: "Failed to delete package" });
+  } catch (_e) {
+    // If package is referenced by subscriptions, Prisma will throw (onDelete: Restrict)
+    res.status(400).json({ error: "Failed to delete package (it may be in use by subscriptions)" });
   }
 });
 

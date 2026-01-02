@@ -1,32 +1,43 @@
 import { useEffect, useMemo, useState } from "react";
 import { useListMode } from "../../../hooks/useListMode.js";
 import { listPayments, createPayment, updatePayment, deletePayment } from "../paymentsApi.js";
-import { listSubscriptions } from "../../subscriptions/subscriptionsApi.js"; // ✅ ADD
+import { listSubscriptions } from "../../subscriptions/subscriptionsApi.js";
 
 function shortId(id) {
   return String(id || "").slice(0, 4);
 }
 
+function dateToInput(d) {
+  if (!d) return "";
+  return String(d).slice(0, 10);
+}
+
+function toIntOrNaN(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return NaN;
+  const n = Number(s);
+  if (!Number.isFinite(n)) return NaN;
+  if (!Number.isInteger(n)) return NaN;
+  return n;
+}
+
 export function usePaymentsPage() {
   const [items, setItems] = useState([]);
-  const [subscriptions, setSubscriptions] = useState([]); // ✅ ADD
+  const [subscriptions, setSubscriptions] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(null); // paymentID
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
-  const [subscriptionId, setSubscriptionId] = useState("");
-  const [amountCents, setAmountCents] = useState("");
+  const [subscriptionID, setSubscriptionID] = useState(""); // stored as string from <select>, convert on submit
   const [dueDate, setDueDate] = useState("");
   const [paidAt, setPaidAt] = useState("");
   const [status, setStatus] = useState("DUE");
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
 
   const selectedItem = useMemo(
-    () => items.find((x) => x.id === editingId) || null,
+    () => items.find((x) => x.paymentID === editingId) || null,
     [items, editingId]
   );
 
@@ -36,13 +47,8 @@ export function usePaymentsPage() {
     setLoading(true);
     setError("");
     try {
-      // ✅ Load BOTH payments and subscriptions (so dropdown can be populated)
-      const [paymentsData, subsData] = await Promise.all([
-        listPayments(),
-        listSubscriptions(),
-      ]);
-
-      setItems(paymentsData);
+      const [paymentsData, subsData] = await Promise.all([listPayments(), listSubscriptions()]);
+      setItems(Array.isArray(paymentsData) ? paymentsData : []);
       setSubscriptions(Array.isArray(subsData) ? subsData : []);
     } catch (e) {
       setError(e?.message || "Failed to fetch");
@@ -53,28 +59,23 @@ export function usePaymentsPage() {
 
   useEffect(() => {
     loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function resetForm() {
     setEditingId(null);
-    setSubscriptionId("");
-    setAmountCents("");
+    setSubscriptionID("");
     setDueDate("");
     setPaidAt("");
     setStatus("DUE");
-    setPeriodStart("");
-    setPeriodEnd("");
   }
 
   function selectRow(item) {
-    setEditingId(item.id);
-    setSubscriptionId(item.subscriptionId || "");
-    setAmountCents(String(item.amountCents ?? ""));
-    setDueDate(item.dueDate ? String(item.dueDate).slice(0, 10) : "");
-    setPaidAt(item.paidAt ? String(item.paidAt).slice(0, 10) : "");
+    setEditingId(item.paymentID);
+    setSubscriptionID(item.subscriptionID != null ? String(item.subscriptionID) : "");
+    setDueDate(dateToInput(item.dueDate));
+    setPaidAt(dateToInput(item.paidAt));
     setStatus(item.status || "DUE");
-    setPeriodStart(item.periodStart ? String(item.periodStart).slice(0, 10) : "");
-    setPeriodEnd(item.periodEnd ? String(item.periodEnd).slice(0, 10) : "");
   }
 
   async function submit(e) {
@@ -82,21 +83,18 @@ export function usePaymentsPage() {
     if (list.listMode) return;
 
     setError("");
+
+    const subIdInt = toIntOrNaN(subscriptionID);
+
     const payload = {
-      subscriptionId: String(subscriptionId || "").trim(),
-      amountCents: Number(amountCents),
+      subscriptionID: subIdInt,
       dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       paidAt: paidAt ? new Date(paidAt).toISOString() : null,
       status,
-      periodStart: periodStart ? new Date(periodStart).toISOString() : undefined,
-      periodEnd: periodEnd ? new Date(periodEnd).toISOString() : undefined,
     };
 
-    if (!payload.subscriptionId) return setError("subscriptionId is required");
-    if (Number.isNaN(payload.amountCents)) return setError("amountCents must be a number");
+    if (Number.isNaN(payload.subscriptionID)) return setError("subscriptionID is required");
     if (!dueDate) return setError("dueDate is required");
-    if (!periodStart) return setError("periodStart is required");
-    if (!periodEnd) return setError("periodEnd is required");
 
     try {
       if (isEditing) await updatePayment(editingId, payload);
@@ -105,7 +103,7 @@ export function usePaymentsPage() {
       await loadAll();
       resetForm();
     } catch (e2) {
-      setError(e2?.message || "Failed to fetch");
+      setError(e2?.message || "Failed to save payment");
     }
   }
 
@@ -117,33 +115,27 @@ export function usePaymentsPage() {
       await loadAll();
       resetForm();
     } catch (e) {
-      setError(e?.message || "Failed to fetch");
+      setError(e?.message || "Failed to delete payment");
     }
   }
 
   return {
     items,
-    subscriptions, // ✅ EXPOSE TO PAGE
+    subscriptions,
     loading,
     error,
     editingId,
     isEditing,
     selectedItem,
 
-    subscriptionId,
-    setSubscriptionId,
-    amountCents,
-    setAmountCents,
+    subscriptionID,
+    setSubscriptionID,
     dueDate,
     setDueDate,
     paidAt,
     setPaidAt,
     status,
     setStatus,
-    periodStart,
-    setPeriodStart,
-    periodEnd,
-    setPeriodEnd,
 
     loadAll,
     resetForm,

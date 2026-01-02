@@ -19,22 +19,26 @@ export function useCustomersActions(state, loadAll) {
     // list mode
     listMode,
     setListMode,
-    selectedIds,
+    selectedIds: _selectedIds, // intentionally unused for now
     setSelectedIds,
 
-    name,
-    setName,
+    // new fields
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
     email,
     setEmail,
-    phone,
-    setPhone,
+    ccExpiration,
+    setCcExpiration,
   } = state;
 
   function resetForm() {
     setEditingId(null);
-    setName("");
+    setFirstName("");
+    setLastName("");
     setEmail("");
-    setPhone("");
+    setCcExpiration("");
   }
 
   // ✅ Toggle list mode ON/OFF
@@ -51,10 +55,10 @@ export function useCustomersActions(state, loadAll) {
   }
 
   // ✅ Row click behavior for list mode (multi-select)
-  function toggleRowSelection(customerId) {
+  function toggleRowSelection(customerID) {
     setSelectedIds((prev) => {
-      if (prev.includes(customerId)) return prev.filter((id) => id !== customerId);
-      return [...prev, customerId];
+      if (prev.includes(customerID)) return prev.filter((id) => id !== customerID);
+      return [...prev, customerID];
     });
   }
 
@@ -63,10 +67,11 @@ export function useCustomersActions(state, loadAll) {
    * Only used when listMode is OFF.
    */
   function selectCustomerRow(c) {
-    setEditingId(c.id); // toggles edit mode
-    setName(c.name || "");
+    setEditingId(c.customerID); // toggles edit mode
+    setFirstName(c.firstName || "");
+    setLastName(c.lastName || "");
     setEmail(c.email || "");
-    setPhone(c.phone || "");
+    setCcExpiration(c.ccExpiration ? String(c.ccExpiration).slice(0, 10) : ""); // YYYY-MM-DD
   }
 
   async function submitForm(e) {
@@ -77,11 +82,11 @@ export function useCustomersActions(state, loadAll) {
     if (listMode) return;
 
     try {
-      const payload = normalizeCustomerPayload({ name, email, phone });
+      const payload = normalizeCustomerPayload({ firstName, lastName, email, ccExpiration });
 
       if (isEditing) {
         const updated = await updateCustomer(editingId, payload);
-        setCustomers(customers.map((x) => (x.id === updated.id ? updated : x)));
+        setCustomers(customers.map((x) => (x.customerID === updated.customerID ? updated : x)));
       } else {
         const created = await createCustomer(payload);
         setCustomers([created, ...customers]);
@@ -104,7 +109,7 @@ export function useCustomersActions(state, loadAll) {
     try {
       await deleteCustomer(editingId);
 
-      setCustomers(customers.filter((c) => c.id !== editingId));
+      setCustomers(customers.filter((c) => c.customerID !== editingId));
 
       const copy = { ...subCounts };
       delete copy[editingId];

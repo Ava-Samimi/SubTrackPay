@@ -1,117 +1,157 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../prisma.js";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const STATUSES = new Set(["DUE", "PAID", "FAILED", "VOID"]);
 
+function toIntOrNull(value) {
+  const n = Number(value);
+  return Number.isInteger(n) ? n : null;
+}
+
+function toDateOrNull(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 // LIST
-router.get("/", async (req, res) => {
+router.get("/", async (_req, res) => {
   try {
-    const rows = await prisma.payment.findMany({ orderBy: { dueDate: "desc" } });
+    const rows = await prisma.payment.findMany({
+      orderBy: { dueDate: "desc" },
+      include: {
+        subscription: {
+          include: { customer: true, package: true },
+        },
+      },
+    });
     res.json(rows);
-  } catch {
+  } catch (_e) {
     res.status(500).json({ error: "Failed to fetch payments" });
   }
 });
 
 // READ ONE
 router.get("/:id", async (req, res) => {
+  const paymentID = toIntOrNull(req.params.id);
+  if (paymentID === null) return res.status(400).json({ error: "Invalid payment id" });
+
   try {
-    const row = await prisma.payment.findUnique({ where: { id: req.params.id } });
+    const row = await prisma.payment.findUnique({
+      where: { paymentID },
+      include: {
+        subscription: {
+          include: { customer: true, package: true },
+        },
+      },
+    });
     if (!row) return res.status(404).json({ error: "Payment not found" });
     res.json(row);
-  } catch {
+  } catch (_e) {
     res.status(500).json({ error: "Failed to fetch payment" });
   }
 });
 
 // CREATE
 router.post("/", async (req, res) => {
-  const {
-    subscriptionId,
-    amountCents,
-    dueDate,
-    paidAt,
-    status,
-    periodStart,
-    periodEnd,
-  } = req.body ?? {};
+  const { subscriptionID, dueDate, paidAt, status } = req.body ?? {};
 
-  if (!subscriptionId || typeof subscriptionId !== "string") {
-    return res.status(400).json({ error: "subscriptionId is required" });
+  const sID = toIntOrNull(subscriptionID);
+  if (sID === null) return res.status(400).json({ error: "subscriptionID is required and must be an integer" });
+
+  const dd = toDateOrNull(dueDate);
+  if (!dd) return res.status(400).json({ error: "dueDate is required and must be a valid date" });
+
+  const pa = paidAt === undefined ? undefined : toDateOrNull(paidAt);
+  if (paidAt !== undefined && paidAt !== null && paidAt !== "" && pa === null) {
+    return res.status(400).json({ error: "paidAt must be a valid date (or null)" });
   }
-  if (!Number.isInteger(amountCents) || amountCents < 0) {
-    return res.status(400).json({ error: "amountCents must be a non-negative integer" });
-  }
-  if (!dueDate) return res.status(400).json({ error: "dueDate is required" });
-  if (!periodStart) return res.status(400).json({ error: "periodStart is required" });
-  if (!periodEnd) return res.status(400).json({ error: "periodEnd is required" });
-  if (status !== undefined && !STATUSES.has(status)) {
-    return res.status(400).json({ error: "status must be DUE, PAID, FAILED, or VOID" });
+
+  // status is REQUIRED in schema
+  if (!status || !STATUSES.has(status)) {
+    return res.status(400).json({ error: "status is required and must be DUE, PAID, FAILED, or VOID" });
   }
 
   try {
     const created = await prisma.payment.create({
       data: {
-        subscriptionId,
-        amountCents,
-        dueDate: new Date(dueDate),
-        paidAt: paidAt ? new Date(paidAt) : null,
-        status: status ?? undefined,
-        periodStart: new Date(periodStart),
-        periodEnd: new Date(periodEnd),
+        subscriptionID: sID,
+        dueDate: dd,
+        paidAt: paidAt === undefined ? null : pa, // if omitted, default to null
+        status,
+      },
+      include: {
+        subscription: {
+          include: { customer: true, package: true },
+        },
       },
     });
+
     res.status(201).json(created);
-  } catch {
-    // could be: invalid FK, or @@unique([subscriptionId, periodStart, periodEnd]) violation
-    res.status(400).json({ error: "Failed to create payment (bad subscriptionId or duplicate period)" });
+  } catch (_e) {
+    res.status(400).json({ error: "Failed to create payment (bad subscriptionID?)" });
   }
 });
 
 // UPDATE
 router.put("/:id", async (req, res) => {
-  const { amountCents, dueDate, paidAt, status, periodStart, periodEnd } = req.body ?? {};
+  const paymentID = toIntOrNull(req.params.id);
+  if (paymentID === null) return res.status(400).json({ error: "Invalid payment id" });
 
-  if (amountCents !== undefined && (!Number.isInteger(amountCents) || amountCents < 0)) {
-    return res.status(400).json({ error: "amountCents must be a non-negative integer" });
+  const { dueDate, paidAt, status } = req.body ?? {};
+
+  const dd = dueDate === undefined ? undefined : toDateOrNull(dueDate);
+  if (dueDate !== undefined && !dd) {
+    return res.status(400).json({ error: "dueDate must be a valid date" });
   }
+
+  const pa = paidAt === undefined ? undefined : toDateOrNull(paidAt);
+  if (paidAt !== undefined && paidAt !== null && paidAt !== "" && pa === null) {
+    return res.status(400).json({ error: "paidAt must be a valid date (or null)" });
+  }
+
   if (status !== undefined && !STATUSES.has(status)) {
     return res.status(400).json({ error: "status must be DUE, PAID, FAILED, or VOID" });
   }
 
   try {
-    const exists = await prisma.payment.findUnique({ where: { id: req.params.id } });
+    const exists = await prisma.payment.findUnique({ where: { paymentID } });
     if (!exists) return res.status(404).json({ error: "Payment not found" });
 
     const updated = await prisma.payment.update({
-      where: { id: req.params.id },
+      where: { paymentID },
       data: {
-        amountCents,
-        dueDate: dueDate !== undefined ? new Date(dueDate) : undefined,
-        paidAt: paidAt !== undefined ? (paidAt ? new Date(paidAt) : null) : undefined,
+        dueDate: dd,
+        paidAt: paidAt === undefined ? undefined : (paidAt ? pa : null),
         status,
-        periodStart: periodStart !== undefined ? new Date(periodStart) : undefined,
-        periodEnd: periodEnd !== undefined ? new Date(periodEnd) : undefined,
+      },
+      include: {
+        subscription: {
+          include: { customer: true, package: true },
+        },
       },
     });
+
     res.json(updated);
-  } catch {
+  } catch (_e) {
     res.status(400).json({ error: "Failed to update payment" });
   }
 });
 
 // DELETE
 router.delete("/:id", async (req, res) => {
+  const paymentID = toIntOrNull(req.params.id);
+  if (paymentID === null) return res.status(400).json({ error: "Invalid payment id" });
+
   try {
-    const exists = await prisma.payment.findUnique({ where: { id: req.params.id } });
+    const exists = await prisma.payment.findUnique({ where: { paymentID } });
     if (!exists) return res.status(404).json({ error: "Payment not found" });
 
-    await prisma.payment.delete({ where: { id: req.params.id } });
+    await prisma.payment.delete({ where: { paymentID } });
     res.status(204).send();
-  } catch {
+  } catch (_e) {
     res.status(400).json({ error: "Failed to delete payment" });
   }
 });
