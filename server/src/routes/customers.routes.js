@@ -68,7 +68,6 @@ router.post("/", async (req, res) => {
     });
     res.status(201).json(created);
   } catch (_e) {
-    // common: unique email violation
     res.status(400).json({ error: "Failed to create customer (maybe duplicate email)" });
   }
 });

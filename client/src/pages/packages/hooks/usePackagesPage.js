@@ -6,11 +6,14 @@ function shortId(id) {
   return String(id || "").slice(0, 4);
 }
 
-function toNumOrNull(v) {
+function toIntOrNull(v) {
   const s = String(v ?? "").trim();
   if (s === "") return null;
   const n = Number(s);
-  return Number.isFinite(n) ? n : NaN;
+  if (!Number.isFinite(n)) return NaN;
+  // enforce integer costs (schema is Int)
+  if (!Number.isInteger(n)) return NaN;
+  return n;
 }
 
 export function usePackagesPage() {
@@ -18,18 +21,17 @@ export function usePackagesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(null); // string id for safety with listMode
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
-  const [name, setName] = useState("");
-  const [monthlyPrice, setMonthlyPrice] = useState("");
-  const [annualPrice, setAnnualPrice] = useState("");
+  const [monthlyCost, setMonthlyCost] = useState("");
+  const [annualCost, setAnnualCost] = useState("");
 
   const list = useListMode();
 
   const selectedItem = useMemo(() => {
     if (editingId == null) return null;
-    return items.find((x) => String(x.id) === String(editingId)) || null;
+    return items.find((x) => String(x.packageID) === String(editingId)) || null;
   }, [items, editingId]);
 
   async function loadAll() {
@@ -47,21 +49,19 @@ export function usePackagesPage() {
 
   useEffect(() => {
     loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function resetForm() {
     setEditingId(null);
-    setName("");
-    setMonthlyPrice("");
-    setAnnualPrice("");
+    setMonthlyCost("");
+    setAnnualCost("");
   }
 
   function selectRow(item) {
-    // normalize id to string to avoid number/string mismatch bugs
-    setEditingId(item?.id != null ? String(item.id) : null);
-    setName(item?.name || "");
-    setMonthlyPrice(item?.monthlyPrice == null ? "" : String(item.monthlyPrice));
-    setAnnualPrice(item?.annualPrice == null ? "" : String(item.annualPrice));
+    setEditingId(item?.packageID != null ? String(item.packageID) : null);
+    setMonthlyCost(item?.monthlyCost == null ? "" : String(item.monthlyCost));
+    setAnnualCost(item?.annualCost == null ? "" : String(item.annualCost));
   }
 
   async function submit(e) {
@@ -71,19 +71,18 @@ export function usePackagesPage() {
     setError("");
 
     const payload = {
-      name: String(name || "").trim(),
-      monthlyPrice: toNumOrNull(monthlyPrice),
-      annualPrice: toNumOrNull(annualPrice),
+      monthlyCost: toIntOrNull(monthlyCost),
+      annualCost: toIntOrNull(annualCost),
     };
 
-    if (!payload.name) return setError("name is required");
-    if (Number.isNaN(payload.monthlyPrice) || Number.isNaN(payload.annualPrice)) {
-      return setError("monthlyPrice and annualPrice must be valid numbers");
+    if (Number.isNaN(payload.monthlyCost) || Number.isNaN(payload.annualCost)) {
+      return setError("monthlyCost and annualCost must be valid integers");
     }
-
-    // If your DB requires both prices, enforce it here:
-    if (payload.monthlyPrice == null || payload.annualPrice == null) {
-      return setError("monthlyPrice and annualPrice are required");
+    if (payload.monthlyCost == null || payload.annualCost == null) {
+      return setError("monthlyCost and annualCost are required");
+    }
+    if (payload.monthlyCost < 0 || payload.annualCost < 0) {
+      return setError("monthlyCost and annualCost must be non-negative");
     }
 
     try {
@@ -108,7 +107,7 @@ export function usePackagesPage() {
       await loadAll();
       resetForm();
     } catch (e) {
-      setError(e?.message || "Failed to delete package");
+      setError(e?.message || "Failed to delete package (it may be in use)");
     }
   }
 
@@ -124,14 +123,13 @@ export function usePackagesPage() {
 
     setError("");
     try {
-      // simplest: fire sequentially (safe + predictable)
       for (const id of ids) {
         await deletePackage(id);
       }
       await loadAll();
-      list.clearSelection?.(); // if your hook has it
+      list.clearSelection?.();
     } catch (e) {
-      setError(e?.message || "Failed to delete selected packages");
+      setError(e?.message || "Failed to delete selected packages (some may be in use)");
     }
   }
 
@@ -142,18 +140,19 @@ export function usePackagesPage() {
     editingId,
     isEditing,
     selectedItem,
-    name,
-    setName,
-    monthlyPrice,
-    setMonthlyPrice,
-    annualPrice,
-    setAnnualPrice,
+
+    monthlyCost,
+    setMonthlyCost,
+    annualCost,
+    setAnnualCost,
+
     loadAll,
     resetForm,
     selectRow,
     submit,
-    removeSelected,  // now works in both modes
-    removeCurrent,   // optional if you want to call directly
+
+    removeSelected, // works in both modes
+    removeCurrent,  // optional
     shortId,
     list,
   };
