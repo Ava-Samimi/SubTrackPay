@@ -1,0 +1,39 @@
+name: Lint
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # ---- Server ----
+      - name: Install server deps
+        working-directory: server
+        run: npm ci
+
+      - name: Lint server (warnings allowed)
+        working-directory: server
+        run: npm run lint
+
+      # ---- Client ----
+      - name: Install client deps
+        working-directory: client
+        run: npm ci
+
+      - name: Lint client (warnings allowed)
+        working-directory: client
+        run: npm run lint
