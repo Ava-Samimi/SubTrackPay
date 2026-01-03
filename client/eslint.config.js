@@ -8,6 +8,22 @@ import reactRefresh from "eslint-plugin-react-refresh";
 export default [
   js.configs.recommended,
 
+  // Global ignores (applies to everything)
+  {
+    ignores: [
+      "node_modules/**",
+      "dist/**",
+      "build/**",
+
+      // Ignore Jest/testing artifacts (not used right now)
+      "**/__tests__/**",
+      "**/__mocks__/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/jest.config.*",
+    ],
+  },
+
   {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
@@ -44,9 +60,5 @@ export default [
 
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
-  },
-
-  {
-    ignores: ["node_modules/**", "dist/**", "build/**"],
   },
 ];

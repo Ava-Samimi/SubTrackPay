@@ -5,6 +5,23 @@ import globals from "globals";
 export default [
   js.configs.recommended,
 
+  // Global ignores (applies to everything)
+  {
+    ignores: [
+      "node_modules/**",
+      "dist/**",
+      "build/**",
+      "prisma/migrations/**",
+
+      // Ignore Jest/testing artifacts (not used right now)
+      "**/__tests__/**",
+      "**/__mocks__/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/jest.config.*",
+    ],
+  },
+
   {
     files: ["**/*.js"],
     languageOptions: {
@@ -25,10 +42,5 @@ export default [
       ],
       "no-console": "off",
     },
-  },
-
-  // Don't lint generated/build folders
-  {
-    ignores: ["node_modules/**", "dist/**", "build/**", "prisma/migrations/**"],
   },
 ];
