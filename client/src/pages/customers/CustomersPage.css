@@ -259,33 +259,46 @@
   margin-left: auto;
 }
 
-/* Table */
+/* Table - ✅ NOW 4 COLUMNS ONLY */
 .customers-header {
   background: #000;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 12px 10px;
   display: grid;
-  grid-template-columns: 70px minmax(140px, 1fr) minmax(180px, 1fr) 140px 110px;
-  gap: 12px;
+
+  /* name | email | member since | # subs */
+  grid-template-columns: minmax(180px, 1.2fr) minmax(240px, 1.6fr) 150px 90px;
+
+  gap: 10px;
   color: #39ff14;
   font-weight: 800;
   align-items: center;
   border: 1px solid rgba(57, 255, 20, 0.25);
-  min-width: 720px;
+  min-width: 680px;
 }
 
 .customers-row {
   margin-top: 10px;
   background: #cfcfcf;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 12px 10px;
   display: grid;
-  grid-template-columns: 70px minmax(140px, 1fr) minmax(180px, 1fr) 140px 110px;
-  gap: 12px;
+
+  /* must match header exactly */
+  grid-template-columns: minmax(180px, 1.2fr) minmax(240px, 1.6fr) 150px 90px;
+
+  gap: 10px;
   align-items: center;
   color: #222;
   cursor: pointer;
-  min-width: 720px;
+  min-width: 680px;
+}
+
+/* hug left */
+.customers-header > div,
+.customers-row > div {
+  text-align: left;
+  justify-self: start;
 }
 
 .customers-row-active {

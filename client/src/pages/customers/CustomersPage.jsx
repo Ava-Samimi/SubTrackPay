@@ -46,8 +46,6 @@ export default function CustomersPage() {
     deleteSelected,
 
     fmtDate,
-    shortId,
-    fmtCcExp, // ✅ we’ll add this helper in the hook
   } = useCustomersPage();
 
   const listButtonEnabled = customers.length > 0;
@@ -238,12 +236,11 @@ export default function CustomersPage() {
             </button>
           </div>
 
+          {/* ✅ 4 columns only */}
           <div className="customers-header">
-            <div>#</div>
             <div>name</div>
             <div>email</div>
             <div>member since</div>
-            <div>cc exp</div>
             <div># of subs</div>
           </div>
 
@@ -271,11 +268,9 @@ export default function CustomersPage() {
                   }}
                   title={listMode ? "Click to select/deselect" : "Click to edit"}
                 >
-                  <div style={{ opacity: 0.9 }}>{shortId(id)}</div>
                   <div>{fullName(c)}</div>
                   <div>{c.email || "-"}</div>
                   <div>{fmtDate(c.createdAt)}</div>
-                  <div>{fmtCcExp(c.ccExpiration)}</div>
                   <div>{subCounts[id] || 0}</div>
                 </div>
               );
