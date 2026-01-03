@@ -15,16 +15,45 @@ services:
       timeout: 3s
       retries: 30
 
+  # 1) Run Prisma migrations ONCE, then exit 0
+  migrate:
+    build: ./server
+    environment:
+      DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-lc", "npx prisma migrate deploy"]
+    restart: "no"
+
+  # 2) Seed data ONCE, after migrations created tables
+  seeder:
+    build: ./server/seeder
+    environment:
+      DATABASE_URL: postgresql://app:app@db:5432/billing
+      SEED_CUSTOMERS: "500"
+      SEED_PACKAGES: "5"
+      SEED_SUBSCRIPTIONS: "500"
+      SEED_RANDOM_SEED: "42"
+      SEED_SKIP_IF_EXISTS: "1"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  # 3) Start API after seeding finishes
   api:
     build: ./server
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
-      PORT: 3001
+      PORT: "3001"
     ports:
       - "3001:3001"
     depends_on:
       db:
         condition: service_healthy
+      seeder:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health | grep -q ok"]
       interval: 3s
