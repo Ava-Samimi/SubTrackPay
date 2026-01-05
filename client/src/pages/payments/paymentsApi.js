@@ -1,3 +1,4 @@
+// client/src/pages/payments/paymentsApi.js
 import { apiGet, apiFetch } from "../../api.js";
 
 export const listPayments = () => apiGet("/api/payments");
