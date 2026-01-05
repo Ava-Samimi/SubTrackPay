@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
+import LogoutButton from "../../components/LogoutButton.jsx";
 import "../shared/EntityPage.css";
 import { usePackagesPage } from "./hooks/usePackagesPage.js";
 
@@ -132,11 +133,15 @@ export default function PackagesPage() {
 
         {/* RIGHT */}
         <div className="entity-right">
-          <EntityNavBar
-            listEnabled={listEnabled}
-            listMode={list.listMode}
-            onToggleList={list.toggleListMode}
-          />
+          {/* Top bar: nav + logout */}
+          <div className="entity-topbar">
+            <EntityNavBar
+              listEnabled={listEnabled}
+              listMode={list.listMode}
+              onToggleList={list.toggleListMode}
+            />
+            <LogoutButton className="entity-navbtn" />
+          </div>
 
           <div className="entity-header" style={{ gridTemplateColumns: "70px 1fr 140px 140px" }}>
             <div>#</div>
