@@ -20,6 +20,7 @@ services:
     build: ./server
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
+      PORT: "3001"
     depends_on:
       db:
         condition: service_healthy
@@ -47,6 +48,9 @@ services:
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
       PORT: "3001"
+      FIREBASE_SERVICE_ACCOUNT_JSON: /run/secrets/firebase-service-account.json
+    volumes:
+      - ./server/secrets/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
     ports:
       - "3001:3001"
     depends_on:
