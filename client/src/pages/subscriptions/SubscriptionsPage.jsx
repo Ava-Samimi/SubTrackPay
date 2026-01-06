@@ -3,6 +3,7 @@ import EntityNavBar from "../../components/EntityNavBar.jsx";
 import AutocompleteInput from "../../components/AutocompleteInput.jsx";
 import "../shared/EntityPage.css";
 import { useSubscriptionsPage } from "./hooks/useSubscriptionsPage.js";
+import LogoutButton from "../../components/LogoutButton.jsx";
 
 function customerLabel(c) {
   const fn = (c?.firstName || "").trim();
@@ -118,7 +119,11 @@ export default function SubscriptionsPage() {
               )}
 
               <div className="entity-label">billingCycle</div>
-              <select className="entity-select" value={billingCycle} onChange={(e) => setBillingCycle(e.target.value)}>
+              <select
+                className="entity-select"
+                value={billingCycle}
+                onChange={(e) => setBillingCycle(e.target.value)}
+              >
                 <option value="MONTHLY">MONTHLY</option>
                 <option value="ANNUAL">ANNUAL</option>
               </select>
@@ -131,13 +136,28 @@ export default function SubscriptionsPage() {
               </select>
 
               <div className="entity-label">startDate</div>
-              <input className="entity-input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <input
+                className="entity-input"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
 
               <div className="entity-label">endDate</div>
-              <input className="entity-input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <input
+                className="entity-input"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
 
               <div className="entity-label">price</div>
-              <input className="entity-input" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="integer (e.g. 999)" />
+              <input
+                className="entity-input"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="integer (e.g. 999)"
+              />
 
               <button className="entity-btn-big" type="submit">
                 {isEditing ? "Update" : "Create"}
@@ -177,7 +197,15 @@ export default function SubscriptionsPage() {
         </div>
 
         <div className="entity-right">
-          <EntityNavBar listEnabled={listEnabled} listMode={list.listMode} onToggleList={list.toggleListMode} />
+          {/* Top bar: nav on left, logout on right (consistent layout) */}
+          <div className="entity-topbar">
+            <EntityNavBar
+              listEnabled={listEnabled}
+              listMode={list.listMode}
+              onToggleList={list.toggleListMode}
+            />
+            <LogoutButton className="entity-navbtn" />
+          </div>
 
           <div className="entity-header" style={{ gridTemplateColumns: "70px 220px 220px 110px 110px 110px" }}>
             <div>#</div>

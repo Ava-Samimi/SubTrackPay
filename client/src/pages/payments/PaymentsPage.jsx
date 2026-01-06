@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
+import LogoutButton from "../../components/LogoutButton.jsx";
 import "../shared/EntityPage.css";
 import { usePaymentsPage } from "./hooks/usePaymentsPage.js";
 
@@ -130,7 +131,15 @@ export default function PaymentsPage() {
         </div>
 
         <div className="entity-right">
-          <EntityNavBar listEnabled={listEnabled} listMode={list.listMode} onToggleList={list.toggleListMode} />
+          {/* Top bar: nav + logout (matches the approach we used for Subscriptions) */}
+          <div className="entity-topbar">
+            <EntityNavBar
+              listEnabled={listEnabled}
+              listMode={list.listMode}
+              onToggleList={list.toggleListMode}
+            />
+            <LogoutButton className="entity-navbtn" />
+          </div>
 
           <div className="entity-header" style={{ gridTemplateColumns: "70px 140px 110px 110px 110px" }}>
             <div>#</div>

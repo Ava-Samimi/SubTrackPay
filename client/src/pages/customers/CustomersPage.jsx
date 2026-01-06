@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./CustomersPage.css";
 import { useCustomersPage } from "./hooks/useCustomersPage.js";
+import LogoutButton from "../../components/LogoutButton.jsx";
 
 function fullName(c) {
   const fn = (c?.firstName || "").trim();
@@ -52,7 +53,9 @@ export default function CustomersPage() {
   const blackoutLeft = listMode;
 
   const selectedNames = useMemo(() => {
-    const map = new Map(customers.map((c) => [c.customerID, fullName(c) || c.email || "(no name)"]));
+    const map = new Map(
+      customers.map((c) => [c.customerID, fullName(c) || c.email || "(no name)"])
+    );
     return selectedIds.map((id) => map.get(id)).filter(Boolean);
   }, [customers, selectedIds]);
 
@@ -176,7 +179,9 @@ export default function CustomersPage() {
                   </div>
                 )}
 
-                <div className="customers-selected-hint">Click a highlighted row again to deselect it.</div>
+                <div className="customers-selected-hint">
+                  Click a highlighted row again to deselect it.
+                </div>
               </div>
             </div>
           )}
@@ -218,22 +223,26 @@ export default function CustomersPage() {
               </Link>
             </div>
 
-            <button
-              type="button"
-              className={[
-                "customers-navbtn",
-                "customers-listbtn",
-                listMode ? "customers-navbtn-active" : "",
-                !listButtonEnabled ? "customers-navbtn-disabled" : "",
-              ].join(" ")}
-              onClick={() => {
-                if (!listButtonEnabled) return;
-                toggleListMode();
-              }}
-              title={listButtonEnabled ? "Toggle list mode" : "Add at least 1 customer to enable"}
-            >
-              List
-            </button>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <button
+                type="button"
+                className={[
+                  "customers-navbtn",
+                  "customers-listbtn",
+                  listMode ? "customers-navbtn-active" : "",
+                  !listButtonEnabled ? "customers-navbtn-disabled" : "",
+                ].join(" ")}
+                onClick={() => {
+                  if (!listButtonEnabled) return;
+                  toggleListMode();
+                }}
+                title={listButtonEnabled ? "Toggle list mode" : "Add at least 1 customer to enable"}
+              >
+                List
+              </button>
+
+              <LogoutButton className="customers-navbtn" />
+            </div>
           </div>
 
           {/* ✅ 4 columns only */}
