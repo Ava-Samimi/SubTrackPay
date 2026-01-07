@@ -15,33 +15,38 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      nav("/"); // go to app
+      nav("/");
     } catch (e2) {
       setErr(e2?.message || "Login failed");
     }
   }
 
   return (
-    <div style={{ maxWidth: 420, margin: "60px auto", padding: 16 }}>
-      <h2>Login</h2>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 380, padding: "32px 28px" }}>
+        <h2 style={{ marginBottom: 24, textAlign: "center" }}>Sign in</h2>
 
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 10 }}>
-        <input
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-        />
-        <input
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-        />
-        <button type="submit">Sign in</button>
-        {err && <div style={{ color: "crimson" }}>{err}</div>}
-      </form>
+        <form onSubmit={onSubmit} style={{ display: "grid", gap: 14 }}>
+          <input
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+          />
+
+          <input
+            placeholder="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+          />
+
+          <button type="submit">Login</button>
+
+          {err && <div style={{ color: "crimson", textAlign: "center" }}>{err}</div>}
+        </form>
+      </div>
     </div>
   );
 }
