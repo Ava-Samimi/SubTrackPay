@@ -22,12 +22,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: 380, padding: "32px 28px" }}>
-        <h2 style={{ marginBottom: 24, textAlign: "center" }}>Sign in</h2>
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>Sign in</h2>
 
-        <form onSubmit={onSubmit} style={{ display: "grid", gap: 14 }}>
+        <form onSubmit={onSubmit} style={styles.form}>
           <input
+            style={styles.input}
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -35,6 +36,7 @@ export default function LoginPage() {
           />
 
           <input
+            style={styles.input}
             placeholder="Password"
             type="password"
             value={password}
@@ -42,11 +44,40 @@ export default function LoginPage() {
             autoComplete="current-password"
           />
 
-          <button type="submit">Login</button>
+          <button type="submit" style={styles.button}>
+            Login
+          </button>
 
-          {err && <div style={{ color: "crimson", textAlign: "center" }}>{err}</div>}
+          {err && <div style={styles.error}>{err}</div>}
         </form>
       </div>
     </div>
   );
 }
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  card: {
+    width: 380,
+    padding: "32px 28px",
+  },
+  title: {
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  form: {
+    display: "grid",
+    gap: 14,
+  },
+  input: {},
+  button: {},
+  error: {
+    color: "crimson",
+    textAlign: "center",
+  },
+};
