@@ -1,3 +1,13 @@
+## NOTE TO TEACHER AND TA
+
+- currently the main branch was changed not to include the login firebase authentication *for easier and faster access)
+- branch main_backup_login includes full login authentication
+- current number of commits of two partners do not reflect the realistic division of labor so far
+- BOTH PARTNERS (Ava and Mustafa) HAVE PARTICIPATED EQUALLY IN THE WORK SO FAR
+- the lopsided number of commits for one partner is due to the initial upload of files for the node.js project
+  Ava
+
+
 # Subscription & Billing Tracker
 
 ## SubTrackPay – Capstone ReaDme
