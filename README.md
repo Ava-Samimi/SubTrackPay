@@ -7,6 +7,29 @@
 - the lopsided number of commits for one partner is due to the initial upload of files for the node.js project
 - Ava
 
+## ⚠️ Authentication & Test Credentials Notice
+
+This repository contains **test-only authentication credentials** and **Firebase configuration files** strictly for **development, demonstration, and educational purposes**.
+
+**Test account:**
+- **Username:** `fake@hotmail.com`
+- **Password:** `fake123`
+
+### Important clarifications
+- This account is **not linked to any real user**, real email, billing, or production data.
+- The Firebase project used here is configured with **restricted permissions** and contains **no sensitive or private information**.
+- No destructive actions, financial operations, or irreversible changes are possible using these credentials.
+- The credentials are intentionally simple and exposed **only to allow reviewers and collaborators to run the project without setup friction**.
+
+### Security awareness
+The project creators are fully aware that:
+- **Credentials should never be committed to version control in real-world or production systems**
+- **Secrets must always be managed using environment variables, secret managers, or secure CI/CD pipelines**
+- **Firebase rules must be locked down appropriately in production**
+
+This repository **does not represent production security practices** and should **not be used as a reference for handling credentials in live applications**.
+
+
 ## DISCLAIMER
 
 - AI LLM ChatGpt was heavily used to generate and modify the code in this project
