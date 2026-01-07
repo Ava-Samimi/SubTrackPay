@@ -5,8 +5,12 @@
 - current number of commits of two partners do not reflect the realistic division of labor so far
 - BOTH PARTNERS (Ava and Mustafa) HAVE PARTICIPATED EQUALLY IN THE WORK SO FAR
 - the lopsided number of commits for one partner is due to the initial upload of files for the node.js project
-  Ava
+- Ava
 
+## DISCLAIMER
+
+- AI LLM ChatGpt was heavily used to generate and modify the code in this project
+- However, the choice of everything else (tech stack, supervison of results) were done by the creators of the project
 
 # Subscription & Billing Tracker
 
