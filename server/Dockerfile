@@ -24,4 +24,6 @@ EXPOSE 3001
 # 1) wait for Postgres (service name "db")
 # 2) apply migrations (deploy)
 # 3) start API
-CMD sh -c 'until nc -z db 5432; do echo "Waiting for Postgres..."; sleep 1; done; npm run prisma:migrate:deploy; npm run start'
+# Start API only (migrations handled by "migrate" service)
+CMD sh -c 'until nc -z db 5432; do echo "Waiting for Postgres..."; sleep 1; done; npm run start'
+
