@@ -216,3 +216,5 @@ The project avoids invasive data collection and prioritizes user transparency.
 
 
 
+
+Temporary: auth disabled for testing
