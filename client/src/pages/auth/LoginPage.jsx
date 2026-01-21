@@ -106,10 +106,7 @@ const styles = {
     textAlign: "center",
     color: "#000",
   },
-  form: {
-    display: "grid",
-    gap: 14,
-  },
+  form: { display: "grid", gap: 14 },
   input: {
     padding: "12px 14px",
     borderRadius: 10,
@@ -127,6 +124,28 @@ const styles = {
     background: "#000",
     color: "#39ff14",
     cursor: "pointer",
+  },
+  divider: {
+    height: 1,
+    background: "#bbb",
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  secondaryBtn: {
+    padding: "12px",
+    borderRadius: 12,
+    border: "1px solid #000",
+    fontSize: 15,
+    fontWeight: 700,
+    background: "transparent",
+    color: "#000",
+    cursor: "pointer",
+  },
+  success: {
+    marginTop: 10,
+    color: "green",
+    fontSize: 14,
+    textAlign: "center",
   },
   error: {
     marginTop: 10,
