@@ -1,30 +1,43 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
 import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const nav = useNavigate();
+
+  const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [msg, setMsg] = useState("");
 
   async function onSubmit(e) {
     e.preventDefault();
     setErr("");
+    setMsg("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (mode === "login") {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
+      }
       nav("/");
     } catch (e2) {
-      setErr(e2?.message || "Login failed");
+      setErr(e2?.message || "Action failed");
     }
   }
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Sign in</h2>
+        <h2 style={styles.title}>
+          {mode === "login" ? "Sign in" : "Create account"}
+        </h2>
 
         <form onSubmit={onSubmit} style={styles.form}>
           <input
@@ -41,19 +54,35 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
           />
 
           <button type="submit" style={styles.button}>
-            Login
+            {mode === "login" ? "Login" : "Create account"}
           </button>
 
+          <div style={styles.divider} />
+
+          <button
+            type="button"
+            onClick={() => {
+              setErr("");
+              setMsg("");
+              setMode(mode === "login" ? "signup" : "login");
+            }}
+            style={styles.secondaryBtn}
+          >
+            {mode === "login" ? "Create an account" : "Back to login"}
+          </button>
+
+          {msg && <div style={styles.success}>{msg}</div>}
           {err && <div style={styles.error}>{err}</div>}
         </form>
       </div>
     </div>
   );
 }
+
 
 const styles = {
   page: {
