@@ -1,30 +1,63 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth";
+
 import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const nav = useNavigate();
+
+  const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [msg, setMsg] = useState("");
 
   async function onSubmit(e) {
     e.preventDefault();
     setErr("");
+    setMsg("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (mode === "login") {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
+      }
       nav("/");
     } catch (e2) {
-      setErr(e2?.message || "Login failed");
+      setErr(e2?.message || "Action failed");
+    }
+  }
+
+    async function onForgotPassword() {
+    setErr("");
+    setMsg("");
+
+    if (!email.trim()) {
+      setErr("Enter your email first, then click “Forgot password”.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setMsg("Password reset email sent. Check your inbox (and spam).");
+    } catch (e2) {
+      console.log("reset error:", e2.code, e2.message);
+      setErr(e2?.code || e2?.message || "Could not send reset email.");
     }
   }
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Sign in</h2>
+        <h2 style={styles.title}>
+          {mode === "login" ? "Sign in" : "Create account"}
+        </h2>
 
         <form onSubmit={onSubmit} style={styles.form}>
           <input
@@ -41,19 +74,46 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
           />
 
           <button type="submit" style={styles.button}>
-            Login
+            {mode === "login" ? "Login" : "Create account"}
           </button>
 
+          {mode === "login" && (
+  <button
+    type="button"
+    onClick={onForgotPassword}
+    style={styles.linkBtn}
+  >
+    Forgot your password?
+  </button>
+)}
+
+
+          <div style={styles.divider} />
+
+          <button
+            type="button"
+            onClick={() => {
+              setErr("");
+              setMsg("");
+              setMode(mode === "login" ? "signup" : "login");
+            }}
+            style={styles.secondaryBtn}
+          >
+            {mode === "login" ? "Create an account" : "Back to login"}
+          </button>
+
+          {msg && <div style={styles.success}>{msg}</div>}
           {err && <div style={styles.error}>{err}</div>}
         </form>
       </div>
     </div>
   );
 }
+
 
 const styles = {
   page: {
@@ -77,10 +137,7 @@ const styles = {
     textAlign: "center",
     color: "#000",
   },
-  form: {
-    display: "grid",
-    gap: 14,
-  },
+  form: { display: "grid", gap: 14 },
   input: {
     padding: "12px 14px",
     borderRadius: 10,
@@ -98,6 +155,39 @@ const styles = {
     background: "#000",
     color: "#39ff14",
     cursor: "pointer",
+  },
+  linkBtn: {
+  background: "transparent",
+  border: "none",
+  color: "#000",
+  textDecoration: "underline",
+  cursor: "pointer",
+  padding: 0,
+  marginTop: 6,
+  fontSize: 14,
+  textAlign: "center",
+},
+  divider: {
+    height: 1,
+    background: "#bbb",
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  secondaryBtn: {
+    padding: "12px",
+    borderRadius: 12,
+    border: "1px solid #000",
+    fontSize: 15,
+    fontWeight: 700,
+    background: "transparent",
+    color: "#000",
+    cursor: "pointer",
+  },
+  success: {
+    marginTop: 10,
+    color: "green",
+    fontSize: 14,
+    textAlign: "center",
   },
   error: {
     marginTop: 10,
