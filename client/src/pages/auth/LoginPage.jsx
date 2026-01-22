@@ -2,7 +2,9 @@ import { useState } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
+
 import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 
@@ -29,6 +31,24 @@ export default function LoginPage() {
       nav("/");
     } catch (e2) {
       setErr(e2?.message || "Action failed");
+    }
+  }
+
+    async function onForgotPassword() {
+    setErr("");
+    setMsg("");
+
+    if (!email.trim()) {
+      setErr("Enter your email first, then click “Forgot password”.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setMsg("Password reset email sent. Check your inbox (and spam).");
+    } catch (e2) {
+      console.log("reset error:", e2.code, e2.message);
+      setErr(e2?.code || e2?.message || "Could not send reset email.");
     }
   }
 
@@ -60,6 +80,17 @@ export default function LoginPage() {
           <button type="submit" style={styles.button}>
             {mode === "login" ? "Login" : "Create account"}
           </button>
+
+          {mode === "login" && (
+  <button
+    type="button"
+    onClick={onForgotPassword}
+    style={styles.linkBtn}
+  >
+    Forgot your password?
+  </button>
+)}
+
 
           <div style={styles.divider} />
 
@@ -125,6 +156,17 @@ const styles = {
     color: "#39ff14",
     cursor: "pointer",
   },
+  linkBtn: {
+  background: "transparent",
+  border: "none",
+  color: "#000",
+  textDecoration: "underline",
+  cursor: "pointer",
+  padding: 0,
+  marginTop: 6,
+  fontSize: 14,
+  textAlign: "center",
+},
   divider: {
     height: 1,
     background: "#bbb",
