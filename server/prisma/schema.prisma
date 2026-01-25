@@ -7,11 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/**
- * If you prefer pure "string" columns like in the diagram,
- * you can keep these as String instead of enums.
- * Enums are cleaner & safer.
- */
+// Notes:
+// - Enums are optional; you can use String fields instead if you prefer.
+
 enum BillingCycle {
   MONTHLY
   ANNUAL
@@ -37,18 +35,18 @@ enum RoleLevel {
 }
 
 model Customer {
-  customerID   Int      @id @default(autoincrement())
+  customerID   Int       @id @default(autoincrement())
   firstName    String
   lastName     String
-  email        String?  @unique
+  email        String?   @unique
   ccExpiration DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   subscriptions Subscription[]
 }
 
 model Package {
-  packageID   Int      @id @default(autoincrement())
+  packageID   Int @id @default(autoincrement())
   monthlyCost Int
   annualCost  Int
 
@@ -56,69 +54,79 @@ model Package {
 }
 
 model Subscription {
-  subscriptionID Int                @id @default(autoincrement())
+  subscriptionID Int @id @default(autoincrement())
 
-  customerID     Int
-  packageID      Int
+  customerID Int
+  packageID  Int
 
-  billingCycle   BillingCycle
-  status         SubscriptionStatus
+  billingCycle BillingCycle
+  status       SubscriptionStatus
 
-  startDate      DateTime           @default(now())
-  endDate        DateTime?
-  price          Int                // matches diagram "price int" (you can rename to priceCents if you want)
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  price     Int
 
-  customer       Customer           @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
-  package        Package            @relation(fields: [packageID], references: [packageID], onDelete: Restrict)
+  customer Customer @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+  package  Package  @relation(fields: [packageID], references: [packageID], onDelete: Restrict)
 
-  payments       Payment[]
+  payments Payment[]
 
   @@index([customerID])
   @@index([packageID])
 }
 
 model Payment {
-  paymentID       Int           @id @default(autoincrement())
-  subscriptionID  Int
+  paymentID      Int @id @default(autoincrement())
+  subscriptionID Int
 
-  dueDate         DateTime
-  paidAt          DateTime?
-  status          PaymentStatus
+  dueDate DateTime
+  paidAt  DateTime?
+  status  PaymentStatus
 
-  subscription    Subscription  @relation(fields: [subscriptionID], references: [subscriptionID], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionID], references: [subscriptionID], onDelete: Cascade)
 
   @@index([subscriptionID])
   @@index([status, dueDate])
 }
 
 model DataJson {
-  data_json_ID Int   @id @default(autoincrement())
+  data_json_ID Int  @id @default(autoincrement())
   data_json    Json
 
-  analytics    Analytics[]
+  analytics Analytics[]
 }
 
 model Analysis {
-  analysisID          Int     @id @default(autoincrement())
+  analysisID          Int    @id @default(autoincrement())
   analysisName        String
   analysisDescription String
 
-  analyticsRuns       Analytics[]
+  analyticsRuns Analytics[]
+}
+
+// Standalone table to store analytics definitions (no relations)
+model AnalyticsDefinition {
+  analyticsID          Int      @id @default(autoincrement())
+  analyticsName        String
+  analyticsDescription String?
+  nameOfJSONFile       String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model Analytics {
-  analyticsID     Int      @id @default(autoincrement())
+  analyticsID Int @id @default(autoincrement())
 
   // diagram calls it analysisTypeID but it's FK to Analysis.analysisID
-  analysisTypeID  Int
-  userID          Int
-  ran_on          DateTime @default(now())
+  analysisTypeID Int
+  userID         Int
+  ran_on         DateTime @default(now())
 
-  data_json_ID    Int
+  data_json_ID Int
 
-  analysisType    Analysis @relation(fields: [analysisTypeID], references: [analysisID], onDelete: Restrict)
-  user            User     @relation(fields: [userID], references: [userID], onDelete: Cascade)
-  dataJson        DataJson @relation(fields: [data_json_ID], references: [data_json_ID], onDelete: Restrict)
+  analysisType Analysis @relation(fields: [analysisTypeID], references: [analysisID], onDelete: Restrict)
+  user         User     @relation(fields: [userID], references: [userID], onDelete: Cascade)
+  dataJson     DataJson @relation(fields: [data_json_ID], references: [data_json_ID], onDelete: Restrict)
 
   @@index([analysisTypeID])
   @@index([userID])
@@ -129,20 +137,20 @@ model Level {
   levelID Int       @id @default(autoincrement())
   level   RoleLevel @unique
 
-  users   User[]
+  users User[]
 }
 
 model User {
-  userID      Int      @id @default(autoincrement())
+  userID Int @id @default(autoincrement())
 
   // MUST be String for Firebase UID
-  firebaseUid String   @unique
+  firebaseUid String @unique
 
-  firstName   String
-  lastName    String
+  firstName String
+  lastName  String
 
-  levelID     Int
-  level       Level    @relation(fields: [levelID], references: [levelID], onDelete: Restrict)
+  levelID Int
+  level   Level @relation(fields: [levelID], references: [levelID], onDelete: Restrict)
 
-  analytics   Analytics[]
+  analytics Analytics[]
 }
