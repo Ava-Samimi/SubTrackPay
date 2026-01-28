@@ -2,28 +2,26 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Needed for:
-# - waiting for Postgres: nc -z db 5432
-# - docker-compose healthcheck: nc -z localhost 3001
-RUN apk add --no-cache netcat-openbsd
+# Install dependencies required for Prisma and netcat
+RUN apk add --no-cache netcat-openbsd openssl ca-certificates
 
-# Install dependencies first (better caching)
+# Copy package.json and package-lock.json first for caching
 COPY package*.json ./
-RUN npm ci
 
-# Copy Prisma schema + migrations, then app source
+# Install dependencies (including dotenv)
+RUN npm install  # Make sure this installs everything
+
+# Copy Prisma schema and migrations, and app source
 COPY prisma ./prisma
 COPY src ./src
 
-# Generate Prisma client at build time (fast startup)
+# Copy the .env file into the container for dotenv to read
+COPY .env .env
+
+# Generate Prisma client at build time (faster startup)
 RUN npm run prisma:generate
 
 EXPOSE 3001
 
-# On container start:
-# 1) wait for Postgres (service name "db")
-# 2) apply migrations (deploy)
-# 3) start API
-# Start API only (migrations handled by "migrate" service)
+# Wait for Postgres to be available before starting the server
 CMD sh -c 'until nc -z db 5432; do echo "Waiting for Postgres..."; sleep 1; done; npm run start'
-

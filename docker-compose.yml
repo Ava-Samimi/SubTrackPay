@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:16
@@ -31,7 +33,7 @@ services:
   seeder:
     build: ./server/seeder
     environment:
-      DATABASE_URL: postgresql://app:app@db:5432/billing
+      DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
       SEED_CUSTOMERS: "500"
       SEED_PACKAGES: "5"
       SEED_SUBSCRIPTIONS: "500"
@@ -40,6 +42,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    volumes:
+      - ./client/src/components/data:/app/client/src/components/data  # Shared volume
     restart: "no"
 
   # 3) Start API after seeding finishes
@@ -56,6 +60,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       seeder:
         condition: service_completed_successfully
     healthcheck:
@@ -64,6 +70,7 @@ services:
       timeout: 5s
       retries: 30
 
+  # 4) Web client (React app)
   web:
     build: ./client
     environment:
@@ -73,6 +80,9 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    volumes:
+      - ./client/src/components/data:/app/client/src/components/data  # Shared volume
+    restart: "no"
 
 volumes:
   billing_db_data:
