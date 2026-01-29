@@ -16,7 +16,7 @@
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch"
   },
   "dependencies": {
-    "@prisma/client": "6.15.0",
+    "@prisma/client": "^5.22.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -27,7 +27,7 @@
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
     "jest": "^30.2.0",
-    "prisma": "6.15.0",
+    "prisma": "^5.22.0",
     "supertest": "^7.1.4"
   }
 }

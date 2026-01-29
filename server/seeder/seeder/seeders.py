@@ -1,6 +1,7 @@
 # server/seeder/seeder/seeders.py
 
 import random
+from datetime import datetime, timezone  # ✅ added
 
 from .config import load_config
 from .db import connect, insert_many
@@ -14,6 +15,10 @@ from .schema import (
 )
 from .verify_due import VerifySchema
 from .payments_due import insert_due_payments
+
+# Import the function from package_percentages.py
+from .package_percentages import generate_package_percentage_json
+
 
 
 class Schema:
@@ -204,6 +209,69 @@ def seed_subscriptions(
     insert_many(cur, SUB_T, sub_rows, returning_col=None)
 
 
+def seed_analytics_definitions(cur):
+    """
+    Insert a few default rows into AnalyticsDefinition (standalone table).
+
+    Safe:
+      - does nothing if table not present
+      - does nothing if rows already exist
+      - adapts to detected column names
+      - ✅ sets createdAt/updatedAt when inserting via raw SQL
+    """
+    ANALYTICS_DEF_T = find_table(
+        cur,
+        ["AnalyticsDefinition", "analyticsdefinition", "analytics_definitions", "analyticsDefinitions"],
+    )
+    if not ANALYTICS_DEF_T:
+        print("ℹ️  AnalyticsDefinition table not found; skipping analytics definitions seed.")
+        return
+
+    cols = get_table_columns(cur, ANALYTICS_DEF_T)
+
+    # Prisma camelCase defaults
+    name_col = pick_col(cols, ["analyticsName", "analytics_name", "name"])
+    desc_col = pick_col(cols, ["analyticsDescription", "analytics_description", "description"])
+    json_col = pick_col(cols, ["nameOfJSONFile", "name_of_JSON_file", "jsonFile", "json_file"])
+    created_col = pick_col(cols, ["createdAt", "created_at"])
+    updated_col = pick_col(cols, ["updatedAt", "updated_at"])
+
+    if not name_col or not json_col:
+        print(
+            f"⚠️  {ANALYTICS_DEF_T}: missing required columns "
+            f"(need analyticsName + nameOfJSONFile). Cols={sorted(list(cols))}"
+        )
+        return
+
+    # Skip if already has rows
+    cur.execute('SELECT COUNT(*) FROM "{}"'.format(ANALYTICS_DEF_T))
+    if cur.fetchone()[0] > 0:
+        print(f"ℹ️  Seed skipped: {ANALYTICS_DEF_T} already has rows.")
+        return
+
+    now = datetime.now(timezone.utc)
+
+    rows = [
+        {
+            name_col: "Current Geographical Subscriptions",
+            **({desc_col: "Line chart of active subscriptions per month"} if desc_col else {}),
+            json_col: "monthly_subscriptions.json",
+            **({created_col: now} if created_col else {}),
+            **({updated_col: now} if updated_col else {}),
+        },
+        {
+            name_col: "Top 5 Packages by percentages",
+            **({desc_col: "Top 5 subscribed packages (percentage)"} if desc_col else {}),
+            json_col: "packages_top_5.json",
+            **({created_col: now} if created_col else {}),
+            **({updated_col: now} if updated_col else {}),
+        },
+    ]
+
+    insert_many(cur, ANALYTICS_DEF_T, rows, returning_col=None)
+    print(f"✅ Seeded {len(rows)} analytics definitions into {ANALYTICS_DEF_T}.")
+
+
 def run_payments_after_seed(cur, schema: Schema):
     """
     Create Payment rows for:
@@ -250,9 +318,10 @@ def run_seed():
             with conn.cursor() as cur:
                 schema = detect_schema(cur)
 
-                # If skipping seed because customers already exist, still insert payments for upcoming dues
+                # If skipping seed because customers already exist, still insert payments + analytics definitions
                 if cfg.seed_skip_if_exists and seed_guard(cur, schema.CUSTOMER_T):
                     print(f"ℹ️  Seed skipped: {schema.CUSTOMER_T} already has rows.")
+                    seed_analytics_definitions(cur)
                     run_payments_after_seed(cur, schema)
                     return
 
@@ -260,14 +329,21 @@ def run_seed():
                 cust_ids = seed_customers(cur, schema, cfg.seed_customers)
                 seed_subscriptions(cur, schema, cfg.seed_subscriptions, cust_ids, pkg_ids, pkg_costs)
 
+                # Seed AnalyticsDefinition (standalone metadata table)
+                seed_analytics_definitions(cur)
+
                 print("✅ Seed complete:")
                 print(f"  Tables: {schema.CUSTOMER_T}, {schema.PACKAGE_T}, {schema.SUB_T}")
                 print(f"  Packages: {cfg.seed_packages}")
                 print(f"  Customers: {cfg.seed_customers}")
                 print(f"  Subscriptions: {cfg.seed_subscriptions}")
 
-                # ✅ After seed: insert due payments
+                # After seed: insert due payments
                 run_payments_after_seed(cur, schema)
+
+                # Generate package percentage JSON after seeding
+                generate_package_percentage_json(cur, './client/src/components/data/package_percentages.json')
+
 
     finally:
         conn.close()
