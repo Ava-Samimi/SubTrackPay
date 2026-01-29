@@ -1,0 +1,4 @@
+.git/objects/pack/pack-40e43ba2e2426105ce64558bde39b15ac0fc3db0.idx
+.git/objects/pack/pack-40e43ba2e2426105ce64558bde39b15ac0fc3db0.pack
+.git/objects/pack/pack-40e43ba2e2426105ce64558bde39b15ac0fc3db0.rev
+server/seeder/New Text Document.txt
