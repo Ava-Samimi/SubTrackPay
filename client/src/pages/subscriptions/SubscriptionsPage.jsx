@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
+import EntityLeftHeader from "../../components/EntityLeftHeader.jsx"; // ✅ NEW
 import AutocompleteInput from "../../components/AutocompleteInput.jsx";
 import "../shared/EntityPage.css";
 import { useSubscriptionsPage } from "./hooks/useSubscriptionsPage.js";
-import LogoutButton from "../../components/LogoutButton.jsx";
 
 function customerLabel(c) {
   const fn = (c?.firstName || "").trim();
@@ -13,9 +13,20 @@ function customerLabel(c) {
 }
 
 function packageLabel(p) {
+  const id = p?.packageID ?? "";
+
+  // ✅ prefer real package name
+  const name =
+    (p?.name ?? "").trim() ||
+    (p?.packageName ?? "").trim() ||
+    (p?.title ?? "").trim() ||
+    (p?.package ?? "").trim() ||
+    (p?.label ?? "").trim();
+
   const m = p?.monthlyCost ?? "-";
   const a = p?.annualCost ?? "-";
-  const id = p?.packageID ?? "";
+
+  if (name) return `${name} • M ${m} • A ${a}`;
   return `Pkg ${String(id).slice(0, 4)} • M ${m} • A ${a}`;
 }
 
@@ -28,6 +39,13 @@ export default function SubscriptionsPage() {
     error,
     editingId,
     isEditing,
+
+    // ✅ customers-style list mode
+    listMode,
+    selectedIds,
+    selectedCount,
+    toggleListMode,
+    toggleRowSelection,
 
     customerQuery,
     packageQuery,
@@ -56,29 +74,32 @@ export default function SubscriptionsPage() {
     submit,
     removeSelected,
     shortId,
-    list,
   } = useSubscriptionsPage();
 
-  const listEnabled = items.length > 0;
-  const blackoutLeft = list.listMode;
+  const listButtonEnabled = items.length > 0;
+  const blackoutLeft = listMode;
 
   const selectedLabels = useMemo(() => {
     const map = new Map(
       items.map((s) => [
         String(s.subscriptionID),
-        `SUB ${shortId(s.subscriptionID)} • C ${shortId(s.customerID)} → P ${shortId(s.packageID)}`,
+        `SUB ${shortId(s.subscriptionID)} • ${customerLabel(s.customer)} → ${
+          s.package ? packageLabel(s.package) : shortId(s.packageID)
+        }`,
       ])
     );
-    return (list.selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
-  }, [items, list.selectedIds, shortId]);
+    return (selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
+  }, [items, selectedIds, shortId]);
 
   return (
     <div className="entity-page">
       {error && <div className="entity-error">{error}</div>}
 
       <div className="entity-layout">
+        {/* LEFT */}
         <div className={`entity-left ${blackoutLeft ? "entity-left-blackout" : ""}`}>
-          <div className="entity-left-title">Subscription</div>
+          {/* ✅ Logo + Title */}
+          <EntityLeftHeader title="Subscription" logoSrc="/logo.png" />
 
           {!blackoutLeft ? (
             <form className="entity-card" onSubmit={submit}>
@@ -96,7 +117,8 @@ export default function SubscriptionsPage() {
               />
               {selectedCustomer && (
                 <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
-                  Selected: <b>{customerLabel(selectedCustomer)}</b> • {selectedCustomer.email || "-"}
+                  Selected: <b>{customerLabel(selectedCustomer)}</b> •{" "}
+                  {selectedCustomer.email || "-"}
                 </div>
               )}
 
@@ -129,7 +151,11 @@ export default function SubscriptionsPage() {
               </select>
 
               <div className="entity-label">status</div>
-              <select className="entity-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <select
+                className="entity-select"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="PAUSED">PAUSED</option>
                 <option value="CANCELED">CANCELED</option>
@@ -182,7 +208,10 @@ export default function SubscriptionsPage() {
             </form>
           ) : (
             <div className="entity-card">
-              <div className="entity-selected-title">Selected subscriptions ({list.selectedCount})</div>
+              <div className="entity-selected-title">
+                Selected subscriptions ({selectedCount})
+              </div>
+
               {selectedLabels.length === 0 ? (
                 <div style={{ opacity: 0.8 }}>Click rows to select/deselect.</div>
               ) : (
@@ -196,18 +225,18 @@ export default function SubscriptionsPage() {
           )}
         </div>
 
+        {/* RIGHT */}
         <div className="entity-right">
-          {/* Top bar: nav on left, logout on right (consistent layout) */}
-          <div className="entity-topbar">
-            <EntityNavBar
-              listEnabled={listEnabled}
-              listMode={list.listMode}
-              onToggleList={list.toggleListMode}
-            />
-            <LogoutButton className="entity-navbtn" />
-          </div>
+          <EntityNavBar
+            listMode={listMode}
+            listButtonEnabled={listButtonEnabled}
+            onToggleListMode={toggleListMode}
+          />
 
-          <div className="entity-header" style={{ gridTemplateColumns: "70px 220px 220px 110px 110px 110px" }}>
+          <div
+            className="entity-header"
+            style={{ gridTemplateColumns: "70px 220px 220px 110px 110px 110px" }}
+          >
             <div>#</div>
             <div>customer</div>
             <div>package</div>
@@ -223,19 +252,19 @@ export default function SubscriptionsPage() {
           ) : (
             items.map((s) => {
               const id = s.subscriptionID;
-              const c = s.customer;
-              const p = s.package;
+              const selected = (selectedIds || []).includes(String(id));
 
               return (
                 <div
                   key={id}
-                  className={`entity-row ${list.isSelected(String(id)) ? "selected" : ""}`}
+                  className={`entity-row ${selected ? "selected" : ""}`}
                   style={{ gridTemplateColumns: "70px 220px 220px 110px 110px 110px" }}
-                  onClick={() => (list.listMode ? list.toggleRowSelection(String(id)) : selectRow(s))}
+                  onClick={() => (listMode ? toggleRowSelection(String(id)) : selectRow(s))}
+                  title={listMode ? "Click to select/deselect" : "Click to edit"}
                 >
                   <div>{shortId(id)}</div>
-                  <div>{c ? customerLabel(c) : shortId(s.customerID)}</div>
-                  <div>{p ? packageLabel(p) : shortId(s.packageID)}</div>
+                  <div>{s.customer ? customerLabel(s.customer) : shortId(s.customerID)}</div>
+                  <div>{s.package ? packageLabel(s.package) : shortId(s.packageID)}</div>
                   <div>{s.billingCycle}</div>
                   <div>{s.status}</div>
                   <div>{s.price}</div>
