@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useListMode } from "../../../hooks/useListMode.js";
 import { listPayments, createPayment, updatePayment, deletePayment } from "../paymentsApi.js";
 import { listSubscriptions } from "../../subscriptions/subscriptionsApi.js";
@@ -28,10 +28,11 @@ export function usePaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [editingId, setEditingId] = useState(null); // paymentID
+  const [editingId, setEditingId] = useState(null); // paymentID (number)
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
-  const [subscriptionID, setSubscriptionID] = useState(""); // stored as string from <select>, convert on submit
+  // form
+  const [subscriptionID, setSubscriptionID] = useState(""); // from <select>, convert on submit
   const [dueDate, setDueDate] = useState("");
   const [paidAt, setPaidAt] = useState("");
   const [status, setStatus] = useState("DUE");
@@ -41,26 +42,42 @@ export function usePaymentsPage() {
     [items, editingId]
   );
 
+  // list mode
   const list = useListMode();
 
-  async function loadAll() {
+  // ✅ prevent effect loops: keep clearSelection in a ref
+  const clearSelectionRef = useRef(null);
+  useEffect(() => {
+    clearSelectionRef.current = list.clearSelection || null;
+  }, [list.clearSelection]);
+
+  // ✅ flatten list-mode exports (Customers-style)
+  const listMode = list.listMode;
+  const selectedIds = list.selectedIds || [];
+  const selectedCount = list.selectedCount ?? selectedIds.length;
+  const toggleListMode = list.toggleListMode;
+  const toggleRowSelection = list.toggleRowSelection;
+
+  const loadAll = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const [paymentsData, subsData] = await Promise.all([listPayments(), listSubscriptions()]);
       setItems(Array.isArray(paymentsData) ? paymentsData : []);
       setSubscriptions(Array.isArray(subsData) ? subsData : []);
+
+      // Optional: clear list selection after refresh
+      clearSelectionRef.current?.();
     } catch (e) {
       setError(e?.message || "Failed to fetch");
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadAll]);
 
   function resetForm() {
     setEditingId(null);
@@ -79,8 +96,8 @@ export function usePaymentsPage() {
   }
 
   async function submit(e) {
-    e.preventDefault();
-    if (list.listMode) return;
+    e?.preventDefault?.();
+    if (listMode) return;
 
     setError("");
 
@@ -107,15 +124,30 @@ export function usePaymentsPage() {
     }
   }
 
+  // ✅ Delete: edit-mode single delete OR list-mode bulk delete
   async function removeSelected() {
-    if (!editingId || list.listMode) return;
     setError("");
+
     try {
-      await deletePayment(editingId);
+      if (!listMode) {
+        if (!editingId) return;
+        await deletePayment(editingId);
+        await loadAll();
+        resetForm();
+        return;
+      }
+
+      if (selectedIds.length === 0) return setError("No payments selected");
+
+      const results = await Promise.allSettled(selectedIds.map((id) => deletePayment(id)));
+
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length > 0) setError(`Failed to delete ${failed.length} payment(s)`);
+
       await loadAll();
-      resetForm();
+      clearSelectionRef.current?.();
     } catch (e) {
-      setError(e?.message || "Failed to delete payment");
+      setError(e?.message || "Failed to delete payment(s)");
     }
   }
 
@@ -124,10 +156,12 @@ export function usePaymentsPage() {
     subscriptions,
     loading,
     error,
+
     editingId,
     isEditing,
     selectedItem,
 
+    // form
     subscriptionID,
     setSubscriptionID,
     dueDate,
@@ -137,12 +171,23 @@ export function usePaymentsPage() {
     status,
     setStatus,
 
+    // actions
     loadAll,
     resetForm,
     selectRow,
     submit,
     removeSelected,
+
+    // ✅ Customers-style list-mode exports
+    listMode,
+    selectedIds,
+    selectedCount,
+    toggleListMode,
+    toggleRowSelection,
+
     shortId,
+
+    // keep list object for backward compatibility
     list,
   };
 }

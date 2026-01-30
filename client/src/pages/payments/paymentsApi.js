@@ -1,23 +1,32 @@
 // client/src/pages/payments/paymentsApi.js
 import { apiGet, apiFetch } from "../../api.js";
 
-export const listPayments = () => apiGet("/api/payments");
+function normId(id) {
+  const n = Number(id);
+  return Number.isFinite(n) && n > 0 ? n : id;
+}
 
-export const createPayment = (data) =>
+// Payments CRUD
+export const listPayments = () =>
+  // If your backend supports include, this prevents extra lookups / undefined fields.
+  // Safe even if ignored by the server.
+  apiGet("/api/payments?include=1");
+
+export const createPayment = (payload) =>
   apiFetch("/api/payments", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 
-export const updatePayment = (id, data) =>
-  apiFetch(`/api/payments/${id}`, {
+export const updatePayment = (id, payload) =>
+  apiFetch(`/api/payments/${normId(id)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 
 export const deletePayment = (id) =>
-  apiFetch(`/api/payments/${id}`, {
+  apiFetch(`/api/payments/${normId(id)}`, {
     method: "DELETE",
   });
