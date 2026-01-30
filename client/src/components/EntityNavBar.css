@@ -1,3 +1,5 @@
+/* Shared navbar styling for EntityNavBar */
+
 .entity-navbar {
   display: flex;
   align-items: center;
@@ -30,13 +32,13 @@
   filter: brightness(1.1);
 }
 
-.entity-navbtn.active {
+.entity-navbtn-active {
   background: #39ff14;
   color: #000;
   border-color: #39ff14;
 }
 
-.entity-navbtn.disabled {
+.entity-navbtn-disabled {
   opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
@@ -45,3 +47,26 @@
 .entity-listbtn {
   margin-left: auto;
 }
+
+/* centers logo + title block */
+.entity-left-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* ✅ center horizontally */
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  text-align: center;    /* ✅ title centered too */
+}
+
+/* logo itself */
+.entity-left-logo {
+  width: 300px;          /* adjust */
+  height: auto;
+  display: block;
+  margin: 0 auto;        /* ✅ extra safety */
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.55));
+  user-select: none;
+  pointer-events: none;
+}
+
