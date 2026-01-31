@@ -1,41 +1,27 @@
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+import { apiGet, apiFetch } from "../../api.js";
 
-async function req(path, options = {}) {
-  const res = await fetch(`${API}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-
-  if (!res.ok) {
-    const ctErr = res.headers.get("content-type") || "";
-    if (ctErr.includes("application/json")) {
-      try {
-        const data = await res.json();
-        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
-      } catch {
-        // fall through to text
-      }
-    }
-    const txt = await res.text();
-    throw new Error(txt || `HTTP ${res.status}`);
-  }
-
-  if (res.status === 204) return null;
-
-  const ct = res.headers.get("content-type") || "";
-  if (!ct.includes("application/json")) return null;
-
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
+export async function listPackages() {
+  return apiGet("/api/packages");
 }
 
-export const listPackages = () => req("/api/packages");
+export async function createPackage(payload) {
+  return apiFetch("/api/packages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
 
-export const createPackage = (data) =>
-  req("/api/packages", { method: "POST", body: JSON.stringify(data) });
+export async function updatePackage(id, payload) {
+  return apiFetch(`/api/packages/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
 
-export const updatePackage = (id, data) =>
-  req(`/api/packages/${id}`, { method: "PUT", body: JSON.stringify(data) });
-
-export const deletePackage = (id) =>
-  req(`/api/packages/${id}`, { method: "DELETE" });
+export async function deletePackage(id) {
+  return apiFetch(`/api/packages/${id}`, {
+    method: "DELETE",
+  });
+}
