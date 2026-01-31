@@ -1,13 +1,24 @@
 import { useMemo } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
-import LogoutButton from "../../components/LogoutButton.jsx";
+import EntityLeftHeader from "../../components/EntityLeftHeader.jsx"; // ✅ add
 import "../shared/EntityPage.css";
 import { usePackagesPage } from "./hooks/usePackagesPage.js";
 
 function pkgLabel(p) {
   const id = p?.packageID;
+
+  // ✅ prefer a real name from API if available
+  const name =
+    (p?.name ?? "").trim() ||
+    (p?.packageName ?? "").trim() ||
+    (p?.title ?? "").trim() ||
+    (p?.package ?? "").trim() ||
+    (p?.label ?? "").trim();
+
   const m = p?.monthlyCost ?? "-";
   const a = p?.annualCost ?? "-";
+
+  if (name) return `${name} (M: ${m} / A: ${a})`;
   return `Pkg #${String(id ?? "").slice(0, 4)} (M: ${m} / A: ${a})`;
 }
 
@@ -18,6 +29,13 @@ export default function PackagesPage() {
     error,
     editingId,
     isEditing,
+
+    // ✅ list mode (flattened like CustomersPage)
+    listMode,
+    selectedIds,
+    selectedCount,
+    toggleListMode,
+    toggleRowSelection,
 
     monthlyCost,
     setMonthlyCost,
@@ -33,16 +51,15 @@ export default function PackagesPage() {
     removeSelected,
 
     shortId,
-    list,
   } = usePackagesPage();
 
-  const listEnabled = items.length > 0;
-  const blackoutLeft = list.listMode;
+  const listButtonEnabled = items.length > 0;
+  const blackoutLeft = listMode;
 
   const selectedLabels = useMemo(() => {
     const map = new Map(items.map((x) => [String(x.packageID), pkgLabel(x)]));
-    return (list.selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
-  }, [items, list.selectedIds]);
+    return (selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
+  }, [items, selectedIds]);
 
   return (
     <div className="entity-page">
@@ -51,7 +68,8 @@ export default function PackagesPage() {
       <div className="entity-layout">
         {/* LEFT */}
         <div className={`entity-left ${blackoutLeft ? "entity-left-blackout" : ""}`}>
-          <div className="entity-left-title">Package</div>
+          {/* ✅ Logo + Title (same style as CustomersPage) */}
+          <EntityLeftHeader title="Package" logoSrc="/logo.png" />
 
           {!blackoutLeft ? (
             <form className="entity-card" onSubmit={submit}>
@@ -103,7 +121,7 @@ export default function PackagesPage() {
             </form>
           ) : (
             <div className="entity-card">
-              <div className="entity-selected-title">Selected packages ({list.selectedCount})</div>
+              <div className="entity-selected-title">Selected packages ({selectedCount})</div>
 
               {selectedLabels.length === 0 ? (
                 <div style={{ opacity: 0.8 }}>Click rows to select/deselect.</div>
@@ -133,15 +151,11 @@ export default function PackagesPage() {
 
         {/* RIGHT */}
         <div className="entity-right">
-          {/* Top bar: nav + logout */}
-          <div className="entity-topbar">
-            <EntityNavBar
-              listEnabled={listEnabled}
-              listMode={list.listMode}
-              onToggleList={list.toggleListMode}
-            />
-            <LogoutButton className="entity-navbtn" />
-          </div>
+          <EntityNavBar
+            listMode={listMode}
+            listButtonEnabled={listButtonEnabled}
+            onToggleListMode={toggleListMode}
+          />
 
           <div className="entity-header" style={{ gridTemplateColumns: "70px 1fr 140px 140px" }}>
             <div>#</div>
@@ -157,12 +171,15 @@ export default function PackagesPage() {
           ) : (
             items.map((p) => {
               const id = p.packageID;
+              const selected = (selectedIds || []).includes(String(id));
+
               return (
                 <div
                   key={id}
-                  className={`entity-row ${list.isSelected(String(id)) ? "selected" : ""}`}
+                  className={`entity-row ${selected ? "selected" : ""}`}
                   style={{ gridTemplateColumns: "70px 1fr 140px 140px" }}
-                  onClick={() => (list.listMode ? list.toggleRowSelection(String(id)) : selectRow(p))}
+                  onClick={() => (listMode ? toggleRowSelection(String(id)) : selectRow(p))}
+                  title={listMode ? "Click to select/deselect" : "Click to edit"}
                 >
                   <div>{shortId(id)}</div>
                   <div>{pkgLabel(p)}</div>

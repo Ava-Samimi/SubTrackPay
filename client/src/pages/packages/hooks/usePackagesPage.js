@@ -27,7 +27,16 @@ export function usePackagesPage() {
   const [monthlyCost, setMonthlyCost] = useState("");
   const [annualCost, setAnnualCost] = useState("");
 
+  // list mode hook (internal object)
   const list = useListMode();
+
+  // ✅ flatten list-mode API to match CustomersPage style
+  const listMode = list.listMode;
+  const selectedIds = list.selectedIds || [];
+  const selectedCount = list.selectedCount ?? selectedIds.length;
+
+  const toggleListMode = list.toggleListMode;
+  const toggleRowSelection = list.toggleRowSelection;
 
   const selectedItem = useMemo(() => {
     if (editingId == null) return null;
@@ -39,7 +48,13 @@ export function usePackagesPage() {
     setError("");
     try {
       const data = await listPackages();
-      setItems(Array.isArray(data) ? data : []);
+      const next = Array.isArray(data) ? data : [];
+      setItems(next);
+
+      // Optional: if data changed, keep selection sane
+      // If your useListMode exposes clearSelection, this helps avoid "ghost" selections.
+      // Comment this out if you want selection to persist across refreshes.
+      list.clearSelection?.();
     } catch (e) {
       setError(e?.message || "Failed to fetch packages");
     } finally {
@@ -66,7 +81,7 @@ export function usePackagesPage() {
 
   async function submit(e) {
     e?.preventDefault?.();
-    if (list.listMode) return; // keep your rule: no editing while in list mode
+    if (listMode) return; // no editing while in list mode
 
     setError("");
 
@@ -111,21 +126,25 @@ export function usePackagesPage() {
     }
   }
 
-  // Bulk delete (list mode)
+  // Bulk delete (list mode) OR single delete fallback (edit mode)
   async function removeSelected() {
-    if (!list.listMode) {
-      // keep backward compatibility with your page calling removeSelected from edit mode
+    if (!listMode) {
+      // backward compatible: page may call removeSelected while not in list mode
       return removeCurrent();
     }
 
-    const ids = list.selectedIds || [];
-    if (ids.length === 0) return setError("No packages selected");
+    if (selectedIds.length === 0) return setError("No packages selected");
 
     setError("");
     try {
-      for (const id of ids) {
-        await deletePackage(id);
+      // delete all (don’t stop at first failure)
+      const results = await Promise.allSettled(selectedIds.map((id) => deletePackage(id)));
+
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length > 0) {
+        setError(`Failed to delete ${failed.length} package(s) (some may be in use)`);
       }
+
       await loadAll();
       list.clearSelection?.();
     } catch (e) {
@@ -134,6 +153,7 @@ export function usePackagesPage() {
   }
 
   return {
+    // data
     items,
     loading,
     error,
@@ -141,19 +161,33 @@ export function usePackagesPage() {
     isEditing,
     selectedItem,
 
+    // form
     monthlyCost,
     setMonthlyCost,
     annualCost,
     setAnnualCost,
 
+    // actions
     loadAll,
     resetForm,
     selectRow,
     submit,
 
+    // ✅ customers-like list-mode API (top-level)
+    listMode,
+    selectedIds,
+    selectedCount,
+    toggleListMode,
+    toggleRowSelection,
+
+    // delete
     removeSelected, // works in both modes
-    removeCurrent,  // optional
+    removeCurrent, // optional
+
+    // utils
     shortId,
+
+    // keep original list object too (in case other code uses it)
     list,
   };
 }
