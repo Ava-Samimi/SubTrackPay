@@ -1,0 +1,83 @@
+{
+  "title": "Action",
+  "metricSelect": {
+    "label": "Metric",
+    "key": "metric",
+    "options": [
+      { "value": "active_subscriptions", "label": "Active Subscriptions" },
+      { "value": "active_customers", "label": "Active Customers" },
+      { "value": "active_packages", "label": "Active Packages" },
+      { "value": "avg_amount_paid_assumed", "label": "Avg Amount Paid (Assumed)" },
+      { "value": "active_subscriptions_by_package", "label": "Active Subs by Package (Now)" },
+      { "value": "active_subscriptions_by_package_spider", "label": "Active Subs by Package (SPIDER)" }
+    ],
+    "default": "active_subscriptions"
+  },
+  "metrics": {
+    "active_subscriptions": {
+      "fields": [
+        {
+          "type": "select",
+          "key": "basis",
+          "label": "Basis",
+          "default": "monthly",
+          "options": [
+            { "value": "weekly", "label": "Weekly" },
+            { "value": "monthly", "label": "Monthly" },
+            { "value": "yearly", "label": "Yearly" }
+          ]
+        }
+      ]
+    },
+    "active_customers": {
+      "fields": [
+        {
+          "type": "select",
+          "key": "basis",
+          "label": "Basis",
+          "default": "monthly",
+          "options": [
+            { "value": "weekly", "label": "Weekly" },
+            { "value": "monthly", "label": "Monthly" },
+            { "value": "yearly", "label": "Yearly" }
+          ]
+        }
+      ]
+    },
+    "active_packages": {
+      "fields": [
+        {
+          "type": "select",
+          "key": "basis",
+          "label": "Basis",
+          "default": "monthly",
+          "options": [
+            { "value": "weekly", "label": "Weekly" },
+            { "value": "monthly", "label": "Monthly" },
+            { "value": "yearly", "label": "Yearly" }
+          ]
+        }
+      ]
+    },
+    "avg_amount_paid_assumed": {
+      "fields": [
+        {
+          "type": "select",
+          "key": "basis",
+          "label": "Basis",
+          "default": "monthly",
+          "options": [
+            { "value": "monthly", "label": "Monthly" },
+            { "value": "yearly", "label": "Yearly" }
+          ]
+        }
+      ]
+    },
+    "active_subscriptions_by_package": {
+      "fields": []
+    },
+    "active_subscriptions_by_package_spider": {
+      "fields": []
+    }
+  }
+}

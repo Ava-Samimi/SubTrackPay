@@ -1,0 +1,89 @@
+{
+  "ok": true,
+  "jobId": "recipe-revenue_total_by_package_timeseries",
+  "recipeId": "revenue_total_by_package_timeseries",
+  "ranAt": "2026-01-31T19:23:02.826Z",
+  "chartKey": "line_multi",
+  "sentence": "Show me the total revenue per package monthly for the past 10 years. (shown as: multi-line (one per group))",
+  "querySpec": {
+    "metric": "revenue_sum",
+    "entity": "Payment",
+    "valueFieldHint": "amount",
+    "timeBucket": "month",
+    "range": "10y",
+    "joinPath": [
+      "Subscription",
+      "Package"
+    ],
+    "groupBy": [
+      {
+        "model": "Package",
+        "fieldHint": "name"
+      }
+    ],
+    "chartKey": "line_multi",
+    "bucket": "month"
+  },
+  "sql": "\n      SELECT\n        date_trunc('month', COALESCE(pay.\"paidAt\", pay.\"dueDate\")) AS bucket,\n        ('Monthly: ' || p.\"monthlyCost\" || ' / Annual: ' || p.\"annualCost\") AS package_name,\n        COALESCE(SUM(s.\"price\"), 0)::float AS revenue\n      FROM \"Payment\" pay\n      JOIN \"Subscription\" s ON s.\"subscriptionID\" = pay.\"subscriptionID\"\n      JOIN \"Package\" p ON p.\"packageID\" = s.\"packageID\"\n      WHERE COALESCE(pay.\"paidAt\", pay.\"dueDate\") >= NOW() - INTERVAL '10 years'\n      GROUP BY 1, 2\n      ORDER BY 1 ASC, revenue DESC\n      LIMIT 20000;\n    ",
+  "rows": [
+    {
+      "bucket": "2026-01-01T05:00:00.000Z",
+      "package_name": "Monthly: 3 / Annual: 300",
+      "revenue": 59
+    },
+    {
+      "bucket": "2026-01-01T05:00:00.000Z",
+      "package_name": "Monthly: 9 / Annual: 900",
+      "revenue": 19
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 5 / Annual: 500",
+      "revenue": 553
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 6 / Annual: 600",
+      "revenue": 237
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 10 / Annual: 1000",
+      "revenue": 158
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 8 / Annual: 800",
+      "revenue": 156
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 3 / Annual: 300",
+      "revenue": 118
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 4 / Annual: 400",
+      "revenue": 118
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 1 / Annual: 100",
+      "revenue": 95
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 7 / Annual: 700",
+      "revenue": 87
+    },
+    {
+      "bucket": "2026-02-01T05:00:00.000Z",
+      "package_name": "Monthly: 2 / Annual: 200",
+      "revenue": 38
+    }
+  ],
+  "meta": {
+    "schema_path": "/app/prisma/schema.prisma",
+    "generated_at_utc": "2026-01-31T18:53:42.213312+00:00"
+  }
+}

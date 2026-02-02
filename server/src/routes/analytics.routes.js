@@ -1,8 +1,57 @@
+// server/src/routes/analytics.routes.js
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 
+// ✅ NEW: shared SQL builder + pool (moved out of nightly.routes.js)
+import { pool, buildSql } from "../analytics/sqlBuilder.js";
+
 const router = express.Router();
 const prisma = new PrismaClient();
+
+/**
+ * ✅ POST /api/analytics/run
+ * Runs a recipe immediately and returns rows (and SQL for debugging).
+ *
+ * Body: { recipeId, querySpec, chartKey, sentence }
+ * Returns:
+ *  {
+ *    ok: true,
+ *    recipeId,
+ *    chartKey,
+ *    sentence,
+ *    querySpec,
+ *    sql,
+ *    rows: [...]
+ *  }
+ */
+router.post("/run", async (req, res) => {
+  try {
+    const { recipeId, querySpec, chartKey, sentence } = req.body || {};
+
+    if (!recipeId || !String(recipeId).trim()) {
+      return res.status(400).json({ ok: false, error: "recipeId is required" });
+    }
+    if (!querySpec || typeof querySpec !== "object") {
+      return res.status(400).json({ ok: false, error: "querySpec is required" });
+    }
+
+    const sql = buildSql(querySpec);
+    const result = await pool.query(sql);
+
+    return res.json({
+      ok: true,
+      recipeId: String(recipeId).trim(),
+      chartKey: chartKey || querySpec?.chartKey || "bar",
+      sentence: sentence || "",
+      querySpec,
+      sql,
+      rows: result?.rows || [],
+    });
+  } catch (e) {
+    console.error("POST /api/analytics/run error:", e);
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
 
 // GET /api/analytics  -> list AnalyticsDefinition rows
 router.get("/", async (req, res) => {

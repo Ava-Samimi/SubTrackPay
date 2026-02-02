@@ -1,0 +1,70 @@
+{
+  "ok": true,
+  "jobId": "recipe-customers_count_group_by_package",
+  "recipeId": "customers_count_group_by_package",
+  "ranAt": "2026-01-31T19:42:53.134Z",
+  "chartKey": "bar",
+  "sentence": "Show me the count of active customers, grouped by the package they are subscribed to. (shown as: bar (compare categories))",
+  "querySpec": {
+    "metric": "customers_count",
+    "distinct": true,
+    "entity": "Customer",
+    "activeOnly": true,
+    "joinPath": [
+      "Subscription",
+      "Package"
+    ],
+    "groupBy": [
+      {
+        "model": "Package",
+        "fieldHint": "name"
+      }
+    ],
+    "chartKey": "bar",
+    "range": "10y",
+    "bucket": "month"
+  },
+  "sql": "\n      SELECT\n        ('Monthly: ' || p.\"monthlyCost\" || ' / Annual: ' || p.\"annualCost\") AS package_name,\n        COUNT(DISTINCT c.\"customerID\")::int AS customers_count\n      FROM \"Customer\" c\n      JOIN \"Subscription\" s ON s.\"customerID\" = c.\"customerID\"\n      JOIN \"Package\" p ON p.\"packageID\" = s.\"packageID\"\n      WHERE s.\"status\" = 'ACTIVE'\n      GROUP BY 1\n      ORDER BY customers_count DESC\n      LIMIT 500;\n    ",
+  "rows": [
+    {
+      "package_name": "Monthly: 79 / Annual: 199",
+      "customers_count": 21
+    },
+    {
+      "package_name": "Monthly: 59 / Annual: 199",
+      "customers_count": 16
+    },
+    {
+      "package_name": "Monthly: 79 / Annual: 799",
+      "customers_count": 15
+    },
+    {
+      "package_name": "Monthly: 19 / Annual: 299",
+      "customers_count": 15
+    },
+    {
+      "package_name": "Monthly: 59 / Annual: 499",
+      "customers_count": 14
+    },
+    {
+      "package_name": "Monthly: 29 / Annual: 299",
+      "customers_count": 14
+    },
+    {
+      "package_name": "Monthly: 39 / Annual: 299",
+      "customers_count": 13
+    },
+    {
+      "package_name": "Monthly: 19 / Annual: 199",
+      "customers_count": 13
+    },
+    {
+      "package_name": "Monthly: 19 / Annual: 799",
+      "customers_count": 7
+    }
+  ],
+  "meta": {
+    "schema_path": "/app/prisma/schema.prisma",
+    "generated_at_utc": "2026-01-31T19:42:29.986970+00:00"
+  }
+}

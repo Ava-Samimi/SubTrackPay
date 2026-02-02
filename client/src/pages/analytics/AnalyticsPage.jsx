@@ -1,188 +1,311 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+// client/src/pages/AnalyticsPage/AnalyticsPage.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import Plot from "react-plotly.js";
+import Plotly from "plotly.js-dist-min";
 
+import "../shared/EntityPage.css"; // ✅ match other pages styling
 import "./AnalyticsPage.css";
 import LogoutButton from "../../components/LogoutButton.jsx";
 
-// ✅ Charts (each chart manages its own data internally)
-import AnalyticsChart2 from "../../components/AnalyticsChart2.jsx";
-import AnalyticsChart4 from "../../components/AnalyticsChart4.jsx";
+import EntityNavBar from "../../components/EntityNavBar.jsx";
+import EntityLeftHeader from "../../components/EntityLeftHeader.jsx";
+
+// Left-side helper component (metric + basis + show)
+import AnalyticsLeftShow from "../../components/AnalyticsLeftShow.jsx";
+
+// handler factory (builds Plotly spec + opens popup)
+import { createHandleShowClick } from "../../components/createHandleShowClick.js";
+
+// Client fetch function(s)
+import {
+  fetchActiveSubscriptionsSnapshot,
+  fetchActiveCustomersSnapshot,
+  fetchActivePackagesSnapshot,
+  fetchAvgAmountPaidAssumed,
+  fetchActiveSubscriptionsByPackageSnapshot,
+} from "../../api/metrics.js";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
 export default function AnalyticsPage() {
-  const location = useLocation();
-  const isActiveRoute = (path) => location.pathname === path;
+  // Plot ref (used to reliably get the Plotly DOM node for toImage)
+  const plotRef = useRef(null);
 
-  // Load analytics definitions from API
-  const [analyticsRows, setAnalyticsRows] = useState([]);
-  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
-  const [analyticsError, setAnalyticsError] = useState("");
+  // Synchronous guard against duplicate saves (onAfterPlot fires multiple times)
+  const savedKeysRef = useRef(new Set());
 
   // Popup state
   const [showChartPopup, setShowChartPopup] = useState(false);
   const [selectedAnalyticsName, setSelectedAnalyticsName] = useState("");
-  const [selectedChartKey, setSelectedChartKey] = useState(null); // "chart2" | "chart4" | null
+
+  // popup mode + data for "Show" action
+  const [popupMode, setPopupMode] = useState("plot"); // "rows" | "plot"
+  const [snapshotRows, setSnapshotRows] = useState([]);
+  const [snapshotLoading, setSnapshotLoading] = useState(false);
+  const [snapshotError, setSnapshotError] = useState("");
+
+  // Plotly spec for "Show" action
+  const [popupPlot, setPopupPlot] = useState(null);
+
+  // Optional: keep for debug/UI; main protection is savedKeysRef
+  const [savedOnceKey, setSavedOnceKey] = useState("");
+
+  // Gallery state
+  const [pngFiles, setPngFiles] = useState([]);
+  const [pngLoading, setPngLoading] = useState(true);
+  const [pngError, setPngError] = useState("");
+
+  async function loadPngGallery() {
+    try {
+      setPngLoading(true);
+      setPngError("");
+
+      const res = await fetch(`${API}/api/metrics/chart-pngs`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Failed to load PNG list.");
+
+      setPngFiles(Array.isArray(json.files) ? json.files : []);
+      setPngLoading(false);
+    } catch (e) {
+      console.error("Failed to load chart pngs:", e);
+      setPngError(e?.message || "Failed to load PNG gallery.");
+      setPngLoading(false);
+    }
+  }
 
   useEffect(() => {
-    setLoadingAnalytics(true);
-    setAnalyticsError("");
-
-    fetch(`${API}/api/analytics`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then((rows) => {
-        setAnalyticsRows(Array.isArray(rows) ? rows : []);
-        setLoadingAnalytics(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching /api/analytics:", err);
-        setAnalyticsError("Failed to load analytics list.");
-        setLoadingAnalytics(false);
-      });
+    loadPngGallery();
   }, []);
 
-  // Decide which chart to show based on the clicked name
-  function pickChartForName(name) {
-    const n = String(name || "").toLowerCase();
+  // Show button handler (builds Plotly spec + opens popup)
+  const handleShowClick = useMemo(() => {
+    return createHandleShowClick({
+      fetchActiveSubscriptionsSnapshot,
+      fetchActiveCustomersSnapshot,
+      fetchActivePackagesSnapshot,
+      fetchAvgAmountPaidAssumed,
+      fetchActiveSubscriptionsByPackageSnapshot,
 
-    // If it is top five packages -> AnalyticsChart2
-    if (n.includes("top 5") || n.includes("top five") || n.includes("packages")) {
-      return "chart2";
+      setSnapshotLoading,
+      setSnapshotError,
+      setSnapshotRows,
+
+      setSelectedAnalyticsName,
+      setPopupMode,
+      setShowChartPopup,
+
+      setPopupPlot,
+    });
+  }, [
+    fetchActiveSubscriptionsSnapshot,
+    fetchActiveCustomersSnapshot,
+    fetchActivePackagesSnapshot,
+    fetchAvgAmountPaidAssumed,
+    fetchActiveSubscriptionsByPackageSnapshot,
+    setSnapshotLoading,
+    setSnapshotError,
+    setSnapshotRows,
+    setSelectedAnalyticsName,
+    setPopupMode,
+    setShowChartPopup,
+    setPopupPlot,
+  ]);
+
+  // Reset save guards on every Show click, and refresh gallery shortly after
+  const handleShowClickWithSaveReset = useMemo(() => {
+    return async (payload) => {
+      setSavedOnceKey("");
+      savedKeysRef.current.clear();
+
+      await handleShowClick(payload);
+
+      // After popup opens & save happens, refresh gallery a moment later
+      setTimeout(() => loadPngGallery(), 800);
+    };
+  }, [handleShowClick]);
+
+  // helper to render rows nicely (used for error fallback)
+  function renderRowsTable(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return <div className="entity-muted">No rows.</div>;
     }
+    const cols = Object.keys(rows[0] || {});
+    if (cols.length === 0) return <div className="entity-muted">No columns.</div>;
 
-    // If it is current geographical -> AnalyticsChart4
-    if (n.includes("geographical") || n.includes("geographic")) {
-      return "chart4";
-    }
-
-    return "chart2";
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          overflow: "auto",
+          borderRadius: 12,
+          border: "1px solid rgba(57, 255, 20, 0.25)",
+          background: "#000",
+        }}
+      >
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              {cols.map((c) => (
+                <th
+                  key={c}
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#000",
+                    color: "#39ff14",
+                    textAlign: "left",
+                    padding: "10px 12px",
+                    fontWeight: 900,
+                    borderBottom: "1px solid rgba(57, 255, 20, 0.25)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                {cols.map((c) => (
+                  <td
+                    key={c}
+                    style={{
+                      padding: "10px 12px",
+                      borderBottom: "1px solid rgba(57, 255, 20, 0.12)",
+                      color: "rgba(57, 255, 20, 0.9)",
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {String(r?.[c] ?? "")}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   }
 
-  function openChartFor(row) {
-    const name = row?.analyticsName || "Analytics";
-    setSelectedAnalyticsName(name);
-    setSelectedChartKey(pickChartForName(name));
-    setShowChartPopup(true);
-  }
-
-  const ChartComponent = useMemo(() => {
-    // Memoize the selected chart component to prevent unnecessary re-renders
-    if (selectedChartKey === "chart4") return AnalyticsChart4;
-    return AnalyticsChart2;
-  }, [selectedChartKey]);
+  const listMode = true;
+  const listButtonEnabled = false;
 
   return (
-    <div className="analytics-page">
-      <div className="analytics-layout">
-        {/* LEFT: Sidebar (keep like before) */}
-        <div className="analytics-left">
-          <div className="analytics-left-title">Analytics</div>
+    <div className="entity-page">
+      <div className="entity-layout">
+        {/* LEFT */}
+        <div className="entity-left">
+          <EntityLeftHeader title="Analytics" logoSrc="/logo.png" />
 
-          <div className="analytics-formcard">
-            <div className="analytics-label">Tip</div>
-            <div className="analytics-tip">
-              Click an analysis in the list to open its chart in a popup.
-            </div>
+          <AnalyticsLeftShow onShow={handleShowClickWithSaveReset} />
+
+          <div className="entity-card" style={{ marginTop: 14 }}>
+            <div className="entity-label">Gallery</div>
+
+            <button type="button" className="entity-btn" onClick={loadPngGallery}>
+              Refresh PNGs
+            </button>
+
+            {pngLoading ? (
+              <div className="entity-muted" style={{ marginTop: 10 }}>
+                Loading PNGs…
+              </div>
+            ) : pngError ? (
+              <div className="entity-error" style={{ marginTop: 10 }}>
+                {pngError}
+              </div>
+            ) : (
+              <div className="entity-muted" style={{ marginTop: 10 }}>
+                {pngFiles.length} image(s)
+              </div>
+            )}
           </div>
         </div>
 
-        {/* RIGHT: List like Customers page */}
-        <div className="analytics-right">
-          <div className="analytics-navbar">
-            <div className="analytics-navgroup">
-              <Link
-                className={`analytics-navbtn ${
-                  isActiveRoute("/customers") ? "analytics-navbtn-active" : ""
-                }`}
-                to="/customers"
-              >
-                Customers
-              </Link>
-              <Link
-                className={`analytics-navbtn ${
-                  isActiveRoute("/packages") ? "analytics-navbtn-active" : ""
-                }`}
-                to="/packages"
-              >
-                Packages
-              </Link>
-              <Link
-                className={`analytics-navbtn ${
-                  isActiveRoute("/subscriptions") ? "analytics-navbtn-active" : ""
-                }`}
-                to="/subscriptions"
-              >
-                Subscriptions
-              </Link>
-              <Link
-                className={`analytics-navbtn ${
-                  isActiveRoute("/payments") ? "analytics-navbtn-active" : ""
-                }`}
-                to="/payments"
-              >
-                Payments
-              </Link>
-              <Link
-                className={`analytics-navbtn ${
-                  isActiveRoute("/analytics") ? "analytics-navbtn-active" : ""
-                }`}
-                to="/analytics"
-              >
-                Analytics
-              </Link>
-            </div>
+        {/* RIGHT */}
+        <div className="entity-right">
+          <EntityNavBar
+            listMode={listMode}
+            listButtonEnabled={listButtonEnabled}
+            onToggleListMode={() => {}}
+          />
 
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <LogoutButton className="analytics-navbtn" />
-            </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+            <LogoutButton className="entity-btn" />
           </div>
 
-          {/* CONTENT AREA (list) */}
-          <div className="analytics-formcard" style={{ marginTop: 14 }}>
-            {analyticsError ? <div className="analytics-error">{analyticsError}</div> : null}
+          <div className="entity-card" style={{ marginTop: 14 }}>
+            <div className="entity-label">Saved Charts</div>
 
-            {loadingAnalytics ? (
-              <div className="analytics-muted">Loading analytics...</div>
-            ) : analyticsRows.length === 0 ? (
-              <div className="analytics-muted">No analytics found.</div>
+            {pngLoading ? (
+              <div className="entity-muted">Loading PNGs…</div>
+            ) : pngError ? (
+              <div className="entity-error">{pngError}</div>
+            ) : pngFiles.length === 0 ? (
+              <div className="entity-muted">No PNGs yet. Click Show to generate one.</div>
             ) : (
-              <>
-                {/* Header (same styling class, but 1 column) */}
-                <div
-                  className="analytics-header"
-                  style={{ gridTemplateColumns: "1fr", minWidth: 0 }}
-                >
-                  <div>Analytics Name</div>
-                </div>
-
-                {/* Rows (same styling class, but 1 column) */}
-                {analyticsRows.map((a) => (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 14,
+                  marginTop: 12,
+                }}
+              >
+                {pngFiles.map((f) => (
                   <div
-                    key={a.analyticsID}
-                    className="analytics-row"
-                    style={{ gridTemplateColumns: "1fr", minWidth: 0 }}
-                    onClick={() => openChartFor(a)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") openChartFor(a);
+                    key={f.name}
+                    style={{
+                      borderRadius: 14,
+                      border: "1px solid rgba(57, 255, 20, 0.25)",
+                      background: "#000",
+                      padding: 10,
+                      overflow: "hidden",
                     }}
-                    title="Click to open chart"
                   >
-                    <div style={{ fontWeight: 900 }}>{a.analyticsName}</div>
+                    <div
+                      style={{
+                        color: "#39ff14",
+                        fontWeight: 900,
+                        fontSize: 12,
+                        marginBottom: 8,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                      title={f.name}
+                    >
+                      {f.name}
+                    </div>
+
+                    <img
+                      src={`${API}${f.url}`}
+                      alt={f.name}
+                      style={{
+                        width: "100%",
+                        height: "auto",
+                        borderRadius: 10,
+                        display: "block",
+                        border: "1px solid rgba(57, 255, 20, 0.15)",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => window.open(`${API}${f.url}`, "_blank")}
+                    />
                   </div>
                 ))}
-              </>
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* =========================
-          POPUP / MODAL (Chart only)
+          POPUP / MODAL
          ========================= */}
       {showChartPopup && (
         <div
@@ -216,7 +339,7 @@ export default function AnalyticsPage() {
               border: "1px solid rgba(57, 255, 20, 0.35)",
             }}
           >
-            {/* Title centered above chart */}
+            {/* Title */}
             <div
               style={{
                 textAlign: "center",
@@ -229,31 +352,19 @@ export default function AnalyticsPage() {
               {selectedAnalyticsName}
             </div>
 
-            {/* Close button (hacker green) */}
+            {/* Close button */}
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={() => setShowChartPopup(false)}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(57, 255, 20, 0.6)",
-                  background: "#000",
-                  color: "#39ff14",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-              >
+              <button type="button" className="entity-btn" onClick={() => setShowChartPopup(false)}>
                 Close
               </button>
             </div>
 
-            {/* Chart centered */}
+            {/* Body */}
             <div
               style={{
                 flex: 1,
                 display: "flex",
-                alignItems: "center",
+                alignItems: "stretch",
                 justifyContent: "center",
                 overflow: "hidden",
                 borderRadius: 12,
@@ -263,7 +374,67 @@ export default function AnalyticsPage() {
               }}
             >
               <div style={{ width: "100%", height: "100%" }}>
-                <ChartComponent />
+                {popupMode === "plot" ? (
+                  popupPlot ? (
+                    <Plot
+                      ref={plotRef}
+                      data={popupPlot.data}
+                      layout={popupPlot.layout}
+                      config={popupPlot.config}
+                      useResizeHandler
+                      style={{ width: "100%", height: "100%" }}
+                      onAfterPlot={async () => {
+                        try {
+                          const gd = plotRef.current?.el;
+                          if (!gd) return;
+
+                          const xLen = popupPlot?.data?.[0]?.x?.length || 0;
+                          const yLen = popupPlot?.data?.[0]?.y?.length || 0;
+                          const key = `${selectedAnalyticsName}__${xLen}x${yLen}`;
+
+                          // dedupe: prevents double-save on rapid double-calls
+                          if (savedKeysRef.current.has(key)) return;
+                          savedKeysRef.current.add(key);
+                          if (savedOnceKey !== key) setSavedOnceKey(key);
+
+                          const dataUrl = await Plotly.toImage(gd, {
+                            format: "png",
+                            width: 1200,
+                            height: 700,
+                            scale: 2,
+                          });
+
+                          const res = await fetch(`${API}/api/metrics/save-chart-png`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              title: selectedAnalyticsName,
+                              filenameHint: selectedAnalyticsName,
+                              pngDataUrl: dataUrl,
+                            }),
+                          });
+
+                          if (!res.ok) {
+                            const txt = await res.text();
+                            throw new Error(`save png failed: HTTP ${res.status} ${txt}`);
+                          }
+
+                          loadPngGallery();
+                        } catch (e) {
+                          console.error("PNG save failed:", e);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="entity-muted">No plot data.</div>
+                  )
+                ) : snapshotLoading ? (
+                  <div className="entity-muted">Loading…</div>
+                ) : snapshotError ? (
+                  <div className="entity-error">{snapshotError}</div>
+                ) : (
+                  renderRowsTable(snapshotRows)
+                )}
               </div>
             </div>
           </div>

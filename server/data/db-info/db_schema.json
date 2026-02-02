@@ -1,0 +1,481 @@
+{
+  "models": [
+    {
+      "model": "Customer",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "customerID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "firstName",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "lastName",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "email",
+          "type": "String",
+          "optional": true,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "ccExpiration",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "subscriptions",
+          "type": "Subscription",
+          "optional": false,
+          "list": true,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "Package",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "packageID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "monthlyCost",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "annualCost",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "subscriptions",
+          "type": "Subscription",
+          "optional": false,
+          "list": true,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "Subscription",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "subscriptionID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "customerID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "packageID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "billingCycle",
+          "type": "BillingCycle",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "status",
+          "type": "SubscriptionStatus",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "startDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "endDate",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "price",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "customer",
+          "type": "Customer",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "package",
+          "type": "Package",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "payments",
+          "type": "Payment",
+          "optional": false,
+          "list": true,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "Payment",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "paymentID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "subscriptionID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "dueDate",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "paidAt",
+          "type": "DateTime",
+          "optional": true,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "status",
+          "type": "PaymentStatus",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "subscription",
+          "type": "Subscription",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "DataJson",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "data_json_ID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "data_json",
+          "type": "Json",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analytics",
+          "type": "Analytics",
+          "optional": false,
+          "list": true,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "Analysis",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "analysisID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analysisName",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analysisDescription",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analyticsRuns",
+          "type": "Analytics",
+          "optional": false,
+          "list": true,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "AnalyticsDefinition",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "analyticsID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analyticsName",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analyticsDescription",
+          "type": "String",
+          "optional": true,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "nameOfJSONFile",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "createdAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "updatedAt",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "Analytics",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "analyticsID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analysisTypeID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "userID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "ran_on",
+          "type": "DateTime",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "data_json_ID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analysisType",
+          "type": "Analysis",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "user",
+          "type": "User",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "dataJson",
+          "type": "DataJson",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "Level",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "levelID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "level",
+          "type": "RoleLevel",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "users",
+          "type": "User",
+          "optional": false,
+          "list": true,
+          "db_column": null
+        }
+      ]
+    },
+    {
+      "model": "User",
+      "db_table": null,
+      "fields": [
+        {
+          "name": "userID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "firebaseUid",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "firstName",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "lastName",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "levelID",
+          "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "level",
+          "type": "Level",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "analytics",
+          "type": "Analytics",
+          "optional": false,
+          "list": true,
+          "db_column": null
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "schema_path": "/app/prisma/schema.prisma",
+    "generated_at_utc": "2026-02-02T08:37:49.374473+00:00"
+  }
+}

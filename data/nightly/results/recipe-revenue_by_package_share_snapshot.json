@@ -1,0 +1,80 @@
+{
+  "ok": true,
+  "jobId": "recipe-revenue_by_package_share_snapshot",
+  "recipeId": "revenue_by_package_share_snapshot",
+  "ranAt": "2026-01-31T19:44:08.607Z",
+  "chartKey": "pie",
+  "sentence": "Show me the revenue share by package (percent of total revenue), top packages first. (shown as: pie (share of total))",
+  "querySpec": {
+    "metric": "revenue_share_by_package",
+    "entity": "Payment",
+    "valueFieldHint": "amount",
+    "joinPath": [
+      "Subscription",
+      "Package"
+    ],
+    "groupBy": [
+      {
+        "model": "Package",
+        "fieldHint": "name"
+      }
+    ],
+    "asPercent": true,
+    "topN": 10,
+    "chartKey": "pie",
+    "range": "10y",
+    "bucket": "month"
+  },
+  "sql": "\n      WITH by_pkg AS (\n        SELECT\n          ('Monthly: ' || p.\"monthlyCost\" || ' / Annual: ' || p.\"annualCost\") AS package_name,\n          COALESCE(SUM(s.\"price\"), 0)::float AS revenue\n        FROM \"Payment\" pay\n        JOIN \"Subscription\" s ON s.\"subscriptionID\" = pay.\"subscriptionID\"\n        JOIN \"Package\" p ON p.\"packageID\" = s.\"packageID\"\n        WHERE COALESCE(pay.\"paidAt\", pay.\"dueDate\") >= NOW() - INTERVAL '10 years'\n        GROUP BY 1\n      ),\n      tot AS (\n        SELECT COALESCE(SUM(revenue), 0)::float AS total_revenue FROM by_pkg\n      )\n      SELECT\n        b.package_name,\n        b.revenue,\n        CASE WHEN t.total_revenue = 0 THEN 0 ELSE (b.revenue / t.total_revenue) * 100 END AS pct\n      FROM by_pkg b\n      CROSS JOIN tot t\n      ORDER BY b.revenue DESC\n      LIMIT 10;\n    ",
+  "rows": [
+    {
+      "package_name": "Monthly: 79 / Annual: 799",
+      "revenue": 553,
+      "pct": 33.76068376068376
+    },
+    {
+      "package_name": "Monthly: 79 / Annual: 199",
+      "revenue": 395,
+      "pct": 24.114774114774114
+    },
+    {
+      "package_name": "Monthly: 59 / Annual: 499",
+      "revenue": 177,
+      "pct": 10.805860805860807
+    },
+    {
+      "package_name": "Monthly: 39 / Annual: 299",
+      "revenue": 156,
+      "pct": 9.523809523809524
+    },
+    {
+      "package_name": "Monthly: 59 / Annual: 199",
+      "revenue": 118,
+      "pct": 7.203907203907203
+    },
+    {
+      "package_name": "Monthly: 19 / Annual: 299",
+      "revenue": 95,
+      "pct": 5.7997557997558
+    },
+    {
+      "package_name": "Monthly: 29 / Annual: 299",
+      "revenue": 87,
+      "pct": 5.311355311355311
+    },
+    {
+      "package_name": "Monthly: 19 / Annual: 199",
+      "revenue": 38,
+      "pct": 2.31990231990232
+    },
+    {
+      "package_name": "Monthly: 19 / Annual: 799",
+      "revenue": 19,
+      "pct": 1.15995115995116
+    }
+  ],
+  "meta": {
+    "schema_path": "/app/prisma/schema.prisma",
+    "generated_at_utc": "2026-01-31T19:42:29.986970+00:00"
+  }
+}

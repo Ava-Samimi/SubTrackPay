@@ -2,6 +2,7 @@
 
 import random
 from datetime import datetime, timezone  # ✅ added
+from .subscription_distributions import pick_subscription_by_distribution
 
 from .config import load_config
 from .db import connect, insert_many
@@ -18,7 +19,6 @@ from .payments_due import insert_due_payments
 
 # Import the function from package_percentages.py
 from .package_percentages import generate_package_percentage_json
-
 
 
 class Schema:
@@ -57,6 +57,12 @@ def seed_guard(cur, customer_table: str) -> bool:
 
 
 def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dict[str, int]]]:
+    """
+    ✅ Always seeds exactly 10 packages with fixed names:
+      Movies, News, Health, Fashion, Weather, Travel, Adventure, Kids, Science, Religion
+
+    Costs remain randomly chosen from existing lists (if your schema has those columns).
+    """
     pkg_cols = schema.pkg_cols
     PACKAGE_T = schema.PACKAGE_T
 
@@ -68,11 +74,27 @@ def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dic
     pkg_monthly_col = pick_col(pkg_cols, ["monthlyCost", "monthly_cost", "monthlyCents", "monthly_cents"])
     pkg_annual_col = pick_col(pkg_cols, ["annualCost", "annual_cost", "annualCents", "annual_cents"])
 
+    package_names = [
+        "Movies",
+        "News",
+        "Health",
+        "Fashion",
+        "Weather",
+        "Travel",
+        "Adventure",
+        "Kids",
+        "Science",
+        "Religion",
+    ]
+
+    # Force exactly 10 packages regardless of cfg.seed_packages
+    n = len(package_names)
+
     package_rows = []
-    for i in range(n):
+    for name in package_names:
         row = {}
         if pkg_name_col:
-            row[pkg_name_col] = f"Package {i+1}"
+            row[pkg_name_col] = name
         if pkg_monthly_col:
             row[pkg_monthly_col] = random.choice([19, 29, 39, 49, 59, 79, 99])
         if pkg_annual_col:
@@ -156,6 +178,12 @@ def seed_subscriptions(
     pkg_ids: list[int],
     pkg_costs: dict[int, dict[str, int]],
 ):
+    """
+    Seeds Subscription rows using a selectable randomness distribution.
+
+    Requires: from .subscription_distributions import pick_subscription_by_distribution
+    (and make sure server/seeder/seeder/subscription_distributions.py exists)
+    """
     sub_cols = schema.sub_cols
     SUB_T = schema.SUB_T
 
@@ -167,7 +195,10 @@ def seed_subscriptions(
     sub_cycle_col = pick_col(sub_cols, ["billingCycle", "billing_cycle", "cycle"])
     sub_start_col = pick_col(sub_cols, ["startDate", "start_date", "createdAt", "created_at"])
     sub_status_col = pick_col(sub_cols, ["status", "state"])
-    sub_price_col = pick_col(sub_cols, ["price", "amount", "amountCents", "amount_cents", "priceCents", "price_cents"])
+    sub_price_col = pick_col(
+        sub_cols,
+        ["price", "amount", "amountCents", "amount_cents", "priceCents", "price_cents"],
+    )
 
     allowed_statuses = get_enum_labels_for_column(cur, SUB_T, sub_status_col) if sub_status_col else []
 
@@ -177,29 +208,67 @@ def seed_subscriptions(
             f"Cols={sorted(list(sub_cols))}"
         )
 
+    if not cust_ids or not pkg_ids:
+        raise SystemExit("Cannot seed subscriptions: cust_ids or pkg_ids is empty.")
+
+    # ----------------------------
+    # ✅ Choose your distribution here
+    # Options: "uniform", "popular_packages", "heavy_monthly", "realistic_default"
+    # ----------------------------
+    dist_name = "uniform"
+
+    # Optional: package popularity weights (same length as pkg_ids)
+    # Example: make earlier packages more popular
+    pkg_weights = None
+    if dist_name in ("popular_packages", "heavy_monthly", "realistic_default"):
+        base = [10, 8, 6, 4, 2]
+        pkg_weights = base[: len(pkg_ids)] + [1] * max(0, len(pkg_ids) - len(base))
+
+    # Optional: customer propensity weights (same length as cust_ids)
+    cust_weights = None
+    if dist_name in ("heavy_monthly", "realistic_default"):
+        cust_weights = [random.choice([1, 1, 1, 2, 2, 3, 5]) for _ in cust_ids]
+
+    # Cycle weights only matter if you have a cycle column; otherwise we'll seed MONTHLY conceptually.
+    cycle_weights = (85, 15)  # (MONTHLY%, ANNUAL%)
+
+    # Status weights (only used in realistic_default)
+    status_weights_by_key = {"ACTIVE": 85, "CANCEL": 10, "PAST": 5, "OTHER": 3}
+
     sub_rows = []
     for _ in range(n):
-        cust_id = random.choice(cust_ids)
-        pkg_id = random.choice(pkg_ids)
+        pick = pick_subscription_by_distribution(
+            dist_name,
+            cust_ids=cust_ids,
+            pkg_ids=pkg_ids,
+            allowed_statuses=allowed_statuses,
+            pkg_weights=pkg_weights,
+            cust_weights=cust_weights,
+            cycle_weights=cycle_weights,
+            status_weights_by_key=status_weights_by_key,
+            max_days_back=1200,
+            recent_mean_days=180,
+        )
 
-        cycle = "MONTHLY"
-        if sub_cycle_col:
-            cycle = random.choice(["MONTHLY", "ANNUAL"])
+        # If schema doesn't have billingCycle, force MONTHLY in the generated pick to match existing behavior
+        cycle = pick.cycle if sub_cycle_col else "MONTHLY"
 
-        row = {sub_cust_fk: cust_id, sub_pkg_fk: pkg_id}
+        row = {sub_cust_fk: pick.customer_id, sub_pkg_fk: pick.package_id}
 
         if sub_cycle_col:
             row[sub_cycle_col] = cycle
-        row[sub_start_col] = rand_past_date(1200)
+
+        # Use distribution-provided start date (timezone-aware)
+        row[sub_start_col] = pick.start_dt
 
         if sub_status_col:
-            row[sub_status_col] = random.choice(allowed_statuses) if allowed_statuses else "ACTIVE"
+            row[sub_status_col] = pick.status if allowed_statuses else "ACTIVE"
 
         # Price (required in some schemas)
         if sub_price_col:
             price = None
-            if pkg_id in pkg_costs:
-                price = pkg_costs[pkg_id].get(cycle)
+            if pick.package_id in pkg_costs:
+                price = pkg_costs[pick.package_id].get(cycle)
             if price is None:
                 price = 29 if cycle == "MONTHLY" else 299
             row[sub_price_col] = price
@@ -310,7 +379,10 @@ def run_payments_after_seed(cur, schema: Schema):
 
 def run_seed():
     cfg = load_config()
-    random.seed(cfg.seed_random_seed)
+    if cfg.seed_random_seed is not None:
+        random.seed(cfg.seed_random_seed)
+    else:
+        random.seed()  # system entropy => different each run
 
     conn = connect(cfg.db_url)
     try:
@@ -334,7 +406,7 @@ def run_seed():
 
                 print("✅ Seed complete:")
                 print(f"  Tables: {schema.CUSTOMER_T}, {schema.PACKAGE_T}, {schema.SUB_T}")
-                print(f"  Packages: {cfg.seed_packages}")
+                print(f"  Packages: 10 (fixed names)")
                 print(f"  Customers: {cfg.seed_customers}")
                 print(f"  Subscriptions: {cfg.seed_subscriptions}")
 
@@ -342,8 +414,11 @@ def run_seed():
                 run_payments_after_seed(cur, schema)
 
                 # Generate package percentage JSON after seeding
-                generate_package_percentage_json(cur, './client/src/components/data/package_percentages.json')
-
+                generate_package_percentage_json(cur)
 
     finally:
         conn.close()
+
+if __name__ == "__main__":
+    run_seed()
+

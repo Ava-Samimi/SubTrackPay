@@ -7,6 +7,7 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
       POSTGRES_DB: billing
+      TZ: America/Montreal
     ports:
       - "5432:5432"
     volumes:
@@ -23,13 +24,14 @@ services:
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
       PORT: "3001"
+      TZ: America/Montreal
     depends_on:
       db:
         condition: service_healthy
     command: ["sh", "-lc", "npx prisma migrate deploy"]
     restart: "no"
 
-  # 2) Seed data ONCE, after migrations created tables
+  # 2) Generate schema JSON + Seed data ONCE, after migrations created tables
   seeder:
     build: ./server/seeder
     environment:
@@ -37,13 +39,31 @@ services:
       SEED_CUSTOMERS: "500"
       SEED_PACKAGES: "5"
       SEED_SUBSCRIPTIONS: "500"
-      SEED_RANDOM_SEED: "42"
+      SEED_RANDOM_SEED: "0"
       SEED_SKIP_IF_EXISTS: "1"
+      DATA_DIR: /app/data
+      TZ: America/Montreal
+
+      # schema json generator config
+      SCHEMA_PRISMA: /app/prisma/schema.prisma
+      OUT_JSON: /app/data/db-info/db_schema.json
+
     depends_on:
+      db:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
+
     volumes:
-      - ./client/src/components/data:/app/client/src/components/data  # Shared volume
+      - ./data:/app/data
+      - ./server/prisma:/app/prisma:ro
+      - ./server/data/db-info:/app/data/db-info
+
+      # mount schema-to-json script
+      - ./server/seeder/prisma_schema_to_json.py:/app/prisma_schema_to_json.py:ro
+
+    # Run schema json generation, then your real seeder entry file
+    command: ["sh", "-lc", "python /app/prisma_schema_to_json.py && python /app/seed_db.py"]
     restart: "no"
 
   # 3) Start API after seeding finishes
@@ -52,9 +72,18 @@ services:
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
       PORT: "3001"
+      DATA_DIR: /app/data
+      TZ: America/Montreal
       FIREBASE_SERVICE_ACCOUNT_JSON: /run/secrets/firebase-service-account.json
     volumes:
       - ./server/secrets/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
+      - ./data:/app/data
+      - ./server/data/db-info:/app/data/db-info
+
+      # ✅ SAVE PNGs ON HOST:
+      # Container writes to /app/exports/chart_pngs
+      # Host will see them in ./server/exports/chart_pngs
+      - ./server/exports:/app/exports
     ports:
       - "3001:3001"
     depends_on:
@@ -75,13 +104,12 @@ services:
     build: ./client
     environment:
       VITE_API_BASE_URL: http://localhost:3001
+      TZ: America/Montreal
     ports:
       - "5173:5173"
     depends_on:
       api:
         condition: service_healthy
-    volumes:
-      - ./client/src/components/data:/app/client/src/components/data  # Shared volume
     restart: "no"
 
 volumes:

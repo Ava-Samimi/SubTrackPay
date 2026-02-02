@@ -1,0 +1,30 @@
+[
+  {
+    "package_id": 4,
+    "package_name": "Pro",
+    "monthly_cost": 59.0,
+    "annual_cost": 499.0,
+    "percentage": 12.6
+  },
+  {
+    "package_id": 3,
+    "package_name": "Standard",
+    "monthly_cost": 99.0,
+    "annual_cost": 399.0,
+    "percentage": 11.4
+  },
+  {
+    "package_id": 8,
+    "package_name": "Enterprise",
+    "monthly_cost": 79.0,
+    "annual_cost": 999.0,
+    "percentage": 10.8
+  },
+  {
+    "package_id": 5,
+    "package_name": "Plus",
+    "monthly_cost": 49.0,
+    "annual_cost": 999.0,
+    "percentage": 10.2
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "models": {
+    "Payment": {
+      "timeField": "createdAt",
+      "amountField": "amount",
+      "subscriptionIdField": "subscriptionId",
+      "customerIdField": "customerId"
+    },
+    "Subscription": {
+      "packageIdField": "packageId",
+      "customerIdField": "customerId",
+      "statusField": "status",
+      "activeValue": "active"
+    },
+    "Package": {
+      "nameField": "name"
+    },
+    "Customer": {
+      "idField": "id",
+      "createdAtField": "createdAt"
+    }
+  }
+}
