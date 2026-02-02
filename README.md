@@ -1,3 +1,12 @@
+## RELEASE 2 VIDEOS and POWER POINTD (pdf)
+- SubtrackPay_Video_demo
+- SubtrackPay_Video_Presentatiom
+- SubtrackPay_power_point pdf
+
+  https://drive.google.com/drive/folders/1qqhN-4eUbRiMo_0fk3vk9MXuh5M4z0hD?usp=sharing
+
+
+
 ## NOTE TO TEACHER AND TA
 
 - currently the main branch was changed not to include the login firebase authentication *for easier and faster access)
