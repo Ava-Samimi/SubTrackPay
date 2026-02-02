@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import LogoutButton from "./LogoutButton.jsx";
 import "./EntityNavBar.css";
 
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
 export default function EntityNavBar({
   className = "",
   listMode = false,
@@ -10,6 +12,32 @@ export default function EntityNavBar({
 }) {
   const location = useLocation();
   const isActiveRoute = (path) => location.pathname === path;
+
+  async function repopulateDb() {
+    const ok = window.confirm(
+      "This will DELETE all demo data and REPOPULATE the database. Continue?"
+    );
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`${API}/api/admin/repopulate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        alert("Repopulate failed: " + t);
+        return;
+      }
+
+      alert("DB repopulated. Reloading…");
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert("Repopulate failed: " + (e?.message || String(e)));
+    }
+  }
 
   return (
     <div className={`entity-navbar ${className}`}>
@@ -51,6 +79,8 @@ export default function EntityNavBar({
       </div>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+
+
         <button
           type="button"
           className={[

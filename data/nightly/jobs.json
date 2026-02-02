@@ -1,0 +1,93 @@
+[
+  {
+    "jobId": "recipe-customers_count_group_by_package",
+    "recipeId": "customers_count_group_by_package",
+    "options": {
+      "range": "10y",
+      "bucket": "month"
+    },
+    "chartKey": "bar",
+    "sentence": "Show me the count of active customers, grouped by the package they are subscribed to. (shown as: bar (compare categories))",
+    "updatedAt": "2026-01-31T19:42:52.889Z",
+    "createdAt": "2026-01-31T08:41:38.414Z",
+    "enabled": true
+  },
+  {
+    "jobId": "recipe-revenue_total_by_package_timeseries",
+    "recipeId": "revenue_total_by_package_timeseries",
+    "options": {
+      "range": "10y",
+      "bucket": "month"
+    },
+    "chartKey": "line_multi",
+    "sentence": "Show me the total revenue per package monthly for the past 10 years. (shown as: multi-line (one per group))",
+    "enabled": true,
+    "updatedAt": "2026-01-31T19:23:02.735Z",
+    "createdAt": "2026-01-31T09:21:02.869Z"
+  },
+  {
+    "jobId": "recipe-revenue_by_package_share_snapshot",
+    "recipeId": "revenue_by_package_share_snapshot",
+    "options": {
+      "range": "10y",
+      "bucket": "month"
+    },
+    "chartKey": "pie",
+    "sentence": "Show me the revenue share by package (percent of total revenue), top packages first. (shown as: pie (share of total))",
+    "enabled": true,
+    "updatedAt": "2026-01-31T19:44:08.448Z",
+    "createdAt": "2026-01-31T09:26:10.408Z"
+  },
+  {
+    "jobId": "recipe-avg_amount_per_customer_timeseries",
+    "recipeId": "avg_amount_per_customer_timeseries",
+    "options": {
+      "range": "10y",
+      "bucket": "month"
+    },
+    "chartKey": "line",
+    "sentence": "Show me the average revenue per customer monthly for the past 10 years. (shown as: line (time series))",
+    "enabled": true,
+    "updatedAt": "2026-01-31T18:00:05.003Z",
+    "createdAt": "2026-01-31T18:00:05.003Z"
+  },
+  {
+    "jobId": "recipe-revenue_total_timeseries",
+    "recipeId": "revenue_total_timeseries",
+    "options": {
+      "range": "10y",
+      "bucket": "month"
+    },
+    "chartKey": "line",
+    "sentence": "Show me total revenue monthly for the past 10 years. (shown as: line (time series))",
+    "enabled": true,
+    "updatedAt": "2026-01-31T18:54:24.255Z",
+    "createdAt": "2026-01-31T18:54:24.255Z"
+  },
+  {
+    "jobId": "recipe-mrr_total_timeseries",
+    "recipeId": "mrr_total_timeseries",
+    "options": {
+      "range": "10y",
+      "bucket": "month"
+    },
+    "chartKey": "line",
+    "sentence": "Show me estimated MRR monthly for the past 10 years. (shown as: line (time series))",
+    "enabled": true,
+    "updatedAt": "2026-01-31T19:43:02.254Z",
+    "createdAt": "2026-01-31T19:43:02.254Z"
+  },
+  {
+    "jobId": "recipe-new_customers_timeseries",
+    "recipeId": "new_customers_timeseries",
+    "options": {
+      "range": "10y",
+      "bucket": "month"
+    },
+    "chartKey": "line",
+    "sentence": "Show me how many new customers we got monthly for the past 10 years. (shown as: line (time series))",
+    "enabled": true,
+    "updatedAt": "2026-01-31T19:44:15.007Z",
+    "createdAt": "2026-01-31T19:44:15.007Z"
+  }
+]

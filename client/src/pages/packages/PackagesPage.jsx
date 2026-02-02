@@ -22,6 +22,33 @@ function pkgLabel(p) {
   return `Pkg #${String(id ?? "").slice(0, 4)} (M: ${m} / A: ${a})`;
 }
 
+// ✅ CSV helpers
+function csvEscape(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  // Quote if needed
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function buildCsv(headers, rows) {
+  const head = headers.map(csvEscape).join(",");
+  const body = rows.map((r) => r.map(csvEscape).join(",")).join("\n");
+  return `${head}\n${body}\n`;
+}
+
+function downloadTextFile({ filename, text, mime = "text/plain;charset=utf-8" }) {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export default function PackagesPage() {
   const {
     items,
@@ -60,6 +87,39 @@ export default function PackagesPage() {
     const map = new Map(items.map((x) => [String(x.packageID), pkgLabel(x)]));
     return (selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
   }, [items, selectedIds]);
+
+  // ✅ Selected rows lookup for export
+  const selectedPackages = useMemo(() => {
+    const idSet = new Set((selectedIds || []).map((x) => String(x)));
+    return items.filter((p) => idSet.has(String(p.packageID)));
+  }, [items, selectedIds]);
+
+  const exportSelectedAsCsv = () => {
+    if (!selectedIds || selectedIds.length === 0) return;
+
+    // Build rows (choose whatever columns you want)
+    const headers = ["packageID", "packageName", "monthlyCost", "annualCost"];
+    const rows = selectedPackages.map((p) => [
+      p.packageID,
+      pkgLabel(p),
+      p.monthlyCost ?? "-",
+      p.annualCost ?? "-",
+    ]);
+
+    const csv = buildCsv(headers, rows);
+
+    const stamp = new Date()
+      .toISOString()
+      .replace(/[:]/g, "-")
+      .replace(/\..+$/, ""); // YYYY-MM-DDTHH-mm-ss
+    const filename = `packages_export_${stamp}.csv`;
+
+    downloadTextFile({
+      filename,
+      text: csv,
+      mime: "text/csv;charset=utf-8",
+    });
+  };
 
   return (
     <div className="entity-page">
@@ -145,6 +205,24 @@ export default function PackagesPage() {
                   </div>
                 </>
               )}
+
+              {/* ✅ Export Button */}
+              <div style={{ marginTop: 12 }}>
+                <button
+                  type="button"
+                  className="entity-btn-big"
+                  disabled={selectedCount === 0}
+                  onClick={exportSelectedAsCsv}
+                  style={{
+                    marginTop: 0,
+                    width: "100%",
+                    opacity: selectedCount === 0 ? 0.5 : 1,
+                    cursor: selectedCount === 0 ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Export
+                </button>
+              </div>
             </div>
           )}
         </div>
