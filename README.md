@@ -1,4 +1,4 @@
-## RELEASE 2 VIDEOS and POWER POINTD (pdf)
+## RELEASE 2 VIDEOS and POWER POINT (pdf)
 - SubtrackPay_Video_demo
 - SubtrackPay_Video_Presentatiom
 - SubtrackPay_power_point pdf
