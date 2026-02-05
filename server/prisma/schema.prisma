@@ -39,6 +39,7 @@ model Customer {
   firstName    String
   lastName     String
   email        String?   @unique
+  postalCode   String
   ccExpiration DateTime?
   createdAt    DateTime  @default(now())
 
@@ -46,7 +47,8 @@ model Customer {
 }
 
 model Package {
-  packageID   Int @id @default(autoincrement())
+  packageID   Int    @id @default(autoincrement())
+  name        String
   monthlyCost Int
   annualCost  Int
 
