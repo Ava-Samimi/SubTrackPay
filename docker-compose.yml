@@ -31,16 +31,22 @@ services:
     command: ["sh", "-lc", "npx prisma migrate deploy"]
     restart: "no"
 
-  # 2) Generate schema JSON + Seed data ONCE, after migrations created tables
+  # 2) Seeder is MANUAL / ON-DEMAND (not part of normal startup)
+  # Run when needed:
+  #   docker compose --profile manual-seed run --rm seeder
   seeder:
     build: ./server/seeder
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
+
+      # Defaults (can be overridden when you run it manually)
       SEED_CUSTOMERS: "500"
       SEED_PACKAGES: "5"
       SEED_SUBSCRIPTIONS: "500"
       SEED_RANDOM_SEED: "0"
-      SEED_SKIP_IF_EXISTS: "1"
+      SEED_SKIP_IF_EXISTS: "0"
+      SEED_DISTRIBUTION: "uniform"   # uniform | popular_packages | heavy_monthly | realistic_default
+
       DATA_DIR: /app/data
       TZ: America/Montreal
 
@@ -58,15 +64,13 @@ services:
       - ./data:/app/data
       - ./server/prisma:/app/prisma:ro
       - ./server/data/db-info:/app/data/db-info
-
-      # mount schema-to-json script
       - ./server/seeder/prisma_schema_to_json.py:/app/prisma_schema_to_json.py:ro
 
-    # Run schema json generation, then your real seeder entry file
     command: ["sh", "-lc", "python /app/prisma_schema_to_json.py && python /app/seed_db.py"]
     restart: "no"
+    profiles: ["manual-seed"]
 
-  # 3) Start API after seeding finishes
+  # 3) API (can trigger seeding via /api/admin/seed)
   api:
     build: ./server
     environment:
@@ -79,11 +83,12 @@ services:
       - ./server/secrets/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
       - ./data:/app/data
       - ./server/data/db-info:/app/data/db-info
-
-      # ✅ SAVE PNGs ON HOST:
-      # Container writes to /app/exports/chart_pngs
-      # Host will see them in ./server/exports/chart_pngs
       - ./server/exports:/app/exports
+
+      # ✅ allow API to run the python seeder on-demand
+      - ./server/seeder:/app/seeder:ro
+      - ./server/seeder/seed_db.py:/app/seed_db.py:ro
+
     ports:
       - "3001:3001"
     depends_on:
@@ -91,18 +96,17 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-      seeder:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health | grep -q ok"]
       interval: 3s
       timeout: 5s
       retries: 30
 
-  # 4) Web client (React app)
+  # 4) Web client (React)
   web:
     build: ./client
     environment:
+      # ✅ IMPORTANT: web container must call api container by service name
       VITE_API_BASE_URL: http://localhost:3001
       TZ: America/Montreal
     ports:

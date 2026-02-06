@@ -1,7 +1,10 @@
 # server/seeder/seeder/seeders.py
 
+import os
 import random
-from datetime import datetime, timezone  # ✅ added
+from datetime import datetime, timezone, date
+from calendar import monthrange
+
 from .subscription_distributions import pick_subscription_by_distribution
 
 from .config import load_config
@@ -17,10 +20,73 @@ from .schema import (
 from .verify_due import VerifySchema
 from .payments_due import insert_due_payments
 
-# Import the function from package_percentages.py
 from .package_percentages import generate_package_percentage_json
 
 
+# ----------------------------
+# Postal code helpers (CA + US)
+# ----------------------------
+def rand_postal_code_ca() -> str:
+    letters = "ABCEGHJKLMNPRSTVXY"
+    digits = "0123456789"
+    return (
+        random.choice(letters)
+        + random.choice(digits)
+        + random.choice(letters)
+        + " "
+        + random.choice(digits)
+        + random.choice(letters)
+        + random.choice(digits)
+    )
+
+
+def rand_zip_us(zip_plus4: bool = False) -> str:
+    zip5 = f"{random.randint(1, 99999):05d}"
+    if not zip_plus4:
+        return zip5
+    return f"{zip5}-{random.randint(0, 9999):04d}"
+
+
+def rand_postal_mixed(ca_ratio: float = 0.5, us_zip_plus4_ratio: float = 0.15) -> str:
+    if random.random() < ca_ratio:
+        return rand_postal_code_ca()
+    use_plus4 = random.random() < us_zip_plus4_ratio
+    return rand_zip_us(zip_plus4=use_plus4)
+
+
+# ----------------------------
+# CC expiration helpers
+# ----------------------------
+def _ensure_utc(dt) -> datetime:
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        return datetime(dt.year, dt.month, dt.day, tzinfo=timezone.utc)
+
+    if not isinstance(dt, datetime):
+        raise TypeError(f"_ensure_utc expected date/datetime, got {type(dt)}")
+
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def add_years_safe(dt, years: int) -> datetime:
+    dt = _ensure_utc(dt)
+    y = dt.year + years
+    m = dt.month
+    d = min(dt.day, monthrange(y, m)[1])
+    return dt.replace(year=y, month=m, day=d)
+
+
+def cc_exp_from_created(created_dt) -> datetime:
+    created_dt = _ensure_utc(created_dt)
+    years_ahead = random.choice([2, 3, 4])
+    exp = add_years_safe(created_dt, years_ahead)
+    return exp.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+# ----------------------------
+# Schema detection
+# ----------------------------
 class Schema:
     def __init__(self, CUSTOMER_T, PACKAGE_T, SUB_T, cust_cols, pkg_cols, sub_cols):
         self.CUSTOMER_T = CUSTOMER_T
@@ -56,13 +122,40 @@ def seed_guard(cur, customer_table: str) -> bool:
     return cur.fetchone()[0] > 0
 
 
-def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dict[str, int]]]:
-    """
-    ✅ Always seeds exactly 10 packages with fixed names:
-      Movies, News, Health, Fashion, Weather, Travel, Adventure, Kids, Science, Religion
+# ----------------------------
+# Reset DB for reseed (TRUNCATE)
+# ----------------------------
+def maybe_reset_db(cur):
+    if os.environ.get("SEED_RESET", "0").strip() not in ("1", "true", "True"):
+        return
 
-    Costs remain randomly chosen from existing lists (if your schema has those columns).
-    """
+    existing = set(list_tables(cur))
+
+    preferred_order = [
+        "Payment",
+        "Subscription",
+        "Customer",
+        "Package",
+        "Analytics",
+        "DataJson",
+        "Analysis",
+        "AnalyticsDefinition",
+    ]
+    to_truncate = [t for t in preferred_order if t in existing]
+
+    if not to_truncate:
+        print("ℹ️  SEED_RESET=1 but no known tables found to truncate.")
+        return
+
+    quoted = ", ".join([f'"{t}"' for t in to_truncate])
+    cur.execute(f"TRUNCATE {quoted} RESTART IDENTITY CASCADE;")
+    print(f"🧹 Reset DB: truncated {len(to_truncate)} tables ({', '.join(to_truncate)}).")
+
+
+# ----------------------------
+# Seeding: Packages
+# ----------------------------
+def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dict[str, int]]]:
     pkg_cols = schema.pkg_cols
     PACKAGE_T = schema.PACKAGE_T
 
@@ -86,8 +179,6 @@ def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dic
         "Science",
         "Religion",
     ]
-
-    # Force exactly 10 packages regardless of cfg.seed_packages
     n = len(package_names)
 
     package_rows = []
@@ -106,7 +197,6 @@ def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dic
 
     pkg_ids = insert_many(cur, PACKAGE_T, package_rows, returning_col=pkg_pk)
 
-    # Cost lookup for subscription pricing
     pkg_costs: dict[int, dict[str, int]] = {}
     if pkg_monthly_col or pkg_annual_col:
         select_cols = ['"{}"'.format(pkg_pk)]
@@ -131,6 +221,9 @@ def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dic
     return pkg_ids, pkg_costs
 
 
+# ----------------------------
+# Seeding: Customers
+# ----------------------------
 def seed_customers(cur, schema: Schema, n: int) -> list[int]:
     cust_cols = schema.cust_cols
     CUSTOMER_T = schema.CUSTOMER_T
@@ -143,7 +236,15 @@ def seed_customers(cur, schema: Schema, n: int) -> list[int]:
     cust_last_col = pick_col(cust_cols, ["lastName", "last_name"])
     cust_full_col = pick_col(cust_cols, ["fullName", "name", "customerName"])
     cust_email_col = pick_col(cust_cols, ["email", "emailAddress"])
+    cust_postal_col = pick_col(cust_cols, ["postalCode", "postal_code", "zip", "zipcode", "postal"])
     cust_since_col = pick_col(cust_cols, ["memberSince", "member_since", "createdAt", "created_at"])
+    cust_cc_exp_col = pick_col(cust_cols, ["ccExpiration", "cc_expiration", "cardExpiration", "card_expiration"])
+
+    if not cust_postal_col:
+        raise SystemExit(
+            f'{CUSTOMER_T}: postalCode is required by schema but was not detected. '
+            f"Cols={sorted(list(cust_cols))}"
+        )
 
     customer_rows = []
     for _ in range(n):
@@ -160,8 +261,15 @@ def seed_customers(cur, schema: Schema, n: int) -> list[int]:
             row[cust_full_col] = full
         if cust_email_col:
             row[cust_email_col] = rand_email(first, last)
+
+        row[cust_postal_col] = rand_postal_mixed(ca_ratio=0.5, us_zip_plus4_ratio=0.15)
+
+        created_dt = rand_past_date()
         if cust_since_col:
-            row[cust_since_col] = rand_past_date()
+            row[cust_since_col] = created_dt
+
+        if cust_cc_exp_col:
+            row[cust_cc_exp_col] = cc_exp_from_created(created_dt)
 
         if not row:
             raise SystemExit(f'{CUSTOMER_T}: no recognized columns to insert.')
@@ -170,6 +278,9 @@ def seed_customers(cur, schema: Schema, n: int) -> list[int]:
     return insert_many(cur, CUSTOMER_T, customer_rows, returning_col=cust_pk)
 
 
+# ----------------------------
+# Seeding: Subscriptions
+# ----------------------------
 def seed_subscriptions(
     cur,
     schema: Schema,
@@ -177,13 +288,8 @@ def seed_subscriptions(
     cust_ids: list[int],
     pkg_ids: list[int],
     pkg_costs: dict[int, dict[str, int]],
+    dist_name: str,
 ):
-    """
-    Seeds Subscription rows using a selectable randomness distribution.
-
-    Requires: from .subscription_distributions import pick_subscription_by_distribution
-    (and make sure server/seeder/seeder/subscription_distributions.py exists)
-    """
     sub_cols = schema.sub_cols
     SUB_T = schema.SUB_T
 
@@ -211,28 +317,20 @@ def seed_subscriptions(
     if not cust_ids or not pkg_ids:
         raise SystemExit("Cannot seed subscriptions: cust_ids or pkg_ids is empty.")
 
-    # ----------------------------
-    # ✅ Choose your distribution here
-    # Options: "uniform", "popular_packages", "heavy_monthly", "realistic_default"
-    # ----------------------------
-    dist_name = "uniform"
+    if dist_name not in ("uniform", "popular_packages", "heavy_monthly", "realistic_default"):
+        print(f"⚠️  Unknown SEED_DISTRIBUTION='{dist_name}', falling back to 'uniform'")
+        dist_name = "uniform"
 
-    # Optional: package popularity weights (same length as pkg_ids)
-    # Example: make earlier packages more popular
     pkg_weights = None
     if dist_name in ("popular_packages", "heavy_monthly", "realistic_default"):
         base = [10, 8, 6, 4, 2]
         pkg_weights = base[: len(pkg_ids)] + [1] * max(0, len(pkg_ids) - len(base))
 
-    # Optional: customer propensity weights (same length as cust_ids)
     cust_weights = None
     if dist_name in ("heavy_monthly", "realistic_default"):
         cust_weights = [random.choice([1, 1, 1, 2, 2, 3, 5]) for _ in cust_ids]
 
-    # Cycle weights only matter if you have a cycle column; otherwise we'll seed MONTHLY conceptually.
-    cycle_weights = (85, 15)  # (MONTHLY%, ANNUAL%)
-
-    # Status weights (only used in realistic_default)
+    cycle_weights = (85, 15)
     status_weights_by_key = {"ACTIVE": 85, "CANCEL": 10, "PAST": 5, "OTHER": 3}
 
     sub_rows = []
@@ -250,7 +348,6 @@ def seed_subscriptions(
             recent_mean_days=180,
         )
 
-        # If schema doesn't have billingCycle, force MONTHLY in the generated pick to match existing behavior
         cycle = pick.cycle if sub_cycle_col else "MONTHLY"
 
         row = {sub_cust_fk: pick.customer_id, sub_pkg_fk: pick.package_id}
@@ -258,13 +355,11 @@ def seed_subscriptions(
         if sub_cycle_col:
             row[sub_cycle_col] = cycle
 
-        # Use distribution-provided start date (timezone-aware)
         row[sub_start_col] = pick.start_dt
 
         if sub_status_col:
             row[sub_status_col] = pick.status if allowed_statuses else "ACTIVE"
 
-        # Price (required in some schemas)
         if sub_price_col:
             price = None
             if pick.package_id in pkg_costs:
@@ -278,16 +373,10 @@ def seed_subscriptions(
     insert_many(cur, SUB_T, sub_rows, returning_col=None)
 
 
+# ----------------------------
+# Seeding: AnalyticsDefinition
+# ----------------------------
 def seed_analytics_definitions(cur):
-    """
-    Insert a few default rows into AnalyticsDefinition (standalone table).
-
-    Safe:
-      - does nothing if table not present
-      - does nothing if rows already exist
-      - adapts to detected column names
-      - ✅ sets createdAt/updatedAt when inserting via raw SQL
-    """
     ANALYTICS_DEF_T = find_table(
         cur,
         ["AnalyticsDefinition", "analyticsdefinition", "analytics_definitions", "analyticsDefinitions"],
@@ -298,7 +387,6 @@ def seed_analytics_definitions(cur):
 
     cols = get_table_columns(cur, ANALYTICS_DEF_T)
 
-    # Prisma camelCase defaults
     name_col = pick_col(cols, ["analyticsName", "analytics_name", "name"])
     desc_col = pick_col(cols, ["analyticsDescription", "analytics_description", "description"])
     json_col = pick_col(cols, ["nameOfJSONFile", "name_of_JSON_file", "jsonFile", "json_file"])
@@ -312,7 +400,6 @@ def seed_analytics_definitions(cur):
         )
         return
 
-    # Skip if already has rows
     cur.execute('SELECT COUNT(*) FROM "{}"'.format(ANALYTICS_DEF_T))
     if cur.fetchone()[0] > 0:
         print(f"ℹ️  Seed skipped: {ANALYTICS_DEF_T} already has rows.")
@@ -341,16 +428,10 @@ def seed_analytics_definitions(cur):
     print(f"✅ Seeded {len(rows)} analytics definitions into {ANALYTICS_DEF_T}.")
 
 
+# ----------------------------
+# Post-seed: Payments due
+# ----------------------------
 def run_payments_after_seed(cur, schema: Schema):
-    """
-    Create Payment rows for:
-      - MONTHLY
-      - ACTIVE
-      - due within next 7 days (based on startDate day-of-month)
-
-    Source of truth = verify_due.find_due_monthly_active_subs(...)
-    No console listing of subscriptions; only a short insert summary.
-    """
     vs = VerifySchema(
         sub_table=schema.SUB_T,
         cust_table=schema.CUSTOMER_T,
@@ -377,12 +458,19 @@ def run_payments_after_seed(cur, schema: Schema):
     insert_due_payments(cur, vs, days_ahead=7, quiet=False)
 
 
+# ----------------------------
+# Main entry
+# ----------------------------
 def run_seed():
     cfg = load_config()
+
+    dist_name = os.environ.get("SEED_DISTRIBUTION", "uniform").strip() or "uniform"
+    seed_reset = os.environ.get("SEED_RESET", "0").strip() in ("1", "true", "True")
+
     if cfg.seed_random_seed is not None:
         random.seed(cfg.seed_random_seed)
     else:
-        random.seed()  # system entropy => different each run
+        random.seed()
 
     conn = connect(cfg.db_url)
     try:
@@ -390,8 +478,10 @@ def run_seed():
             with conn.cursor() as cur:
                 schema = detect_schema(cur)
 
-                # If skipping seed because customers already exist, still insert payments + analytics definitions
-                if cfg.seed_skip_if_exists and seed_guard(cur, schema.CUSTOMER_T):
+                if seed_reset:
+                    maybe_reset_db(cur)
+
+                if (not seed_reset) and cfg.seed_skip_if_exists and seed_guard(cur, schema.CUSTOMER_T):
                     print(f"ℹ️  Seed skipped: {schema.CUSTOMER_T} already has rows.")
                     seed_analytics_definitions(cur)
                     run_payments_after_seed(cur, schema)
@@ -399,26 +489,33 @@ def run_seed():
 
                 pkg_ids, pkg_costs = seed_packages(cur, schema, cfg.seed_packages)
                 cust_ids = seed_customers(cur, schema, cfg.seed_customers)
-                seed_subscriptions(cur, schema, cfg.seed_subscriptions, cust_ids, pkg_ids, pkg_costs)
 
-                # Seed AnalyticsDefinition (standalone metadata table)
+                seed_subscriptions(
+                    cur,
+                    schema,
+                    cfg.seed_subscriptions,
+                    cust_ids,
+                    pkg_ids,
+                    pkg_costs,
+                    dist_name,
+                )
+
                 seed_analytics_definitions(cur)
 
                 print("✅ Seed complete:")
                 print(f"  Tables: {schema.CUSTOMER_T}, {schema.PACKAGE_T}, {schema.SUB_T}")
-                print(f"  Packages: 10 (fixed names)")
+                print("  Packages: 10 (fixed names)")
                 print(f"  Customers: {cfg.seed_customers}")
                 print(f"  Subscriptions: {cfg.seed_subscriptions}")
+                print(f"  Distribution: {dist_name}")
+                print(f"  Reset first: {'YES' if seed_reset else 'NO'}")
 
-                # After seed: insert due payments
                 run_payments_after_seed(cur, schema)
-
-                # Generate package percentage JSON after seeding
                 generate_package_percentage_json(cur)
 
     finally:
         conn.close()
 
+
 if __name__ == "__main__":
     run_seed()
-

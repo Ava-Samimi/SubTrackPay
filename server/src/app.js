@@ -10,6 +10,7 @@ import dataRoutes from "./routes/data.routes.js"; // ✅ NEW
 import nightlyRoutes from "./routes/nightly.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import metricsRoutes from "./routes/metrics.routes.js";
+import seedRoutes from "./routes/seed.routes.js";
 import path from "path";
 
 
@@ -33,10 +34,11 @@ app.use("/api/nightly", nightlyRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use("/exports", express.static("/app/exports"));
+app.use("/api", seedRoutes);
 
 
 // Protect everything below this line
-app.use("/api", requireFirebaseAuth);
+//app.use("/api", requireFirebaseAuth);
 
 app.use("/api/customers", customersRouter);
 app.use("/api/packages", packagesRouter);

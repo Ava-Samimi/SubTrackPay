@@ -2,14 +2,23 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies required for Prisma and netcat
-RUN apk add --no-cache netcat-openbsd openssl ca-certificates
+# Install OS deps:
+# - netcat: wait for Postgres
+# - openssl/ca-certificates: TLS / Prisma engines
+# - python3: run the seeder
+# - py3-psycopg2: Postgres driver needed by the seeder (psycopg2)
+RUN apk add --no-cache \
+  netcat-openbsd \
+  openssl \
+  ca-certificates \
+  python3 \
+  py3-psycopg2
 
 # Copy package.json and package-lock.json first for caching
 COPY package*.json ./
 
-# Install dependencies (including dotenv)
-RUN npm install  # Make sure this installs everything
+# Install dependencies
+RUN npm install
 
 # Copy Prisma schema and migrations, and app source
 COPY prisma ./prisma

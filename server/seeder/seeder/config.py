@@ -1,7 +1,9 @@
+# server/seeder/seeder/config.py
+
 import os
 from dataclasses import dataclass
 from urllib.parse import urlparse, urlunparse
-from typing import Optional
+from typing import Optional, Literal
 
 
 def strip_prisma_schema_query(url: str) -> str:
@@ -26,14 +28,19 @@ def _parse_optional_int(env_value: Optional[str]) -> Optional[int]:
     return int(s)
 
 
+# ✅ allowed subscription distributions
+DistributionName = Literal["uniform", "popular_packages", "heavy_monthly", "realistic_default"]
+
+
 @dataclass(frozen=True)
 class SeedConfig:
     db_url: str
     seed_customers: int
     seed_packages: int
     seed_subscriptions: int
-    seed_random_seed: Optional[int]  # ✅ optional now
+    seed_random_seed: Optional[int]  # optional (None => true randomness)
     seed_skip_if_exists: bool
+    seed_distribution: DistributionName  # ✅ new
 
 
 def load_config() -> SeedConfig:
@@ -44,11 +51,18 @@ def load_config() -> SeedConfig:
 
     seed_skip_if_exists = os.environ.get("SEED_SKIP_IF_EXISTS", "1").strip() not in ("0", "false", "False")
 
+    # ✅ distribution (validated)
+    dist = os.environ.get("SEED_DISTRIBUTION", "uniform").strip()
+    allowed = {"uniform", "popular_packages", "heavy_monthly", "realistic_default"}
+    if dist not in allowed:
+        raise SystemExit(f"Invalid SEED_DISTRIBUTION='{dist}'. Allowed: {sorted(list(allowed))}")
+
     return SeedConfig(
         db_url=db_url,
         seed_customers=int(os.environ.get("SEED_CUSTOMERS", "500")),
         seed_packages=int(os.environ.get("SEED_PACKAGES", "5")),
         seed_subscriptions=int(os.environ.get("SEED_SUBSCRIPTIONS", "500")),
-        seed_random_seed=_parse_optional_int(os.environ.get("SEED_RANDOM_SEED")),  # ✅ no default 42
+        seed_random_seed=_parse_optional_int(os.environ.get("SEED_RANDOM_SEED")),
         seed_skip_if_exists=seed_skip_if_exists,
+        seed_distribution=dist,  # type: ignore[arg-type]
     )

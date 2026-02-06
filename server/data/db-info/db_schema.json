@@ -33,6 +33,13 @@
           "db_column": null
         },
         {
+          "name": "postalCode",
+          "type": "String",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
           "name": "ccExpiration",
           "type": "DateTime",
           "optional": true,
@@ -62,6 +69,13 @@
         {
           "name": "packageID",
           "type": "Int",
+          "optional": false,
+          "list": false,
+          "db_column": null
+        },
+        {
+          "name": "name",
+          "type": "String",
           "optional": false,
           "list": false,
           "db_column": null
@@ -476,6 +490,6 @@
   ],
   "meta": {
     "schema_path": "/app/prisma/schema.prisma",
-    "generated_at_utc": "2026-02-02T08:37:49.374473+00:00"
+    "generated_at_utc": "2026-02-05T05:25:18.043530+00:00"
   }
 }
