@@ -83,7 +83,7 @@ router.post("/jobs", async (req, res) => {
 
     saveJobs(jobs);
     return res.json({ ok: true, saved: job });
-  } catch (err) {
+  } catch (_err) {
     console.error("[nightly.routes] POST /jobs error:", err);
     return res.status(500).json({ error: "Failed to save nightly job" });
   }
@@ -128,7 +128,7 @@ router.post("/jobs/run", async (req, res) => {
     fs.writeFileSync(outFile, JSON.stringify(payload, null, 2), "utf-8");
 
     return res.json({ ok: true, ranAt: now, rows: payload.rows.length, outFile });
-  } catch (err) {
+  } catch (_err) {
     console.error("[nightly.routes] POST /jobs/run error:", err);
     return res.status(500).json({ error: String(err?.message || err) });
   }
@@ -141,7 +141,7 @@ router.get("/jobs", (req, res) => {
   try {
     const jobs = loadJobs();
     res.json({ ok: true, jobs });
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ error: "Failed to load jobs" });
   }
 });
