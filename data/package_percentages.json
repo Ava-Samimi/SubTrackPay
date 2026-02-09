@@ -1,29 +1,29 @@
 [
   {
-    "package_id": 4,
-    "package_name": "Pro",
-    "monthly_cost": 79.0,
-    "annual_cost": 299.0,
-    "percentage": 11.6
+    "package_id": 5,
+    "package_name": "Plus",
+    "monthly_cost": 49.0,
+    "annual_cost": 199.0,
+    "percentage": 12.4
   },
   {
-    "package_id": 2,
-    "package_name": "Basic",
+    "package_id": 3,
+    "package_name": "Standard",
     "monthly_cost": 49.0,
-    "annual_cost": 399.0,
-    "percentage": 11.4
+    "annual_cost": 499.0,
+    "percentage": 11.6
   },
   {
     "package_id": 8,
     "package_name": "Enterprise",
-    "monthly_cost": 19.0,
-    "annual_cost": 299.0,
-    "percentage": 11.2
+    "monthly_cost": 39.0,
+    "annual_cost": 799.0,
+    "percentage": 11.0
   },
   {
-    "package_id": 1,
-    "package_name": "Starter",
-    "monthly_cost": 99.0,
+    "package_id": 9,
+    "package_name": "Student",
+    "monthly_cost": 29.0,
     "annual_cost": 799.0,
     "percentage": 10.8
   }
