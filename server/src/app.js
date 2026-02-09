@@ -6,12 +6,11 @@ import packagesRouter from "./routes/packages.routes.js";
 import subscriptionsRouter from "./routes/subscriptions.routes.js";
 import paymentsRouter from "./routes/payments.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
-import dataRoutes from "./routes/data.routes.js"; // ✅ NEW
+import dataRoutes from "./routes/data.routes.js";
 import nightlyRoutes from "./routes/nightly.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import metricsRoutes from "./routes/metrics.routes.js";
 import seedRoutes from "./routes/seed.routes.js";
-
 
 import { requireFirebaseAuth } from "./middleware/requireFirebaseAuth.js";
 
@@ -28,23 +27,21 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 // ✅ PUBLIC (no auth) — for demo / charts
 app.use("/api/analytics", analyticsRoutes);
-app.use("/api/data", dataRoutes); // ✅ NEW
+app.use("/api/data", dataRoutes);
 app.use("/api/nightly", nightlyRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use("/exports", express.static("/app/exports"));
 app.use("/api", seedRoutes);
 
-
-// Protect everything below this line
-app.use("/api", requireFirebaseAuth);
+// ✅ Protect everything below this line (skip in tests)
+if (process.env.NODE_ENV !== "test") {
+  app.use("/api", requireFirebaseAuth);
+}
 
 app.use("/api/customers", customersRouter);
 app.use("/api/packages", packagesRouter);
 app.use("/api/subscriptions", subscriptionsRouter);
 app.use("/api/payments", paymentsRouter);
-
-// (Optional) later you can re-protect analytics by moving it below auth
-// app.use("/api/analytics", analyticsRoutes);
 
 export default app;

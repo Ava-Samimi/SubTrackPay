@@ -27,7 +27,7 @@ export async function requireFirebaseAuth(req, res, next) {
 
     req.user = await admin.auth().verifyIdToken(token);
     return next();
-  } catch (_err) {
+  } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
   }
 }

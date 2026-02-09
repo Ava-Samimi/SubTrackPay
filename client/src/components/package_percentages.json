@@ -1,0 +1,32 @@
+[
+    {
+        "package_id": 5,
+        "monthly_cost": 79,
+        "annual_cost": 199,
+        "percentage": 21.4
+    },
+    {
+        "package_id": 3,
+        "monthly_cost": 39,
+        "annual_cost": 299,
+        "percentage": 21.2
+    },
+    {
+        "package_id": 1,
+        "monthly_cost": 79,
+        "annual_cost": 199,
+        "percentage": 20.2
+    },
+    {
+        "package_id": 2,
+        "monthly_cost": 19,
+        "annual_cost": 799,
+        "percentage": 18.8
+    },
+    {
+        "package_id": 4,
+        "monthly_cost": 29,
+        "annual_cost": 299,
+        "percentage": 18.4
+    }
+]

@@ -13,6 +13,75 @@ import AnalyticsPage from "./pages/analytics/AnalyticsPage.jsx";
 
 import SeedConfigModal from "./components/SeedConfigModal.jsx";
 
+function AuthedShell({
+  children,
+  seedOpen,
+  setSeedOpen,
+  seeding,
+  seedMode,
+  openReseed,
+  handleSeedApply,
+}) {
+  return (
+    <AuthGate>
+      <>
+        {/* ✅ Re-seed button (only for authenticated pages) */}
+        <button
+          onClick={openReseed}
+          disabled={seeding}
+          style={{
+            position: "fixed",
+            right: 16,
+            bottom: 16,
+            zIndex: 9999,
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(255,255,255,0.25)",
+            background: "rgba(0,0,0,0.65)",
+            color: "white",
+            cursor: seeding ? "not-allowed" : "pointer",
+          }}
+          title="Repopulate fake data"
+        >
+          Re-seed DB
+        </button>
+
+        {/* ✅ Seed modal (only for authenticated pages) */}
+        <SeedConfigModal
+          open={seedOpen}
+          onClose={() => !seeding && setSeedOpen(false)}
+          onApply={handleSeedApply}
+          mode={seedMode}
+        />
+
+        {/* ✅ Seeding overlay (only for authenticated pages) */}
+        {seeding && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.55)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10000,
+              color: "white",
+              fontSize: 16,
+              fontWeight: 600,
+            }}
+          >
+            {seedMode === "reseed"
+              ? "Resetting + seeding database… please wait."
+              : "Seeding database… please wait."}
+          </div>
+        )}
+
+        {children}
+      </>
+    </AuthGate>
+  );
+}
+
 export default function App() {
   const [seedOpen, setSeedOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -87,112 +156,104 @@ export default function App() {
   };
 
   return (
-    <>
-      {/* ✅ Re-seed button (shows modal on demand) */}
-      <button
-        onClick={openReseed}
-        disabled={seeding}
-        style={{
-          position: "fixed",
-          right: 16,
-          bottom: 16,
-          zIndex: 9999,
-          padding: "10px 14px",
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.25)",
-          background: "rgba(0,0,0,0.65)",
-          color: "white",
-          cursor: seeding ? "not-allowed" : "pointer",
-        }}
-        title="Repopulate fake data"
-      >
-        Re-seed DB
-      </button>
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={<LoginPage />} />
 
-      <SeedConfigModal
-        open={seedOpen}
-        onClose={() => !seeding && setSeedOpen(false)}
-        onApply={handleSeedApply}
-        // optional: if your modal wants to show a label
-        mode={seedMode}
+      {/* Authenticated */}
+      <Route
+        path="/"
+        element={
+          <AuthedShell
+            seedOpen={seedOpen}
+            setSeedOpen={setSeedOpen}
+            seeding={seeding}
+            seedMode={seedMode}
+            openReseed={openReseed}
+            handleSeedApply={handleSeedApply}
+          >
+            <Navigate to="/customers" replace />
+          </AuthedShell>
+        }
+      />
+      <Route
+        path="/customers"
+        element={
+          <AuthedShell
+            seedOpen={seedOpen}
+            setSeedOpen={setSeedOpen}
+            seeding={seeding}
+            seedMode={seedMode}
+            openReseed={openReseed}
+            handleSeedApply={handleSeedApply}
+          >
+            <CustomersPage />
+          </AuthedShell>
+        }
+      />
+      <Route
+        path="/packages"
+        element={
+          <AuthedShell
+            seedOpen={seedOpen}
+            setSeedOpen={setSeedOpen}
+            seeding={seeding}
+            seedMode={seedMode}
+            openReseed={openReseed}
+            handleSeedApply={handleSeedApply}
+          >
+            <PackagesPage />
+          </AuthedShell>
+        }
+      />
+      <Route
+        path="/subscriptions"
+        element={
+          <AuthedShell
+            seedOpen={seedOpen}
+            setSeedOpen={setSeedOpen}
+            seeding={seeding}
+            seedMode={seedMode}
+            openReseed={openReseed}
+            handleSeedApply={handleSeedApply}
+          >
+            <SubscriptionsPage />
+          </AuthedShell>
+        }
+      />
+      <Route
+        path="/payments"
+        element={
+          <AuthedShell
+            seedOpen={seedOpen}
+            setSeedOpen={setSeedOpen}
+            seeding={seeding}
+            seedMode={seedMode}
+            openReseed={openReseed}
+            handleSeedApply={handleSeedApply}
+          >
+            <PaymentsPage />
+          </AuthedShell>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <AuthedShell
+            seedOpen={seedOpen}
+            setSeedOpen={setSeedOpen}
+            seeding={seeding}
+            seedMode={seedMode}
+            openReseed={openReseed}
+            handleSeedApply={handleSeedApply}
+          >
+            <AnalyticsPage />
+          </AuthedShell>
+        }
       />
 
-      {/* seeding overlay */}
-      {seeding && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.55)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10000,
-            color: "white",
-            fontSize: 16,
-            fontWeight: 600,
-          }}
-        >
-          {seedMode === "reseed"
-            ? "Resetting + seeding database… please wait."
-            : "Seeding database… please wait."}
-        </div>
-      )}
-
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-
-        <Route
-          path="/"
-          element={
-            <AuthGate>
-              <Navigate to="/customers" replace />
-            </AuthGate>
-          }
-        />
-        <Route
-          path="/customers"
-          element={
-            <AuthGate>
-              <CustomersPage />
-            </AuthGate>
-          }
-        />
-        <Route
-          path="/packages"
-          element={
-            <AuthGate>
-              <PackagesPage />
-            </AuthGate>
-          }
-        />
-        <Route
-          path="/subscriptions"
-          element={
-            <AuthGate>
-              <SubscriptionsPage />
-            </AuthGate>
-          }
-        />
-        <Route
-          path="/payments"
-          element={
-            <AuthGate>
-              <PaymentsPage />
-            </AuthGate>
-          }
-        />
-        <Route
-          path="/analytics"
-          element={
-            <AuthGate>
-              <AnalyticsPage />
-            </AuthGate>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/customers" replace />} />
-      </Routes>
-    </>
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/customers" replace />} />
+    </Routes>
   );
 }
