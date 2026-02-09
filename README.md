@@ -1,3 +1,16 @@
+### HOORAY, latest JEST test run resulted in ove 80%
+
+## Results Summary (latest run)
+- ✅ **Test Suites:** 5 passed / 5 total  
+- ✅ **Tests:** 47 passed / 47 total  
+- ✅ **Overall Coverage:**  
+  - **Statements:** 83.58%  
+  - **Branches:** 72.6%  
+  - **Functions:** 97.14%  
+  - **Lines:** 86.05%
+
+- also, Jest testing is now fully available on both client and server
+
 ## RELEASE 2 VIDEOS and POWER POINT (pdf)
 - SubtrackPay_Video_demo
 - SubtrackPay_Video_Presentatiom
