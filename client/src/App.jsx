@@ -12,11 +12,14 @@ import PaymentsPage from "./pages/payments/PaymentsPage.jsx";
 import AnalyticsPage from "./pages/analytics/AnalyticsPage.jsx";
 
 import SeedConfigModal from "./components/SeedConfigModal.jsx";
+import SnapshotModal from "./components/SnapshotModal.jsx";
 
 function AuthedShell({
   children,
   seedOpen,
   setSeedOpen,
+  snapshotOpen,
+  setSnapshotOpen,
   seeding,
   seedMode,
   openReseed,
@@ -25,26 +28,71 @@ function AuthedShell({
   return (
     <AuthGate>
       <>
-        {/* ✅ Re-seed button (only for authenticated pages) */}
-        <button
-          onClick={openReseed}
-          disabled={seeding}
+        {/* ✅ Bottom-right buttons (only for authenticated pages) */}
+        <div
           style={{
             position: "fixed",
             right: 16,
             bottom: 16,
             zIndex: 9999,
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.25)",
-            background: "rgba(0,0,0,0.65)",
-            color: "white",
-            cursor: seeding ? "not-allowed" : "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
           }}
-          title="Repopulate fake data"
         >
-          Re-seed DB
-        </button>
+          {/* ✅ Snapshot button (opens SnapshotModal) */}
+          <button
+            onClick={() => setSnapshotOpen(true)}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(0,0,0,0.65)",
+              color: "white",
+              cursor: "pointer",
+            }}
+            title="Snapshot"
+          >
+            Snapshot
+          </button>
+
+          {/* ✅ HELP button (currently does nothing) */}
+          <button
+            onClick={() => {}}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(0,0,0,0.65)",
+              color: "white",
+              cursor: "pointer",
+            }}
+            title="Help"
+          >
+            HELP!
+          </button>
+
+          {/* ✅ Re-seed button */}
+          <button
+            onClick={openReseed}
+            disabled={seeding}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(0,0,0,0.65)",
+              color: "white",
+              cursor: seeding ? "not-allowed" : "pointer",
+              opacity: seeding ? 0.6 : 1,
+            }}
+            title="Repopulate fake data"
+          >
+            Re-seed DB
+          </button>
+        </div>
+
+        {/* ✅ Snapshot modal (only for authenticated pages) */}
+        <SnapshotModal open={snapshotOpen} onClose={() => setSnapshotOpen(false)} />
 
         {/* ✅ Seed modal (only for authenticated pages) */}
         <SeedConfigModal
@@ -84,6 +132,7 @@ function AuthedShell({
 
 export default function App() {
   const [seedOpen, setSeedOpen] = useState(false);
+  const [snapshotOpen, setSnapshotOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
   // "first" => initial seed (no reset)
@@ -167,6 +216,8 @@ export default function App() {
           <AuthedShell
             seedOpen={seedOpen}
             setSeedOpen={setSeedOpen}
+            snapshotOpen={snapshotOpen}
+            setSnapshotOpen={setSnapshotOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -182,6 +233,8 @@ export default function App() {
           <AuthedShell
             seedOpen={seedOpen}
             setSeedOpen={setSeedOpen}
+            snapshotOpen={snapshotOpen}
+            setSnapshotOpen={setSnapshotOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -197,6 +250,8 @@ export default function App() {
           <AuthedShell
             seedOpen={seedOpen}
             setSeedOpen={setSeedOpen}
+            snapshotOpen={snapshotOpen}
+            setSnapshotOpen={setSnapshotOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -212,6 +267,8 @@ export default function App() {
           <AuthedShell
             seedOpen={seedOpen}
             setSeedOpen={setSeedOpen}
+            snapshotOpen={snapshotOpen}
+            setSnapshotOpen={setSnapshotOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -227,6 +284,8 @@ export default function App() {
           <AuthedShell
             seedOpen={seedOpen}
             setSeedOpen={setSeedOpen}
+            snapshotOpen={snapshotOpen}
+            setSnapshotOpen={setSnapshotOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -242,6 +301,8 @@ export default function App() {
           <AuthedShell
             seedOpen={seedOpen}
             setSeedOpen={setSeedOpen}
+            snapshotOpen={snapshotOpen}
+            setSnapshotOpen={setSnapshotOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
