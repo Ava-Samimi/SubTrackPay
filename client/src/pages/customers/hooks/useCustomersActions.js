@@ -1,3 +1,4 @@
+// client/src/pages/customers/hooks/useCustomersActions.js
 import { createCustomer, updateCustomer, deleteCustomer } from "../customersApi.js";
 import { normalizeCustomerPayload } from "./customersFormat.js";
 
@@ -22,13 +23,15 @@ export function useCustomersActions(state, loadAll) {
     selectedIds: _selectedIds, // intentionally unused for now
     setSelectedIds,
 
-    // new fields
+    // fields
     firstName,
     setFirstName,
     lastName,
     setLastName,
     email,
     setEmail,
+    postalCode,
+    setPostalCode,
     ccExpiration,
     setCcExpiration,
   } = state;
@@ -38,23 +41,19 @@ export function useCustomersActions(state, loadAll) {
     setFirstName("");
     setLastName("");
     setEmail("");
+    setPostalCode("");
     setCcExpiration("");
   }
 
-  // ✅ Toggle list mode ON/OFF
   function toggleListMode() {
     setListMode((prev) => {
       const next = !prev;
-
-      // when entering/exiting list mode, clear multi-select + normal edit selection
       setSelectedIds([]);
       resetForm();
-
       return next;
     });
   }
 
-  // ✅ Row click behavior for list mode (multi-select)
   function toggleRowSelection(customerID) {
     setSelectedIds((prev) => {
       if (prev.includes(customerID)) return prev.filter((id) => id !== customerID);
@@ -62,27 +61,39 @@ export function useCustomersActions(state, loadAll) {
     });
   }
 
-  /**
-   * ✅ NORMAL ROW CLICK BEHAVIOR (edit mode)
-   * Only used when listMode is OFF.
-   */
   function selectCustomerRow(c) {
-    setEditingId(c.customerID); // toggles edit mode
+    setEditingId(c.customerID);
     setFirstName(c.firstName || "");
     setLastName(c.lastName || "");
     setEmail(c.email || "");
-    setCcExpiration(c.ccExpiration ? String(c.ccExpiration).slice(0, 10) : ""); // YYYY-MM-DD
+    setPostalCode(c.postalCode || "");
+    setCcExpiration(c.ccExpiration ? String(c.ccExpiration).slice(0, 10) : "");
   }
 
   async function submitForm(e) {
     e.preventDefault();
     setError("");
 
-    // If in list mode, ignore form submits (optional safety)
     if (listMode) return;
 
     try {
-      const payload = normalizeCustomerPayload({ firstName, lastName, email, ccExpiration });
+      // Option A: if user leaves postalCode blank, default it for testing
+      const pc = (postalCode || "").trim() || "H2X 1Y4";
+
+      const payload = normalizeCustomerPayload({
+        firstName,
+        lastName,
+        email,
+        ccExpiration,
+        postalCode: pc,
+      });
+
+      // Ensure we never send empty strings for optional fields
+      payload.email = (payload.email || "").trim() ? payload.email.trim() : null;
+      payload.ccExpiration = payload.ccExpiration ? payload.ccExpiration : null;
+
+      // Ensure postalCode is always present + trimmed
+      payload.postalCode = pc;
 
       if (isEditing) {
         const updated = await updateCustomer(editingId, payload);
@@ -92,7 +103,7 @@ export function useCustomersActions(state, loadAll) {
         setCustomers([created, ...customers]);
       }
 
-      await loadAll(); // refresh subscription counts too
+      await loadAll();
       resetForm();
     } catch (e2) {
       setError(e2?.message || "Failed to fetch");
@@ -103,7 +114,6 @@ export function useCustomersActions(state, loadAll) {
     if (!editingId) return;
     setError("");
 
-    // If in list mode, ignore deletes (optional safety)
     if (listMode) return;
 
     try {
