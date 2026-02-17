@@ -1,3 +1,4 @@
+// client/src/pages/packages/hooks/usePackagesPage.js
 import { useEffect, useMemo, useState } from "react";
 import { useListMode } from "../../../hooks/useListMode.js";
 import { listPackages, createPackage, updatePackage, deletePackage } from "../packagesApi.js";
@@ -11,9 +12,14 @@ function toIntOrNull(v) {
   if (s === "") return null;
   const n = Number(s);
   if (!Number.isFinite(n)) return NaN;
-  // enforce integer costs (schema is Int)
   if (!Number.isInteger(n)) return NaN;
   return n;
+}
+
+function toTrimmedStringOrNull(v) {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  return s ? s : null;
 }
 
 export function usePackagesPage() {
@@ -24,13 +30,14 @@ export function usePackagesPage() {
   const [editingId, setEditingId] = useState(null); // string id for safety with listMode
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
+  // ✅ NEW: name
+  const [name, setName] = useState("");
+
   const [monthlyCost, setMonthlyCost] = useState("");
   const [annualCost, setAnnualCost] = useState("");
 
-  // list mode hook (internal object)
   const list = useListMode();
 
-  // ✅ flatten list-mode API to match CustomersPage style
   const listMode = list.listMode;
   const selectedIds = list.selectedIds || [];
   const selectedCount = list.selectedCount ?? selectedIds.length;
@@ -50,10 +57,6 @@ export function usePackagesPage() {
       const data = await listPackages();
       const next = Array.isArray(data) ? data : [];
       setItems(next);
-
-      // Optional: if data changed, keep selection sane
-      // If your useListMode exposes clearSelection, this helps avoid "ghost" selections.
-      // Comment this out if you want selection to persist across refreshes.
       list.clearSelection?.();
     } catch (e) {
       setError(e?.message || "Failed to fetch packages");
@@ -69,23 +72,32 @@ export function usePackagesPage() {
 
   function resetForm() {
     setEditingId(null);
+    setName("");
     setMonthlyCost("");
     setAnnualCost("");
   }
 
   function selectRow(item) {
     setEditingId(item?.packageID != null ? String(item.packageID) : null);
+
+    // ✅ load name from API (your model is `name`)
+    setName(item?.name == null ? "" : String(item.name));
+
     setMonthlyCost(item?.monthlyCost == null ? "" : String(item.monthlyCost));
     setAnnualCost(item?.annualCost == null ? "" : String(item.annualCost));
   }
 
   async function submit(e) {
     e?.preventDefault?.();
-    if (listMode) return; // no editing while in list mode
+    if (listMode) return;
 
     setError("");
 
+    const nm = toTrimmedStringOrNull(name);
+    if (!nm) return setError("name is required");
+
     const payload = {
+      name: nm,
       monthlyCost: toIntOrNull(monthlyCost),
       annualCost: toIntOrNull(annualCost),
     };
@@ -113,7 +125,6 @@ export function usePackagesPage() {
     }
   }
 
-  // Single delete (edit mode)
   async function removeCurrent() {
     if (!editingId) return;
     setError("");
@@ -126,10 +137,8 @@ export function usePackagesPage() {
     }
   }
 
-  // Bulk delete (list mode) OR single delete fallback (edit mode)
   async function removeSelected() {
     if (!listMode) {
-      // backward compatible: page may call removeSelected while not in list mode
       return removeCurrent();
     }
 
@@ -137,7 +146,6 @@ export function usePackagesPage() {
 
     setError("");
     try {
-      // delete all (don’t stop at first failure)
       const results = await Promise.allSettled(selectedIds.map((id) => deletePackage(id)));
 
       const failed = results.filter((r) => r.status === "rejected");
@@ -162,6 +170,8 @@ export function usePackagesPage() {
     selectedItem,
 
     // form
+    name,
+    setName,
     monthlyCost,
     setMonthlyCost,
     annualCost,
@@ -173,7 +183,7 @@ export function usePackagesPage() {
     selectRow,
     submit,
 
-    // ✅ customers-like list-mode API (top-level)
+    // list-mode API
     listMode,
     selectedIds,
     selectedCount,
@@ -181,13 +191,12 @@ export function usePackagesPage() {
     toggleRowSelection,
 
     // delete
-    removeSelected, // works in both modes
-    removeCurrent, // optional
+    removeSelected,
+    removeCurrent,
 
     // utils
     shortId,
 
-    // keep original list object too (in case other code uses it)
     list,
   };
 }
