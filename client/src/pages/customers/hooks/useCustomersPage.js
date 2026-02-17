@@ -1,3 +1,4 @@
+// client/src/pages/customers/hooks/useCustomersPage.js
 import { useEffect } from "react";
 import { useCustomersState } from "./useCustomersState.js";
 import { useCustomersLoad } from "./useCustomersLoad.js";

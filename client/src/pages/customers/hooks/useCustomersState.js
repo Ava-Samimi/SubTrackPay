@@ -1,3 +1,4 @@
+// client/src/pages/customers/hooks/useCustomersState.js
 import { useMemo, useState } from "react";
 
 export function useCustomersState() {
@@ -10,15 +11,16 @@ export function useCustomersState() {
   const [editingId, setEditingId] = useState(null); // customerID (number) or null
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
-  // ✅ list mode (multi-select)
+  // list mode (multi-select)
   const [listMode, setListMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]); // array of customerID numbers
   const selectedCount = selectedIds.length;
 
-  // Form fields (new schema)
+  // Form fields (schema)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [postalCode, setPostalCode] = useState(""); // ✅ NEW (required in Prisma)
   const [ccExpiration, setCcExpiration] = useState(""); // string input (YYYY-MM-DD or blank)
 
   const selectedCustomer = useMemo(
@@ -55,6 +57,8 @@ export function useCustomersState() {
     setLastName,
     email,
     setEmail,
+    postalCode, // ✅ NEW
+    setPostalCode, // ✅ NEW
     ccExpiration,
     setCcExpiration,
   };

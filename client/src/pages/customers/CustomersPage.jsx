@@ -1,3 +1,4 @@
+// client/src/pages/customers/CustomersPage.jsx
 import { useMemo, useEffect, useState } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
 import EntityLeftHeader from "../../components/EntityLeftHeader.jsx";
@@ -62,6 +63,8 @@ export default function CustomersPage() {
     setLastName,
     email,
     setEmail,
+    postalCode, // ✅ NEW
+    setPostalCode, // ✅ NEW
     ccExpiration,
     setCcExpiration,
 
@@ -99,6 +102,7 @@ export default function CustomersPage() {
       "firstName",
       "lastName",
       "email",
+      "postalCode", // ✅ NEW
       "createdAt",
       "ccExpiration",
       "subscriptionsCount",
@@ -111,6 +115,7 @@ export default function CustomersPage() {
         c.firstName || "",
         c.lastName || "",
         c.email || "",
+        c.postalCode || "", // ✅ NEW
         c.createdAt ? new Date(c.createdAt).toISOString() : "",
         c.ccExpiration ? new Date(c.ccExpiration).toISOString() : "",
         subCounts?.[id] ?? 0,
@@ -205,6 +210,15 @@ export default function CustomersPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="jdoe@gmail.com"
+              />
+
+              {/* ✅ NEW: postal code */}
+              <div className="entity-label">postal code</div>
+              <input
+                className="entity-input"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                placeholder="H2X 1Y4"
               />
 
               <div className="entity-label">cc expiration</div>

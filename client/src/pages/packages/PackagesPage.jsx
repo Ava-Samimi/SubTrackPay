@@ -1,20 +1,24 @@
+// client/src/pages/packages/PackagesPage.jsx
 import { useMemo } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
-import EntityLeftHeader from "../../components/EntityLeftHeader.jsx"; // ✅ add
+import EntityLeftHeader from "../../components/EntityLeftHeader.jsx";
 import "../shared/EntityPage.css";
 import { usePackagesPage } from "./hooks/usePackagesPage.js";
 
-function pkgLabel(p) {
-  const id = p?.packageID;
-
-  // ✅ prefer a real name from API if available
-  const name =
+function getPackageName(p) {
+  return (
     (p?.name ?? "").trim() ||
     (p?.packageName ?? "").trim() ||
     (p?.title ?? "").trim() ||
     (p?.package ?? "").trim() ||
-    (p?.label ?? "").trim();
+    (p?.label ?? "").trim() ||
+    ""
+  );
+}
 
+function pkgLabel(p) {
+  const id = p?.packageID;
+  const name = getPackageName(p);
   const m = p?.monthlyCost ?? "-";
   const a = p?.annualCost ?? "-";
 
@@ -22,11 +26,10 @@ function pkgLabel(p) {
   return `Pkg #${String(id ?? "").slice(0, 4)} (M: ${m} / A: ${a})`;
 }
 
-// ✅ CSV helpers
+// CSV helpers
 function csvEscape(v) {
   if (v === null || v === undefined) return "";
   const s = String(v);
-  // Quote if needed
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
@@ -57,12 +60,15 @@ export default function PackagesPage() {
     editingId,
     isEditing,
 
-    // ✅ list mode (flattened like CustomersPage)
     listMode,
     selectedIds,
     selectedCount,
     toggleListMode,
     toggleRowSelection,
+
+    // ✅ NEW: name field
+    name,
+    setName,
 
     monthlyCost,
     setMonthlyCost,
@@ -74,9 +80,7 @@ export default function PackagesPage() {
     selectRow,
     submit,
 
-    // edit delete OR list delete
     removeSelected,
-
     shortId,
   } = usePackagesPage();
 
@@ -88,7 +92,6 @@ export default function PackagesPage() {
     return (selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
   }, [items, selectedIds]);
 
-  // ✅ Selected rows lookup for export
   const selectedPackages = useMemo(() => {
     const idSet = new Set((selectedIds || []).map((x) => String(x)));
     return items.filter((p) => idSet.has(String(p.packageID)));
@@ -97,11 +100,10 @@ export default function PackagesPage() {
   const exportSelectedAsCsv = () => {
     if (!selectedIds || selectedIds.length === 0) return;
 
-    // Build rows (choose whatever columns you want)
-    const headers = ["packageID", "packageName", "monthlyCost", "annualCost"];
+    const headers = ["packageID", "name", "monthlyCost", "annualCost"];
     const rows = selectedPackages.map((p) => [
       p.packageID,
-      pkgLabel(p),
+      getPackageName(p),
       p.monthlyCost ?? "-",
       p.annualCost ?? "-",
     ]);
@@ -111,7 +113,7 @@ export default function PackagesPage() {
     const stamp = new Date()
       .toISOString()
       .replace(/[:]/g, "-")
-      .replace(/\..+$/, ""); // YYYY-MM-DDTHH-mm-ss
+      .replace(/\..+$/, "");
     const filename = `packages_export_${stamp}.csv`;
 
     downloadTextFile({
@@ -128,11 +130,19 @@ export default function PackagesPage() {
       <div className="entity-layout">
         {/* LEFT */}
         <div className={`entity-left ${blackoutLeft ? "entity-left-blackout" : ""}`}>
-          {/* ✅ Logo + Title (same style as CustomersPage) */}
           <EntityLeftHeader title="Package" logoSrc="/logo.png" />
 
           {!blackoutLeft ? (
             <form className="entity-card" onSubmit={submit}>
+              {/* ✅ NEW: package name */}
+              <div className="entity-label">name</div>
+              <input
+                className="entity-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Movies"
+              />
+
               <div className="entity-label">monthlyCost</div>
               <input
                 className="entity-input"
@@ -206,7 +216,6 @@ export default function PackagesPage() {
                 </>
               )}
 
-              {/* ✅ Export Button */}
               <div style={{ marginTop: 12 }}>
                 <button
                   type="button"
