@@ -1,5 +1,5 @@
 // client/src/App.jsx
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
 import AuthGate from "./AuthGate.jsx";
@@ -13,6 +13,7 @@ import AnalyticsPage from "./pages/analytics/AnalyticsPage.jsx";
 
 import SeedConfigModal from "./components/SeedConfigModal.jsx";
 import SnapshotModal from "./components/SnapshotModal.jsx";
+import NorthAmericaMapModal from "./components/NorthAmericaMapModal.jsx"; // ✅ NEW
 
 function AuthedShell({
   children,
@@ -20,11 +21,15 @@ function AuthedShell({
   setSeedOpen,
   snapshotOpen,
   setSnapshotOpen,
+  naMapOpen,
+  setNaMapOpen,
   seeding,
   seedMode,
   openReseed,
   handleSeedApply,
 }) {
+  const navigate = useNavigate();
+
   return (
     <AuthGate>
       <>
@@ -40,6 +45,38 @@ function AuthedShell({
             gap: 10,
           }}
         >
+          {/* ✅ Our Clients (opens the North America modal) */}
+          <button
+            onClick={() => setNaMapOpen(true)}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(0,0,0,0.65)",
+              color: "white",
+              cursor: "pointer",
+            }}
+            title="Open North America map"
+          >
+            Our Clients
+          </button>
+
+          {/* ✅ Call Center */}
+          <button
+            onClick={() => alert("Call Center (coming soon)")}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(0,0,0,0.65)",
+              color: "white",
+              cursor: "pointer",
+            }}
+            title="Call Center"
+          >
+            Call Center
+          </button>
+
           {/* ✅ Snapshot button (opens SnapshotModal) */}
           <button
             onClick={() => setSnapshotOpen(true)}
@@ -91,6 +128,9 @@ function AuthedShell({
           </button>
         </div>
 
+        {/* ✅ North America map modal (only for authenticated pages) */}
+        <NorthAmericaMapModal open={naMapOpen} onClose={() => setNaMapOpen(false)} />
+
         {/* ✅ Snapshot modal (only for authenticated pages) */}
         <SnapshotModal open={snapshotOpen} onClose={() => setSnapshotOpen(false)} />
 
@@ -133,6 +173,7 @@ function AuthedShell({
 export default function App() {
   const [seedOpen, setSeedOpen] = useState(false);
   const [snapshotOpen, setSnapshotOpen] = useState(false);
+  const [naMapOpen, setNaMapOpen] = useState(false); // ✅ NEW
   const [seeding, setSeeding] = useState(false);
 
   // "first" => initial seed (no reset)
@@ -218,6 +259,8 @@ export default function App() {
             setSeedOpen={setSeedOpen}
             snapshotOpen={snapshotOpen}
             setSnapshotOpen={setSnapshotOpen}
+            naMapOpen={naMapOpen}
+            setNaMapOpen={setNaMapOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -235,6 +278,8 @@ export default function App() {
             setSeedOpen={setSeedOpen}
             snapshotOpen={snapshotOpen}
             setSnapshotOpen={setSnapshotOpen}
+            naMapOpen={naMapOpen}
+            setNaMapOpen={setNaMapOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -252,6 +297,8 @@ export default function App() {
             setSeedOpen={setSeedOpen}
             snapshotOpen={snapshotOpen}
             setSnapshotOpen={setSnapshotOpen}
+            naMapOpen={naMapOpen}
+            setNaMapOpen={setNaMapOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -269,6 +316,8 @@ export default function App() {
             setSeedOpen={setSeedOpen}
             snapshotOpen={snapshotOpen}
             setSnapshotOpen={setSnapshotOpen}
+            naMapOpen={naMapOpen}
+            setNaMapOpen={setNaMapOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -286,6 +335,8 @@ export default function App() {
             setSeedOpen={setSeedOpen}
             snapshotOpen={snapshotOpen}
             setSnapshotOpen={setSnapshotOpen}
+            naMapOpen={naMapOpen}
+            setNaMapOpen={setNaMapOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
@@ -303,6 +354,8 @@ export default function App() {
             setSeedOpen={setSeedOpen}
             snapshotOpen={snapshotOpen}
             setSnapshotOpen={setSnapshotOpen}
+            naMapOpen={naMapOpen}
+            setNaMapOpen={setNaMapOpen}
             seeding={seeding}
             seedMode={seedMode}
             openReseed={openReseed}
