@@ -40,6 +40,8 @@ model Customer {
   lastName     String
   email        String?   @unique
   postalCode   String
+  latitude     Float?
+  longitude    Float?
   ccExpiration DateTime?
   createdAt    DateTime  @default(now())
 

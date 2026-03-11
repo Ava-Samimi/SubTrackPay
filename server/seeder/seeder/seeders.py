@@ -55,6 +55,91 @@ def rand_postal_mixed(ca_ratio: float = 0.5, us_zip_plus4_ratio: float = 0.15) -
 
 
 # ----------------------------
+# Latitude / Longitude helpers
+# ----------------------------
+def rand_between(min_val: float, max_val: float) -> float:
+    return min_val + random.random() * (max_val - min_val)
+
+
+def jitter_coord(lat: float, lon: float, lat_jitter: float = 0.35, lon_jitter: float = 0.45) -> tuple[float, float]:
+    return (
+        round(lat + rand_between(-lat_jitter, lat_jitter), 6),
+        round(lon + rand_between(-lon_jitter, lon_jitter), 6),
+    )
+
+
+CA_CITY_CENTERS = [
+    # name, lat, lon, weight
+    ("Toronto", 43.6532, -79.3832, 18),
+    ("Montreal", 45.5019, -73.5674, 16),
+    ("Vancouver", 49.2827, -123.1207, 12),
+    ("Calgary", 51.0447, -114.0719, 8),
+    ("Ottawa", 45.4215, -75.6972, 7),
+    ("Edmonton", 53.5461, -113.4938, 7),
+    ("Quebec City", 46.8139, -71.2080, 5),
+    ("Winnipeg", 49.8951, -97.1384, 4),
+    ("Halifax", 44.6488, -63.5752, 3),
+    ("Victoria", 48.4284, -123.3656, 3),
+    ("Saskatoon", 52.1579, -106.6702, 2),
+    ("St. John's", 47.5615, -52.7126, 2),
+]
+
+US_CITY_CENTERS = [
+    ("New York", 40.7128, -74.0060, 16),
+    ("Los Angeles", 34.0522, -118.2437, 13),
+    ("Chicago", 41.8781, -87.6298, 10),
+    ("Houston", 29.7604, -95.3698, 8),
+    ("Miami", 25.7617, -80.1918, 8),
+    ("Dallas", 32.7767, -96.7970, 7),
+    ("Atlanta", 33.7490, -84.3880, 7),
+    ("Seattle", 47.6062, -122.3321, 6),
+    ("Boston", 42.3601, -71.0589, 6),
+    ("Phoenix", 33.4484, -112.0740, 6),
+    ("San Francisco", 37.7749, -122.4194, 6),
+    ("Denver", 39.7392, -104.9903, 5),
+    ("Detroit", 42.3314, -83.0458, 4),
+    ("Minneapolis", 44.9778, -93.2650, 4),
+    ("Las Vegas", 36.1699, -115.1398, 4),
+    ("Philadelphia", 39.9526, -75.1652, 5),
+    ("Washington", 38.9072, -77.0369, 5),
+    ("Charlotte", 35.2271, -80.8431, 4),
+]
+
+
+def weighted_choice_city(city_rows):
+    weights = [row[3] for row in city_rows]
+    return random.choices(city_rows, weights=weights, k=1)[0]
+
+
+def rand_ca_lat_lon() -> tuple[float, float]:
+    _, lat, lon, _ = weighted_choice_city(CA_CITY_CENTERS)
+    return jitter_coord(lat, lon, lat_jitter=0.32, lon_jitter=0.42)
+
+
+def rand_us_lat_lon() -> tuple[float, float]:
+    _, lat, lon, _ = weighted_choice_city(US_CITY_CENTERS)
+    return jitter_coord(lat, lon, lat_jitter=0.40, lon_jitter=0.50)
+
+
+def rand_lat_lon_for_postal(postal_code: str) -> tuple[float, float]:
+    """
+    If postal code contains a space and matches Canadian style like 'A1A 1A1',
+    treat as Canada. Otherwise treat as US ZIP/ZIP+4.
+    """
+    postal_code = (postal_code or "").strip()
+
+    is_ca = (
+        len(postal_code) >= 7
+        and " " in postal_code
+        and postal_code[0].isalpha()
+    )
+
+    if is_ca:
+        return rand_ca_lat_lon()
+    return rand_us_lat_lon()
+
+
+# ----------------------------
 # CC expiration helpers
 # ----------------------------
 def _ensure_utc(dt) -> datetime:
@@ -237,6 +322,8 @@ def seed_customers(cur, schema: Schema, n: int) -> list[int]:
     cust_full_col = pick_col(cust_cols, ["fullName", "name", "customerName"])
     cust_email_col = pick_col(cust_cols, ["email", "emailAddress"])
     cust_postal_col = pick_col(cust_cols, ["postalCode", "postal_code", "zip", "zipcode", "postal"])
+    cust_lat_col = pick_col(cust_cols, ["latitude", "lat"])
+    cust_lon_col = pick_col(cust_cols, ["longitude", "lon", "lng"])
     cust_since_col = pick_col(cust_cols, ["memberSince", "member_since", "createdAt", "created_at"])
     cust_cc_exp_col = pick_col(cust_cols, ["ccExpiration", "cc_expiration", "cardExpiration", "card_expiration"])
 
@@ -262,7 +349,14 @@ def seed_customers(cur, schema: Schema, n: int) -> list[int]:
         if cust_email_col:
             row[cust_email_col] = rand_email(first, last)
 
-        row[cust_postal_col] = rand_postal_mixed(ca_ratio=0.5, us_zip_plus4_ratio=0.15)
+        postal_code = rand_postal_mixed(ca_ratio=0.5, us_zip_plus4_ratio=0.15)
+        row[cust_postal_col] = postal_code
+
+        lat, lon = rand_lat_lon_for_postal(postal_code)
+        if cust_lat_col:
+            row[cust_lat_col] = lat
+        if cust_lon_col:
+            row[cust_lon_col] = lon
 
         created_dt = rand_past_date()
         if cust_since_col:
