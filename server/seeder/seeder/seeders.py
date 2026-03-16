@@ -61,7 +61,21 @@ def rand_between(min_val: float, max_val: float) -> float:
     return min_val + random.random() * (max_val - min_val)
 
 
-def jitter_coord(lat: float, lon: float, lat_jitter: float = 0.35, lon_jitter: float = 0.45) -> tuple[float, float]:
+def rand_coord_in_box(
+    lat_min: float, lat_max: float, lon_min: float, lon_max: float
+) -> tuple[float, float]:
+    return (
+        round(rand_between(lat_min, lat_max), 6),
+        round(rand_between(lon_min, lon_max), 6),
+    )
+
+
+def jitter_coord(
+    lat: float,
+    lon: float,
+    lat_jitter: float = 0.35,
+    lon_jitter: float = 0.45,
+) -> tuple[float, float]:
     return (
         round(lat + rand_between(-lat_jitter, lat_jitter), 6),
         round(lon + rand_between(-lon_jitter, lon_jitter), 6),
@@ -105,10 +119,114 @@ US_CITY_CENTERS = [
     ("Charlotte", 35.2271, -80.8431, 4),
 ]
 
+CA_SECONDARY_CENTERS = [
+    ("Kelowna", 49.8880, -119.4960, 4),
+    ("Regina", 50.4452, -104.6189, 4),
+    ("Sherbrooke", 45.4042, -71.8929, 4),
+    ("Trois-Rivières", 46.3430, -72.5430, 3),
+    ("Moncton", 46.0878, -64.7782, 3),
+    ("Sudbury", 46.4917, -80.9930, 3),
+    ("Red Deer", 52.2681, -113.8112, 2),
+    ("Kamloops", 50.6745, -120.3273, 2),
+]
+
+US_SECONDARY_CENTERS = [
+    ("Portland", 45.5152, -122.6784, 4),
+    ("San Diego", 32.7157, -117.1611, 4),
+    ("Nashville", 36.1627, -86.7816, 4),
+    ("Kansas City", 39.0997, -94.5786, 4),
+    ("Columbus", 39.9612, -82.9988, 4),
+    ("Indianapolis", 39.7684, -86.1581, 4),
+    ("Tampa", 27.9506, -82.4572, 4),
+    ("Cleveland", 41.4993, -81.6944, 3),
+    ("Raleigh", 35.7796, -78.6382, 3),
+    ("Salt Lake City", 40.7608, -111.8910, 3),
+]
+
+CA_RURAL_ANCHORS = [
+    ("Northern BC", 55.0, -124.0, 2),
+    ("Rural Alberta", 53.0, -112.0, 3),
+    ("Rural Saskatchewan", 51.5, -106.0, 3),
+    ("Northern Ontario", 49.5, -86.0, 3),
+    ("Eastern Quebec", 48.5, -68.0, 3),
+    ("New Brunswick Rural", 46.2, -66.3, 2),
+]
+
+US_RURAL_ANCHORS = [
+    ("Montana Rural", 47.0, -109.5, 2),
+    ("Wyoming Rural", 43.2, -107.5, 2),
+    ("Nebraska Rural", 41.5, -99.5, 3),
+    ("Kansas Rural", 38.5, -98.3, 3),
+    ("West Texas", 31.5, -102.5, 3),
+    ("Dakotas Rural", 46.5, -100.5, 2),
+    ("Appalachia", 37.5, -81.5, 3),
+]
+
+CA_BOXES = [
+    # name, lat_min, lat_max, lon_min, lon_max, weight
+    ("BC_AB", 48.0, 57.5, -132.0, -110.0, 4),
+    ("Prairies", 49.0, 56.5, -110.0, -95.0, 4),
+    ("Ontario", 42.0, 52.5, -95.0, -74.0, 7),
+    ("Quebec", 45.0, 53.5, -79.5, -57.0, 6),
+    ("Atlantic", 43.0, 49.5, -67.5, -52.0, 3),
+]
+
+US_BOXES = [
+    ("West", 32.0, 48.8, -124.8, -111.0, 5),
+    ("Mountain", 31.0, 48.8, -111.0, -101.0, 4),
+    ("Midwest", 35.0, 48.8, -101.0, -84.0, 6),
+    ("South", 25.0, 36.8, -100.0, -75.0, 6),
+    ("Northeast", 39.0, 47.5, -80.0, -67.0, 5),
+]
+
+CA_EAST_CENTERS = [
+    ("Montreal", 45.5019, -73.5674, 12),
+    ("Ottawa", 45.4215, -75.6972, 8),
+    ("Quebec City", 46.8139, -71.2080, 8),
+    ("Toronto", 43.6532, -79.3832, 10),
+    ("Halifax", 44.6488, -63.5752, 5),
+    ("St. John's", 47.5615, -52.7126, 4),
+]
+
+US_EAST_CENTERS = [
+    ("New York", 40.7128, -74.0060, 14),
+    ("Boston", 42.3601, -71.0589, 8),
+    ("Philadelphia", 39.9526, -75.1652, 8),
+    ("Washington", 38.9072, -77.0369, 8),
+    ("Miami", 25.7617, -80.1918, 8),
+    ("Atlanta", 33.7490, -84.3880, 8),
+    ("Charlotte", 35.2271, -80.8431, 6),
+    ("Detroit", 42.3314, -83.0458, 4),
+]
+
+CA_WEST_CENTERS = [
+    ("Vancouver", 49.2827, -123.1207, 14),
+    ("Victoria", 48.4284, -123.3656, 5),
+    ("Calgary", 51.0447, -114.0719, 10),
+    ("Edmonton", 53.5461, -113.4938, 9),
+    ("Saskatoon", 52.1579, -106.6702, 5),
+    ("Winnipeg", 49.8951, -97.1384, 4),
+]
+
+US_WEST_CENTERS = [
+    ("Los Angeles", 34.0522, -118.2437, 12),
+    ("San Francisco", 37.7749, -122.4194, 10),
+    ("Seattle", 47.6062, -122.3321, 8),
+    ("Phoenix", 33.4484, -112.0740, 8),
+    ("Denver", 39.7392, -104.9903, 7),
+    ("Las Vegas", 36.1699, -115.1398, 5),
+    ("Dallas", 32.7767, -96.7970, 4),
+]
+
 
 def weighted_choice_city(city_rows):
     weights = [row[3] for row in city_rows]
     return random.choices(city_rows, weights=weights, k=1)[0]
+
+
+def weighted_choice_region(rows):
+    weights = [row[-1] for row in rows]
+    return random.choices(rows, weights=weights, k=1)[0]
 
 
 def rand_ca_lat_lon() -> tuple[float, float]:
@@ -137,6 +255,204 @@ def rand_lat_lon_for_postal(postal_code: str) -> tuple[float, float]:
     if is_ca:
         return rand_ca_lat_lon()
     return rand_us_lat_lon()
+
+
+# ----------------------------
+# Postal + coordinate distributions
+# ----------------------------
+POSTAL_DISTRIBUTIONS = {
+    "urban_only",
+    "uniform_scattered",
+    "mixed_realistic",
+    "canada_only",
+    "usa_only",
+    "east_heavy",
+    "west_heavy",
+    "rural_heavy",
+}
+
+
+def make_postal_for_country(country: str, us_zip_plus4_ratio: float = 0.15) -> str:
+    if country == "CA":
+        return rand_postal_code_ca()
+    return rand_zip_us(zip_plus4=(random.random() < us_zip_plus4_ratio))
+
+
+def pick_country(ca_ratio: float = 0.5) -> str:
+    return "CA" if random.random() < ca_ratio else "US"
+
+
+def generate_urban_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    country = pick_country(ca_ratio=ca_ratio)
+
+    if country == "CA":
+        _, lat, lon, _ = weighted_choice_city(CA_CITY_CENTERS)
+        lat, lon = jitter_coord(lat, lon, lat_jitter=0.14, lon_jitter=0.20)
+        return make_postal_for_country("CA"), lat, lon
+
+    _, lat, lon, _ = weighted_choice_city(US_CITY_CENTERS)
+    lat, lon = jitter_coord(lat, lon, lat_jitter=0.16, lon_jitter=0.22)
+    return make_postal_for_country("US"), lat, lon
+
+
+def generate_secondary_city_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    country = pick_country(ca_ratio=ca_ratio)
+
+    if country == "CA":
+        _, lat, lon, _ = weighted_choice_city(CA_SECONDARY_CENTERS)
+        lat, lon = jitter_coord(lat, lon, lat_jitter=0.20, lon_jitter=0.28)
+        return make_postal_for_country("CA"), lat, lon
+
+    _, lat, lon, _ = weighted_choice_city(US_SECONDARY_CENTERS)
+    lat, lon = jitter_coord(lat, lon, lat_jitter=0.24, lon_jitter=0.32)
+    return make_postal_for_country("US"), lat, lon
+
+
+def generate_suburban_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    country = pick_country(ca_ratio=ca_ratio)
+
+    if country == "CA":
+        _, lat, lon, _ = weighted_choice_city(CA_CITY_CENTERS + CA_SECONDARY_CENTERS)
+        lat, lon = jitter_coord(lat, lon, lat_jitter=0.55, lon_jitter=0.70)
+        return make_postal_for_country("CA"), lat, lon
+
+    _, lat, lon, _ = weighted_choice_city(US_CITY_CENTERS + US_SECONDARY_CENTERS)
+    lat, lon = jitter_coord(lat, lon, lat_jitter=0.65, lon_jitter=0.80)
+    return make_postal_for_country("US"), lat, lon
+
+
+def generate_rural_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    country = pick_country(ca_ratio=ca_ratio)
+
+    if country == "CA":
+        _, lat, lon, _ = weighted_choice_city(CA_RURAL_ANCHORS)
+        lat, lon = jitter_coord(lat, lon, lat_jitter=1.20, lon_jitter=1.60)
+        return make_postal_for_country("CA"), lat, lon
+
+    _, lat, lon, _ = weighted_choice_city(US_RURAL_ANCHORS)
+    lat, lon = jitter_coord(lat, lon, lat_jitter=1.40, lon_jitter=1.80)
+    return make_postal_for_country("US"), lat, lon
+
+
+def generate_uniform_scattered_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    country = pick_country(ca_ratio=ca_ratio)
+
+    if country == "CA":
+        _, lat_min, lat_max, lon_min, lon_max, _ = weighted_choice_region(CA_BOXES)
+        lat, lon = rand_coord_in_box(lat_min, lat_max, lon_min, lon_max)
+        return make_postal_for_country("CA"), lat, lon
+
+    _, lat_min, lat_max, lon_min, lon_max, _ = weighted_choice_region(US_BOXES)
+    lat, lon = rand_coord_in_box(lat_min, lat_max, lon_min, lon_max)
+    return make_postal_for_country("US"), lat, lon
+
+
+def generate_mixed_realistic_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    r = random.random()
+
+    if r < 0.60:
+        return generate_urban_postal_and_coords(ca_ratio=ca_ratio)
+
+    if r < 0.80:
+        return generate_suburban_postal_and_coords(ca_ratio=ca_ratio)
+
+    if r < 0.90:
+        return generate_secondary_city_postal_and_coords(ca_ratio=ca_ratio)
+
+    return generate_uniform_scattered_postal_and_coords(ca_ratio=ca_ratio)
+
+
+def generate_country_only_postal_and_coords(
+    country: str, style: str = "mixed_realistic"
+) -> tuple[str, float, float]:
+    forced_ca_ratio = 1.0 if country == "CA" else 0.0
+
+    if style == "urban_only":
+        return generate_urban_postal_and_coords(ca_ratio=forced_ca_ratio)
+    if style == "uniform_scattered":
+        return generate_uniform_scattered_postal_and_coords(ca_ratio=forced_ca_ratio)
+    if style == "rural_heavy":
+        return generate_rural_heavy_postal_and_coords(ca_ratio=forced_ca_ratio)
+
+    return generate_mixed_realistic_postal_and_coords(ca_ratio=forced_ca_ratio)
+
+
+def generate_east_heavy_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    country = pick_country(ca_ratio=ca_ratio)
+
+    if country == "CA":
+        _, lat, lon, _ = weighted_choice_city(CA_EAST_CENTERS)
+        lat, lon = jitter_coord(lat, lon, lat_jitter=0.35, lon_jitter=0.45)
+        return make_postal_for_country("CA"), lat, lon
+
+    _, lat, lon, _ = weighted_choice_city(US_EAST_CENTERS)
+    lat, lon = jitter_coord(lat, lon, lat_jitter=0.42, lon_jitter=0.55)
+    return make_postal_for_country("US"), lat, lon
+
+
+def generate_west_heavy_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    country = pick_country(ca_ratio=ca_ratio)
+
+    if country == "CA":
+        _, lat, lon, _ = weighted_choice_city(CA_WEST_CENTERS)
+        lat, lon = jitter_coord(lat, lon, lat_jitter=0.35, lon_jitter=0.50)
+        return make_postal_for_country("CA"), lat, lon
+
+    _, lat, lon, _ = weighted_choice_city(US_WEST_CENTERS)
+    lat, lon = jitter_coord(lat, lon, lat_jitter=0.45, lon_jitter=0.60)
+    return make_postal_for_country("US"), lat, lon
+
+
+def generate_rural_heavy_postal_and_coords(ca_ratio: float = 0.45) -> tuple[str, float, float]:
+    r = random.random()
+
+    if r < 0.45:
+        return generate_rural_postal_and_coords(ca_ratio=ca_ratio)
+
+    if r < 0.70:
+        return generate_uniform_scattered_postal_and_coords(ca_ratio=ca_ratio)
+
+    if r < 0.90:
+        return generate_suburban_postal_and_coords(ca_ratio=ca_ratio)
+
+    return generate_urban_postal_and_coords(ca_ratio=ca_ratio)
+
+
+def generate_postal_and_coords(dist_name: str) -> tuple[str, float, float]:
+    dist_name = (dist_name or "mixed_realistic").strip() or "mixed_realistic"
+
+    if dist_name not in POSTAL_DISTRIBUTIONS:
+        print(
+            f"⚠️  Unknown SEED_POSTAL_DISTRIBUTION='{dist_name}', "
+            "falling back to 'mixed_realistic'"
+        )
+        dist_name = "mixed_realistic"
+
+    if dist_name == "urban_only":
+        return generate_urban_postal_and_coords()
+
+    if dist_name == "uniform_scattered":
+        return generate_uniform_scattered_postal_and_coords()
+
+    if dist_name == "mixed_realistic":
+        return generate_mixed_realistic_postal_and_coords()
+
+    if dist_name == "canada_only":
+        return generate_country_only_postal_and_coords("CA", style="mixed_realistic")
+
+    if dist_name == "usa_only":
+        return generate_country_only_postal_and_coords("US", style="mixed_realistic")
+
+    if dist_name == "east_heavy":
+        return generate_east_heavy_postal_and_coords()
+
+    if dist_name == "west_heavy":
+        return generate_west_heavy_postal_and_coords()
+
+    if dist_name == "rural_heavy":
+        return generate_rural_heavy_postal_and_coords()
+
+    return generate_mixed_realistic_postal_and_coords()
 
 
 # ----------------------------
@@ -309,7 +625,7 @@ def seed_packages(cur, schema: Schema, n: int) -> tuple[list[int], dict[int, dic
 # ----------------------------
 # Seeding: Customers
 # ----------------------------
-def seed_customers(cur, schema: Schema, n: int) -> list[int]:
+def seed_customers(cur, schema: Schema, n: int, postal_dist_name: str) -> list[int]:
     cust_cols = schema.cust_cols
     CUSTOMER_T = schema.CUSTOMER_T
 
@@ -349,10 +665,9 @@ def seed_customers(cur, schema: Schema, n: int) -> list[int]:
         if cust_email_col:
             row[cust_email_col] = rand_email(first, last)
 
-        postal_code = rand_postal_mixed(ca_ratio=0.5, us_zip_plus4_ratio=0.15)
+        postal_code, lat, lon = generate_postal_and_coords(postal_dist_name)
         row[cust_postal_col] = postal_code
 
-        lat, lon = rand_lat_lon_for_postal(postal_code)
         if cust_lat_col:
             row[cust_lat_col] = lat
         if cust_lon_col:
@@ -559,6 +874,9 @@ def run_seed():
     cfg = load_config()
 
     dist_name = os.environ.get("SEED_DISTRIBUTION", "uniform").strip() or "uniform"
+    postal_dist_name = (
+        os.environ.get("SEED_POSTAL_DISTRIBUTION", "mixed_realistic").strip()
+    )
     seed_reset = os.environ.get("SEED_RESET", "0").strip() in ("1", "true", "True")
 
     if cfg.seed_random_seed is not None:
@@ -582,7 +900,7 @@ def run_seed():
                     return
 
                 pkg_ids, pkg_costs = seed_packages(cur, schema, cfg.seed_packages)
-                cust_ids = seed_customers(cur, schema, cfg.seed_customers)
+                cust_ids = seed_customers(cur, schema, cfg.seed_customers, postal_dist_name)
 
                 seed_subscriptions(
                     cur,
@@ -602,6 +920,7 @@ def run_seed():
                 print(f"  Customers: {cfg.seed_customers}")
                 print(f"  Subscriptions: {cfg.seed_subscriptions}")
                 print(f"  Distribution: {dist_name}")
+                print(f"  Postal distribution: {postal_dist_name}")
                 print(f"  Reset first: {'YES' if seed_reset else 'NO'}")
 
                 run_payments_after_seed(cur, schema)
