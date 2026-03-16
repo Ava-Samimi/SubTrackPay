@@ -13,7 +13,8 @@ import AnalyticsPage from "./pages/analytics/AnalyticsPage.jsx";
 
 import SeedConfigModal from "./components/SeedConfigModal.jsx";
 import SnapshotModal from "./components/SnapshotModal.jsx";
-import NorthAmericaMapModal from "./components/NorthAmericaMapModal.jsx"; // ✅ NEW
+import NorthAmericaMapModal from "./components/NorthAmericaMapModal.jsx";
+import HelpModal from "./components/HelpModal.jsx";
 
 function AuthedShell({
   children,
@@ -23,6 +24,8 @@ function AuthedShell({
   setSnapshotOpen,
   naMapOpen,
   setNaMapOpen,
+  helpOpen,
+  setHelpOpen,
   seeding,
   seedMode,
   openReseed,
@@ -33,7 +36,7 @@ function AuthedShell({
   return (
     <AuthGate>
       <>
-        {/* ✅ Bottom-right buttons (only for authenticated pages) */}
+        {/* Bottom-right floating menu */}
         <div
           style={{
             position: "fixed",
@@ -45,7 +48,6 @@ function AuthedShell({
             gap: 10,
           }}
         >
-          {/* ✅ Our Clients (opens the North America modal) */}
           <button
             onClick={() => setNaMapOpen(true)}
             style={{
@@ -61,7 +63,6 @@ function AuthedShell({
             Our Clients
           </button>
 
-          {/* ✅ Call Center */}
           <button
             onClick={() => alert("Call Center (coming soon)")}
             style={{
@@ -77,7 +78,6 @@ function AuthedShell({
             Call Center
           </button>
 
-          {/* ✅ Snapshot button (opens SnapshotModal) */}
           <button
             onClick={() => setSnapshotOpen(true)}
             style={{
@@ -93,9 +93,8 @@ function AuthedShell({
             Snapshot
           </button>
 
-          {/* ✅ HELP button (currently does nothing) */}
           <button
-            onClick={() => {}}
+            onClick={() => setHelpOpen(true)}
             style={{
               padding: "10px 14px",
               borderRadius: 10,
@@ -109,7 +108,6 @@ function AuthedShell({
             HELP!
           </button>
 
-          {/* ✅ Re-seed button */}
           <button
             onClick={openReseed}
             disabled={seeding}
@@ -128,13 +126,22 @@ function AuthedShell({
           </button>
         </div>
 
-        {/* ✅ North America map modal (only for authenticated pages) */}
-        <NorthAmericaMapModal open={naMapOpen} onClose={() => setNaMapOpen(false)} />
+        {/* Modals */}
+        <NorthAmericaMapModal
+          open={naMapOpen}
+          onClose={() => setNaMapOpen(false)}
+        />
 
-        {/* ✅ Snapshot modal (only for authenticated pages) */}
-        <SnapshotModal open={snapshotOpen} onClose={() => setSnapshotOpen(false)} />
+        <SnapshotModal
+          open={snapshotOpen}
+          onClose={() => setSnapshotOpen(false)}
+        />
 
-        {/* ✅ Seed modal (only for authenticated pages) */}
+        <HelpModal
+          open={helpOpen}
+          onClose={() => setHelpOpen(false)}
+        />
+
         <SeedConfigModal
           open={seedOpen}
           onClose={() => !seeding && setSeedOpen(false)}
@@ -142,7 +149,7 @@ function AuthedShell({
           mode={seedMode}
         />
 
-        {/* ✅ Seeding overlay (only for authenticated pages) */}
+        {/* Seeding overlay */}
         {seeding && (
           <div
             style={{
@@ -173,7 +180,8 @@ function AuthedShell({
 export default function App() {
   const [seedOpen, setSeedOpen] = useState(false);
   const [snapshotOpen, setSnapshotOpen] = useState(false);
-  const [naMapOpen, setNaMapOpen] = useState(false); // ✅ NEW
+  const [naMapOpen, setNaMapOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
   // "first" => initial seed (no reset)
@@ -185,7 +193,6 @@ export default function App() {
     []
   );
 
-  // ✅ show modal only the first time this browser visits (until seeded once)
   useEffect(() => {
     const has = localStorage.getItem("seedConfig.v1");
     if (!has) {
@@ -196,10 +203,10 @@ export default function App() {
 
   const handleSeedApply = async (cfg) => {
     setSeeding(true);
+
     try {
       const payload = {
         ...cfg,
-        // ✅ on reseed we wipe DB first (API + seeder must support SEED_RESET)
         reset: seedMode === "reseed",
       };
 
@@ -213,6 +220,7 @@ export default function App() {
 
       if (!resp.ok || !json.ok) {
         console.error("Seed failed:", json);
+
         const msg =
           json?.err ||
           json?.error ||
@@ -220,11 +228,11 @@ export default function App() {
           json?.out ||
           json?.message ||
           `Unknown error (HTTP ${resp.status}). Check browser console + API logs.`;
+
         alert("Seeding failed:\n\n" + msg);
         return;
       }
 
-      // ✅ mark seeded so it won't auto-popup next refresh
       localStorage.setItem(
         "seedConfig.v1",
         JSON.stringify({ seededAt: Date.now(), cfg })
@@ -245,6 +253,21 @@ export default function App() {
     setSeedOpen(true);
   };
 
+  const authedShellProps = {
+    seedOpen,
+    setSeedOpen,
+    snapshotOpen,
+    setSnapshotOpen,
+    naMapOpen,
+    setNaMapOpen,
+    helpOpen,
+    setHelpOpen,
+    seeding,
+    seedMode,
+    openReseed,
+    handleSeedApply,
+  };
+
   return (
     <Routes>
       {/* Public */}
@@ -254,113 +277,52 @@ export default function App() {
       <Route
         path="/"
         element={
-          <AuthedShell
-            seedOpen={seedOpen}
-            setSeedOpen={setSeedOpen}
-            snapshotOpen={snapshotOpen}
-            setSnapshotOpen={setSnapshotOpen}
-            naMapOpen={naMapOpen}
-            setNaMapOpen={setNaMapOpen}
-            seeding={seeding}
-            seedMode={seedMode}
-            openReseed={openReseed}
-            handleSeedApply={handleSeedApply}
-          >
+          <AuthedShell {...authedShellProps}>
             <Navigate to="/customers" replace />
           </AuthedShell>
         }
       />
+
       <Route
         path="/customers"
         element={
-          <AuthedShell
-            seedOpen={seedOpen}
-            setSeedOpen={setSeedOpen}
-            snapshotOpen={snapshotOpen}
-            setSnapshotOpen={setSnapshotOpen}
-            naMapOpen={naMapOpen}
-            setNaMapOpen={setNaMapOpen}
-            seeding={seeding}
-            seedMode={seedMode}
-            openReseed={openReseed}
-            handleSeedApply={handleSeedApply}
-          >
+          <AuthedShell {...authedShellProps}>
             <CustomersPage />
           </AuthedShell>
         }
       />
+
       <Route
         path="/packages"
         element={
-          <AuthedShell
-            seedOpen={seedOpen}
-            setSeedOpen={setSeedOpen}
-            snapshotOpen={snapshotOpen}
-            setSnapshotOpen={setSnapshotOpen}
-            naMapOpen={naMapOpen}
-            setNaMapOpen={setNaMapOpen}
-            seeding={seeding}
-            seedMode={seedMode}
-            openReseed={openReseed}
-            handleSeedApply={handleSeedApply}
-          >
+          <AuthedShell {...authedShellProps}>
             <PackagesPage />
           </AuthedShell>
         }
       />
+
       <Route
         path="/subscriptions"
         element={
-          <AuthedShell
-            seedOpen={seedOpen}
-            setSeedOpen={setSeedOpen}
-            snapshotOpen={snapshotOpen}
-            setSnapshotOpen={setSnapshotOpen}
-            naMapOpen={naMapOpen}
-            setNaMapOpen={setNaMapOpen}
-            seeding={seeding}
-            seedMode={seedMode}
-            openReseed={openReseed}
-            handleSeedApply={handleSeedApply}
-          >
+          <AuthedShell {...authedShellProps}>
             <SubscriptionsPage />
           </AuthedShell>
         }
       />
+
       <Route
         path="/payments"
         element={
-          <AuthedShell
-            seedOpen={seedOpen}
-            setSeedOpen={setSeedOpen}
-            snapshotOpen={snapshotOpen}
-            setSnapshotOpen={setSnapshotOpen}
-            naMapOpen={naMapOpen}
-            setNaMapOpen={setNaMapOpen}
-            seeding={seeding}
-            seedMode={seedMode}
-            openReseed={openReseed}
-            handleSeedApply={handleSeedApply}
-          >
+          <AuthedShell {...authedShellProps}>
             <PaymentsPage />
           </AuthedShell>
         }
       />
+
       <Route
         path="/analytics"
         element={
-          <AuthedShell
-            seedOpen={seedOpen}
-            setSeedOpen={setSeedOpen}
-            snapshotOpen={snapshotOpen}
-            setSnapshotOpen={setSnapshotOpen}
-            naMapOpen={naMapOpen}
-            setNaMapOpen={setNaMapOpen}
-            seeding={seeding}
-            seedMode={seedMode}
-            openReseed={openReseed}
-            handleSeedApply={handleSeedApply}
-          >
+          <AuthedShell {...authedShellProps}>
             <AnalyticsPage />
           </AuthedShell>
         }
