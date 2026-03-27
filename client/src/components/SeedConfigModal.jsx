@@ -6,6 +6,7 @@ const DEFAULTS = {
   seedRandomSeed: "", // empty means random each run
   seedSkipIfExists: true,
   seedDistribution: "uniform", // uniform | popular_packages | heavy_monthly | realistic_default
+  seedPostalDistribution: "mixed_realistic", // urban_only | uniform_scattered | mixed_realistic | canada_only | usa_only | east_heavy | west_heavy | rural_heavy
 };
 
 const STORAGE_KEY = "seedConfig.v1";
@@ -34,8 +35,10 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
   const [seedRandomSeed, setSeedRandomSeed] = useState(initial.seedRandomSeed);
   const [seedSkipIfExists, setSeedSkipIfExists] = useState(initial.seedSkipIfExists);
   const [seedDistribution, setSeedDistribution] = useState(initial.seedDistribution);
+  const [seedPostalDistribution, setSeedPostalDistribution] = useState(
+    initial.seedPostalDistribution
+  );
 
-  // Keep state in sync if modal opens later
   useEffect(() => {
     if (!open) return;
     const latest = loadSaved();
@@ -45,6 +48,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
     setSeedRandomSeed(init.seedRandomSeed);
     setSeedSkipIfExists(init.seedSkipIfExists);
     setSeedDistribution(init.seedDistribution);
+    setSeedPostalDistribution(init.seedPostalDistribution);
   }, [open]);
 
   if (!open) return null;
@@ -72,6 +76,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
       seedRandomSeed: seedRandomSeed === "" ? "" : String(Number(seedRandomSeed)),
       seedSkipIfExists: Boolean(seedSkipIfExists),
       seedDistribution,
+      seedPostalDistribution,
     };
 
     saveConfig(cfg);
@@ -130,7 +135,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
           </label>
 
           <label style={styles.label}>
-            Distribution
+            Subscription distribution
             <select
               value={seedDistribution}
               onChange={(e) => setSeedDistribution(e.target.value)}
@@ -142,6 +147,46 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
               <option value="realistic_default">realistic_default</option>
             </select>
           </label>
+
+          <label style={styles.label}>
+            Postal code distribution
+            <select
+              value={seedPostalDistribution}
+              onChange={(e) => setSeedPostalDistribution(e.target.value)}
+              style={styles.input}
+            >
+              <option value="urban_only">urban_only</option>
+              <option value="uniform_scattered">uniform_scattered</option>
+              <option value="mixed_realistic">mixed_realistic</option>
+              <option value="canada_only">canada_only</option>
+              <option value="usa_only">usa_only</option>
+              <option value="east_heavy">east_heavy</option>
+              <option value="west_heavy">west_heavy</option>
+              <option value="rural_heavy">rural_heavy</option>
+            </select>
+          </label>
+        </div>
+
+        <div style={styles.infoBox}>
+          <div style={styles.infoTitle}>Postal distribution guide</div>
+          <div style={styles.infoLine}>
+            <strong>urban_only</strong>: concentrated around major cities
+          </div>
+          <div style={styles.infoLine}>
+            <strong>uniform_scattered</strong>: more evenly spread across North America
+          </div>
+          <div style={styles.infoLine}>
+            <strong>mixed_realistic</strong>: mostly urban with some suburban and scattered points
+          </div>
+          <div style={styles.infoLine}>
+            <strong>canada_only</strong> / <strong>usa_only</strong>: restrict customers to one country
+          </div>
+          <div style={styles.infoLine}>
+            <strong>east_heavy</strong> / <strong>west_heavy</strong>: bias customers by region
+          </div>
+          <div style={styles.infoLine}>
+            <strong>rural_heavy</strong>: more customers outside major city cores
+          </div>
         </div>
 
         <label style={styles.toggleRow}>
@@ -188,7 +233,7 @@ const styles = {
     zIndex: 9999,
   },
   modal: {
-    width: "min(720px, 100%)",
+    width: "min(780px, 100%)",
     background: "#0f1115",
     border: "1px solid rgba(255,255,255,0.1)",
     borderRadius: 14,
@@ -218,6 +263,23 @@ const styles = {
     background: "rgba(255,255,255,0.06)",
     color: "white",
     outline: "none",
+  },
+  infoBox: {
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 10,
+    border: "1px solid rgba(59,130,246,0.25)",
+    background: "rgba(59,130,246,0.08)",
+    color: "rgba(255,255,255,0.95)",
+    fontSize: 13,
+  },
+  infoTitle: {
+    fontWeight: 600,
+    marginBottom: 8,
+  },
+  infoLine: {
+    marginBottom: 4,
+    opacity: 0.95,
   },
   toggleRow: { display: "flex", alignItems: "center", marginTop: 14, fontSize: 14 },
   errorBox: {

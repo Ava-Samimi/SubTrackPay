@@ -33,13 +33,14 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use("/exports", express.static("/app/exports"));
 app.use("/api", seedRoutes);
+app.use("/api/customers", customersRouter);
 
 // ✅ Protect everything below this line (skip in tests)
 if (process.env.NODE_ENV !== "test") {
   app.use("/api", requireFirebaseAuth);
 }
 
-app.use("/api/customers", customersRouter);
+
 app.use("/api/packages", packagesRouter);
 app.use("/api/subscriptions", subscriptionsRouter);
 app.use("/api/payments", paymentsRouter);
