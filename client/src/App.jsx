@@ -206,7 +206,12 @@ export default function App() {
 
     try {
       const payload = {
-        ...cfg,
+        seedCustomers: cfg.seedCustomers,
+        seedSubscriptions: cfg.seedSubscriptions,
+        seedRandomSeed: cfg.seedRandomSeed,
+        seedSkipIfExists: cfg.seedSkipIfExists,
+        seedDistribution: cfg.seedDistribution,
+        seedPostalDistribution: cfg.seedPostalDistribution || "mixed_realistic",
         reset: seedMode === "reseed",
       };
 
@@ -235,7 +240,17 @@ export default function App() {
 
       localStorage.setItem(
         "seedConfig.v1",
-        JSON.stringify({ seededAt: Date.now(), cfg })
+        JSON.stringify({
+          seededAt: Date.now(),
+          cfg: {
+            seedCustomers: cfg.seedCustomers,
+            seedSubscriptions: cfg.seedSubscriptions,
+            seedRandomSeed: cfg.seedRandomSeed,
+            seedSkipIfExists: cfg.seedSkipIfExists,
+            seedDistribution: cfg.seedDistribution,
+            seedPostalDistribution: cfg.seedPostalDistribution || "mixed_realistic",
+          },
+        })
       );
 
       setSeedOpen(false);

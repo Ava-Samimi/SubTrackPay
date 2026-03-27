@@ -33,12 +33,10 @@ router.post("/admin/seed", async (req, res) => {
     seedRandomSeed,
     seedSkipIfExists,
     seedDistribution,
-    reset, // ✅ NEW: wipe tables before reseeding
+    seedPostalDistribution,
+    reset,
   } = req.body || {};
 
-  // ✅ IMPORTANT:
-  // Your code lives at /app/seeder/seeder/seeders.py
-  // To import "seeder.seeders", Python must have /app/seeder on sys.path.
   const env = {
     ...process.env,
     SEED_CUSTOMERS: String(seedCustomers ?? 500),
@@ -47,16 +45,24 @@ router.post("/admin/seed", async (req, res) => {
       seedRandomSeed === "" || seedRandomSeed == null ? "0" : String(seedRandomSeed),
     SEED_SKIP_IF_EXISTS: seedSkipIfExists ? "1" : "0",
     SEED_DISTRIBUTION: seedDistribution ?? "uniform",
-
-    // ✅ NEW: instruct python seeder to truncate/reset first
+    SEED_POSTAL_DISTRIBUTION: seedPostalDistribution ?? "mixed_realistic",
     SEED_RESET: reset ? "1" : "0",
-
-    // ✅ make "/app/seeder" importable
     PYTHONPATH: "/app/seeder",
   };
 
+  console.log("✅ Seeder env preview", {
+    SEED_CUSTOMERS: env.SEED_CUSTOMERS,
+    SEED_SUBSCRIPTIONS: env.SEED_SUBSCRIPTIONS,
+    SEED_RANDOM_SEED: env.SEED_RANDOM_SEED,
+    SEED_SKIP_IF_EXISTS: env.SEED_SKIP_IF_EXISTS,
+    SEED_DISTRIBUTION: env.SEED_DISTRIBUTION,
+    SEED_POSTAL_DISTRIBUTION: env.SEED_POSTAL_DISTRIBUTION,
+    SEED_RESET: env.SEED_RESET,
+    PYTHONPATH: env.PYTHONPATH,
+  });
+
   try {
-    // (Optional) quick import diagnostic (keep it while developing)
+    // Optional diagnostic while developing
     const diag = await runChild(
       "python3",
       [
@@ -65,6 +71,9 @@ router.post("/admin/seed", async (req, res) => {
           "import sys, os;",
           "print('CWD=', os.getcwd());",
           "print('PYTHONPATH=', os.environ.get('PYTHONPATH'));",
+          "print('SEED_DISTRIBUTION=', os.environ.get('SEED_DISTRIBUTION'));",
+          "print('SEED_POSTAL_DISTRIBUTION=', os.environ.get('SEED_POSTAL_DISTRIBUTION'));",
+          "print('SEED_RESET=', os.environ.get('SEED_RESET'));",
           "import seeder.seeders as s;",
           "print('IMPORT_OK');",
         ].join(" "),
@@ -81,7 +90,7 @@ router.post("/admin/seed", async (req, res) => {
       });
     }
 
-    // 2) run the actual seeder
+    // Run actual seeder
     const run = await runChild("python3", ["-u", "/app/seed_db.py"], {
       env,
       cwd: "/app/seeder",
@@ -89,7 +98,11 @@ router.post("/admin/seed", async (req, res) => {
 
     if (run.code !== 0) {
       console.error("❌ Seeder failed:", run.err || run.out);
-      return res.status(500).json({ ok: false, code: run.code, err: run.err || run.out });
+      return res.status(500).json({
+        ok: false,
+        code: run.code,
+        err: run.err || run.out,
+      });
     }
 
     return res.json({ ok: true, out: run.out });

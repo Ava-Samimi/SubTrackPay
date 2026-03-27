@@ -1,123 +1,75 @@
 // client/src/components/NorthAmericaMapModal.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Plot from "react-plotly.js";
-import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
-import { point as turfPoint } from "@turf/helpers";
-
-function randBetween(min, max) {
-  return min + Math.random() * (max - min);
-}
-
-function sampleCandidatePoint() {
-  const lat = randBetween(18, 72);
-  const lon = randBetween(-170, -52);
-  return { lat, lon };
-}
-
-async function fetchGeoJSON(url) {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Failed to load ${url} (HTTP ${resp.status})`);
-  return resp.json();
-}
-
-function featureToGeometry(geojson) {
-  if (!geojson) throw new Error("Empty GeoJSON");
-
-  if (geojson.type === "FeatureCollection") {
-    if (!geojson.features?.length) throw new Error("Empty FeatureCollection");
-    geojson = geojson.features[0];
-  }
-
-  if (geojson.type === "Feature") {
-    if (!geojson.geometry) throw new Error("Feature has no geometry");
-    return geojson.geometry;
-  }
-
-  if (geojson.type === "Polygon" || geojson.type === "MultiPolygon") return geojson;
-
-  throw new Error(`Unsupported GeoJSON type: ${geojson.type}`);
-}
-
-function pointInAnyPolygon(pt, geometries) {
-  const p = turfPoint([pt.lon, pt.lat]);
-  for (const geom of geometries) {
-    if (booleanPointInPolygon(p, geom)) return true;
-  }
-  return false;
-}
 
 export default function NorthAmericaMapModal({ open, onClose }) {
   const [showDots, setShowDots] = useState(true);
   const [showGlow, setShowGlow] = useState(true);
   const [showBorders, setShowBorders] = useState(true);
 
-  const [landGeoms, setLandGeoms] = useState(null);
-  const [loadingLand, setLoadingLand] = useState(false);
-  const [landErr, setLandErr] = useState("");
-
   const [points, setPoints] = useState([]);
   const [loadingPts, setLoadingPts] = useState(false);
+  const [pointsErr, setPointsErr] = useState("");
 
-  const lats = useMemo(() => points.map((p) => p.lat), [points]);
-  const lons = useMemo(() => points.map((p) => p.lon), [points]);
+  const API_BASE =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
   useEffect(() => {
     if (!open) return;
+
     const onKey = (e) => {
       if (e.key === "Escape") onClose?.();
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
+  const normalizeRows = (json) => {
+    const rows = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.customers)
+      ? json.customers
+      : [];
 
-    async function load() {
-      setLandErr("");
-      setLoadingLand(true);
-      try {
-        const [usa, can] = await Promise.all([
-          fetchGeoJSON("/geo/usa.geo.json"),
-          fetchGeoJSON("/geo/can.geo.json"),
-        ]);
+    return rows
+      .map((row) => ({
+        id: row.customerID,
+        name:
+          `${row.firstName || ""} ${row.lastName || ""}`.trim() ||
+          "Unnamed customer",
+        email: row.email || "",
+        postalCode: row.postalCode || "",
+        lat: Number(row.latitude),
+        lon: Number(row.longitude),
+      }))
+      .filter(
+        (row) =>
+          Number.isFinite(row.lat) &&
+          Number.isFinite(row.lon) &&
+          row.lat >= 18 &&
+          row.lat <= 73 &&
+          row.lon >= -170 &&
+          row.lon <= -52
+      );
+  };
 
-        const usaGeom = featureToGeometry(usa);
-        const canGeom = featureToGeometry(can);
-
-        if (!cancelled) setLandGeoms([usaGeom, canGeom]);
-      } catch (e) {
-        if (!cancelled) {
-          setLandErr(String(e?.message || e));
-          setLandGeoms(null);
-        }
-      } finally {
-        if (!cancelled) setLoadingLand(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
-
-  const generateLandPoints = async () => {
-    if (!landGeoms?.length) return;
-
+  const loadCustomerPoints = async () => {
     setLoadingPts(true);
-    try {
-      const out = [];
-      let guard = 0;
+    setPointsErr("");
 
-      while (out.length < 100 && guard < 600000) {
-        guard++;
-        const cand = sampleCandidatePoint();
-        if (pointInAnyPolygon(cand, landGeoms)) out.push(cand);
+    try {
+      const resp = await fetch(`${API_BASE}/api/customers`);
+      if (!resp.ok) {
+        throw new Error(`Failed to load customers (HTTP ${resp.status})`);
       }
 
-      setPoints(out);
+      const json = await resp.json();
+      const cleaned = normalizeRows(json);
+      setPoints(cleaned);
+    } catch (e) {
+      setPoints([]);
+      setPointsErr(String(e?.message || e));
     } finally {
       setLoadingPts(false);
     }
@@ -125,10 +77,59 @@ export default function NorthAmericaMapModal({ open, onClose }) {
 
   useEffect(() => {
     if (!open) return;
-    if (!landGeoms?.length) return;
-    generateLandPoints();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, landGeoms]);
+
+    let cancelled = false;
+
+    async function load() {
+      setLoadingPts(true);
+      setPointsErr("");
+
+      try {
+        const resp = await fetch(`${API_BASE}/api/customers`);
+        if (!resp.ok) {
+          throw new Error(`Failed to load customers (HTTP ${resp.status})`);
+        }
+
+        const json = await resp.json();
+        const cleaned = normalizeRows(json);
+
+        if (!cancelled) {
+          setPoints(cleaned);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setPoints([]);
+          setPointsErr(String(e?.message || e));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingPts(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, API_BASE]);
+
+  const lats = useMemo(() => points.map((p) => p.lat), [points]);
+  const lons = useMemo(() => points.map((p) => p.lon), [points]);
+
+  const hoverTexts = useMemo(
+    () =>
+      points.map(
+        (p) =>
+          `<b>${p.name}</b><br>` +
+          `Email: ${p.email || "N/A"}<br>` +
+          `Postal Code: ${p.postalCode || "N/A"}<br>` +
+          `Lat: ${p.lat.toFixed(4)}<br>` +
+          `Lon: ${p.lon.toFixed(4)}`
+      ),
+    [points]
+  );
 
   if (!open) return null;
 
@@ -141,8 +142,13 @@ export default function NorthAmericaMapModal({ open, onClose }) {
     mode: "markers",
     lat: lats,
     lon: lons,
-    marker: { size: 10, color: "rgba(255, 0, 0, 0.25)", line: { width: 0 } },
+    text: hoverTexts,
     hoverinfo: "skip",
+    marker: {
+      size: 8,
+      color: "rgba(255, 0, 0, 0.18)",
+      line: { width: 0 },
+    },
     showlegend: false,
     name: "",
   };
@@ -152,8 +158,13 @@ export default function NorthAmericaMapModal({ open, onClose }) {
     mode: "markers",
     lat: lats,
     lon: lons,
-    marker: { size: 4, color: "rgba(255, 30, 30, 1)", line: { width: 0 } },
-    hovertemplate: "Lat: %{lat:.4f}<br>Lon: %{lon:.4f}<extra></extra>",
+    text: hoverTexts,
+    marker: {
+      size: 3,
+      color: "rgba(255, 40, 40, 1)",
+      line: { width: 0 },
+    },
+    hovertemplate: "%{text}<extra></extra>",
     showlegend: false,
     name: "",
   };
@@ -167,24 +178,27 @@ export default function NorthAmericaMapModal({ open, onClose }) {
       <div style={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
         <div style={styles.header}>
           <h2 style={{ margin: 0 }}>Our Clients (USA + Canada, incl. Alaska)</h2>
-          <button onClick={() => onClose?.()} style={styles.xBtn} aria-label="Close">
+          <button
+            onClick={() => onClose?.()}
+            style={styles.xBtn}
+            aria-label="Close"
+          >
             ✕
           </button>
         </div>
 
         <p style={styles.subtext}>
-          Land-only points using Turf point-in-polygon (no ocean dots). Alaska included.
+          Customer locations loaded from database latitude/longitude values
+          linked to postal codes.
         </p>
 
-        {landErr && (
+        {pointsErr && (
           <div style={{ marginBottom: 12, color: "#ff6b6b" }}>
-            GeoJSON error: {landErr}
+            Map data error: {pointsErr}
           </div>
         )}
 
-        {/* ✅ Map + right-side controls layout */}
         <div style={styles.mapRow}>
-          {/* ✅ Smaller map */}
           <div style={styles.mapBox}>
             <Plot
               data={plotData}
@@ -192,11 +206,8 @@ export default function NorthAmericaMapModal({ open, onClose }) {
                 paper_bgcolor: "rgba(0,0,0,0)",
                 plot_bgcolor: "rgba(0,0,0,0)",
                 margin: { l: 0, r: 0, t: 0, b: 0 },
-                showlegend: false, // ✅ no “trace” stuff
-
-                // ✅ non-draggable
+                showlegend: false,
                 dragmode: false,
-
                 geo: {
                   scope: "north america",
                   projection: { type: "mercator" },
@@ -227,8 +238,6 @@ export default function NorthAmericaMapModal({ open, onClose }) {
               config={{
                 displayModeBar: false,
                 responsive: true,
-
-                // ✅ keep it static (no pan/zoom)
                 staticPlot: true,
                 scrollZoom: false,
                 doubleClick: false,
@@ -238,19 +247,32 @@ export default function NorthAmericaMapModal({ open, onClose }) {
             />
           </div>
 
-          {/* ✅ Controls in black space to the right */}
           <div style={styles.sidePanel}>
             <div style={styles.sideTitle}>Controls</div>
 
             <div style={styles.overlayButtons}>
-              <button style={styles.overlayBtn} onClick={() => {}} disabled={loadingLand || loadingPts}>
-                Action 1
+              <button
+                style={styles.overlayBtn}
+                onClick={() => setShowDots(true)}
+                disabled={loadingPts}
+              >
+                Show All Dots
               </button>
-              <button style={styles.overlayBtn} onClick={() => {}} disabled={loadingLand || loadingPts}>
-                Action 2
+
+              <button
+                style={styles.overlayBtn}
+                onClick={() => setShowGlow((v) => !v)}
+                disabled={loadingPts || !showDots}
+              >
+                Toggle Glow
               </button>
-              <button style={styles.overlayBtn} onClick={() => {}} disabled={loadingLand || loadingPts}>
-                Action 3
+
+              <button
+                style={styles.overlayBtn}
+                onClick={loadCustomerPoints}
+                disabled={loadingPts}
+              >
+                Refresh Data
               </button>
             </div>
 
@@ -285,13 +307,17 @@ export default function NorthAmericaMapModal({ open, onClose }) {
             </div>
 
             <div style={styles.status}>
-              {loadingLand && <div>Loading land polygons…</div>}
-              {!loadingLand && !landErr && landGeoms && (
+              {loadingPts && <div>Loading customer map points…</div>}
+              {!loadingPts && !pointsErr && (
                 <div style={{ opacity: 0.9 }}>
-                  Points: <b>{points.length}</b>/100
+                  Customers plotted: <b>{points.length}</b>
                 </div>
               )}
-              {loadingPts && <div>Generating points…</div>}
+              {!loadingPts && !pointsErr && points.length === 0 && (
+                <div style={{ opacity: 0.8 }}>
+                  No customer coordinates were returned.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -328,28 +354,36 @@ const styles = {
     color: "white",
     overflow: "auto",
   },
-  header: { display: "flex", alignItems: "center", justifyContent: "space-between" },
-  xBtn: { background: "transparent", border: "none", color: "white", fontSize: 18, cursor: "pointer" },
-  subtext: { marginTop: 10, marginBottom: 12, opacity: 0.85 },
-
-  // ✅ row that contains the map + right panel
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  xBtn: {
+    background: "transparent",
+    border: "none",
+    color: "white",
+    fontSize: 18,
+    cursor: "pointer",
+  },
+  subtext: {
+    marginTop: 10,
+    marginBottom: 12,
+    opacity: 0.85,
+  },
   mapRow: {
     display: "flex",
     gap: 14,
     alignItems: "stretch",
   },
-
-  // ✅ smaller map
   mapBox: {
-    flex: "0 0 640px",         // map width
-    height: 440,               // map height (smaller)
+    flex: "0 0 640px",
+    height: 440,
     borderRadius: 12,
     overflow: "hidden",
     border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(0,0,0,0.6)",
   },
-
-  // ✅ black area on the right
   sidePanel: {
     flex: "1 1 auto",
     minWidth: 220,
@@ -361,20 +395,17 @@ const styles = {
     flexDirection: "column",
     gap: 10,
   },
-
   sideTitle: {
     fontSize: 13,
     opacity: 0.9,
     borderBottom: "1px solid rgba(255,255,255,0.08)",
     paddingBottom: 8,
   },
-
   overlayButtons: {
     display: "flex",
     flexDirection: "column",
     gap: 8,
   },
-
   overlayBtn: {
     padding: "8px 10px",
     borderRadius: 10,
@@ -385,7 +416,6 @@ const styles = {
     fontSize: 13,
     opacity: 0.95,
   },
-
   overlayChecks: {
     display: "flex",
     flexDirection: "column",
@@ -393,10 +423,16 @@ const styles = {
     borderTop: "1px solid rgba(255,255,255,0.08)",
     paddingTop: 10,
   },
-
-  checkRow: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, opacity: 0.95 },
-  checkText: { lineHeight: 1.2 },
-
+  checkRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 13,
+    opacity: 0.95,
+  },
+  checkText: {
+    lineHeight: 1.2,
+  },
   status: {
     borderTop: "1px solid rgba(255,255,255,0.08)",
     paddingTop: 10,
@@ -404,8 +440,12 @@ const styles = {
     opacity: 0.9,
     marginTop: "auto",
   },
-
-  footer: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 },
+  footer: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 16,
+  },
   btnSecondary: {
     padding: "10px 14px",
     borderRadius: 10,
