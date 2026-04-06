@@ -3,16 +3,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import Plot from "react-plotly.js";
 
 export default function NorthAmericaMapModal({ open, onClose }) {
-  const [showDots, setShowDots] = useState(true);
-  const [showGlow, setShowGlow] = useState(true);
-  const [showBorders, setShowBorders] = useState(true);
+  const API_BASE =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-  const [points, setPoints] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [packages, setPackages] = useState([]);
+
   const [loadingPts, setLoadingPts] = useState(false);
   const [pointsErr, setPointsErr] = useState("");
 
-  const API_BASE =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+  const [filters, setFilters] = useState({ ALL: true });
 
   useEffect(() => {
     if (!open) return;
@@ -25,7 +26,7 @@ export default function NorthAmericaMapModal({ open, onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const normalizeRows = (json) => {
+  function normalizeCustomers(json) {
     const rows = Array.isArray(json)
       ? json
       : Array.isArray(json?.customers)
@@ -33,18 +34,26 @@ export default function NorthAmericaMapModal({ open, onClose }) {
       : [];
 
     return rows
-      .map((row) => ({
-        id: row.customerID,
-        name:
-          `${row.firstName || ""} ${row.lastName || ""}`.trim() ||
-          "Unnamed customer",
-        email: row.email || "",
-        postalCode: row.postalCode || "",
-        lat: Number(row.latitude),
-        lon: Number(row.longitude),
-      }))
+      .map((row) => {
+        const lat = Number(row.latitude);
+        const lon = Number(row.longitude);
+
+        return {
+          customerID: row.customerID ?? row.customerId ?? row.id,
+          name:
+            `${row.firstName || ""} ${row.lastName || ""}`.trim() ||
+            row.fullName ||
+            row.name ||
+            "Unnamed customer",
+          email: row.email || "",
+          postalCode: row.postalCode || "",
+          lat,
+          lon,
+        };
+      })
       .filter(
         (row) =>
+          row.customerID != null &&
           Number.isFinite(row.lat) &&
           Number.isFinite(row.lon) &&
           row.lat >= 18 &&
@@ -52,53 +61,99 @@ export default function NorthAmericaMapModal({ open, onClose }) {
           row.lon >= -170 &&
           row.lon <= -52
       );
-  };
+  }
 
-  const loadCustomerPoints = async () => {
-    setLoadingPts(true);
-    setPointsErr("");
+  function normalizeSubscriptions(json) {
+    const rows = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.subscriptions)
+      ? json.subscriptions
+      : [];
 
-    try {
-      const resp = await fetch(`${API_BASE}/api/customers`);
-      if (!resp.ok) {
-        throw new Error(`Failed to load customers (HTTP ${resp.status})`);
-      }
+    return rows
+      .map((row) => ({
+        subscriptionID:
+          row.subscriptionID ?? row.subscriptionId ?? row.id ?? null,
+        customerID: row.customerID ?? row.customerId ?? row.customer_id ?? null,
+        packageID: row.packageID ?? row.packageId ?? row.package_id ?? null,
+        status: row.status || row.state || "",
+        billingCycle: row.billingCycle || row.billing_cycle || row.cycle || "",
+      }))
+      .filter((row) => row.customerID != null && row.packageID != null);
+  }
 
-      const json = await resp.json();
-      const cleaned = normalizeRows(json);
-      setPoints(cleaned);
-    } catch (e) {
-      setPoints([]);
-      setPointsErr(String(e?.message || e));
-    } finally {
-      setLoadingPts(false);
-    }
-  };
+  function normalizePackages(json) {
+    const rows = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.packages)
+      ? json.packages
+      : [];
+
+    return rows
+      .map((row) => ({
+        packageID: row.packageID ?? row.packageId ?? row.id ?? null,
+        name: row.name || row.title || row.packageName || "",
+      }))
+      .filter((row) => row.packageID != null && row.name);
+  }
 
   useEffect(() => {
     if (!open) return;
 
     let cancelled = false;
 
-    async function load() {
+    async function loadAll() {
       setLoadingPts(true);
       setPointsErr("");
 
       try {
-        const resp = await fetch(`${API_BASE}/api/customers`);
-        if (!resp.ok) {
-          throw new Error(`Failed to load customers (HTTP ${resp.status})`);
+        const [customersRes, subscriptionsRes, packagesRes] = await Promise.all([
+          fetch(`${API_BASE}/api/customers`),
+          fetch(`${API_BASE}/api/subscriptions`),
+          fetch(`${API_BASE}/api/packages`),
+        ]);
+
+        if (!customersRes.ok) {
+          throw new Error(`Failed to load customers (HTTP ${customersRes.status})`);
+        }
+        if (!subscriptionsRes.ok) {
+          throw new Error(
+            `Failed to load subscriptions (HTTP ${subscriptionsRes.status})`
+          );
+        }
+        if (!packagesRes.ok) {
+          throw new Error(`Failed to load packages (HTTP ${packagesRes.status})`);
         }
 
-        const json = await resp.json();
-        const cleaned = normalizeRows(json);
+        const [customersJson, subscriptionsJson, packagesJson] =
+          await Promise.all([
+            customersRes.json(),
+            subscriptionsRes.json(),
+            packagesRes.json(),
+          ]);
 
-        if (!cancelled) {
-          setPoints(cleaned);
-        }
+        if (cancelled) return;
+
+        const normalizedCustomers = normalizeCustomers(customersJson);
+        const normalizedSubscriptions = normalizeSubscriptions(subscriptionsJson);
+        const normalizedPackages = normalizePackages(packagesJson);
+
+        setCustomers(normalizedCustomers);
+        setSubscriptions(normalizedSubscriptions);
+        setPackages(normalizedPackages);
+
+        setFilters((prev) => {
+          const next = { ALL: prev.ALL ?? true };
+          for (const pkg of normalizedPackages) {
+            next[pkg.name] = prev[pkg.name] ?? false;
+          }
+          return next;
+        });
       } catch (e) {
         if (!cancelled) {
-          setPoints([]);
+          setCustomers([]);
+          setSubscriptions([]);
+          setPackages([]);
           setPointsErr(String(e?.message || e));
         }
       } finally {
@@ -108,27 +163,128 @@ export default function NorthAmericaMapModal({ open, onClose }) {
       }
     }
 
-    load();
+    loadAll();
 
     return () => {
       cancelled = true;
     };
   }, [open, API_BASE]);
 
-  const lats = useMemo(() => points.map((p) => p.lat), [points]);
-  const lons = useMemo(() => points.map((p) => p.lon), [points]);
+  const filterButtons = useMemo(() => {
+    const packageButtons = packages
+      .map((p) => p.name)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    return ["ALL", ...packageButtons];
+  }, [packages]);
+
+  const toggleFilter = (key) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+
+      if (key === "ALL") {
+        const cleared = { ALL: true };
+        for (const btn of filterButtons) {
+          if (btn !== "ALL") cleared[btn] = false;
+        }
+        return cleared;
+      }
+
+      next[key] = !prev[key];
+      next.ALL = false;
+
+      return next;
+    });
+  };
+
+  const packageIdToName = useMemo(() => {
+    const map = new Map();
+    for (const pkg of packages) {
+      map.set(pkg.packageID, pkg.name);
+    }
+    return map;
+  }, [packages]);
+
+  const customerPackageNames = useMemo(() => {
+    const map = new Map();
+
+    for (const sub of subscriptions) {
+      const pkgName = packageIdToName.get(sub.packageID);
+      if (!pkgName) continue;
+
+      if (!map.has(sub.customerID)) {
+        map.set(sub.customerID, new Set());
+      }
+      map.get(sub.customerID).add(pkgName);
+    }
+
+    return map;
+  }, [subscriptions, packageIdToName]);
+
+  const allCustomerIDs = useMemo(() => {
+    return new Set(customers.map((c) => c.customerID));
+  }, [customers]);
+
+  const anyNonAllToggleOn = useMemo(
+    () =>
+      Object.entries(filters).some(
+        ([key, value]) => key !== "ALL" && Boolean(value)
+      ),
+    [filters]
+  );
+
+  const filteredCustomers = useMemo(() => {
+    if (filters.ALL) {
+      return customers.filter((customer) => allCustomerIDs.has(customer.customerID));
+    }
+
+    if (!anyNonAllToggleOn) return [];
+
+    const selectedPackages = filterButtons.filter(
+      (name) => name !== "ALL" && filters[name]
+    );
+
+    return customers.filter((customer) => {
+      const customerPackages =
+        customerPackageNames.get(customer.customerID) || new Set();
+
+      return selectedPackages.some((pkg) => customerPackages.has(pkg));
+    });
+  }, [
+    filters,
+    anyNonAllToggleOn,
+    filterButtons,
+    customers,
+    customerPackageNames,
+    allCustomerIDs,
+  ]);
+
+  const lats = useMemo(
+    () => filteredCustomers.map((p) => p.lat),
+    [filteredCustomers]
+  );
+  const lons = useMemo(
+    () => filteredCustomers.map((p) => p.lon),
+    [filteredCustomers]
+  );
 
   const hoverTexts = useMemo(
     () =>
-      points.map(
-        (p) =>
+      filteredCustomers.map((p) => {
+        const pkgSet = customerPackageNames.get(p.customerID) || new Set();
+        const pkgText = Array.from(pkgSet).sort().join(", ") || "None";
+
+        return (
           `<b>${p.name}</b><br>` +
           `Email: ${p.email || "N/A"}<br>` +
           `Postal Code: ${p.postalCode || "N/A"}<br>` +
+          `Packages: ${pkgText}<br>` +
           `Lat: ${p.lat.toFixed(4)}<br>` +
           `Lon: ${p.lon.toFixed(4)}`
-      ),
-    [points]
+        );
+      }),
+    [filteredCustomers, customerPackageNames]
   );
 
   if (!open) return null;
@@ -136,6 +292,21 @@ export default function NorthAmericaMapModal({ open, onClose }) {
   const HACKER_GREEN = "#00ff66";
   const LAND_BLACK = "#000000";
   const BORDER = "rgba(0,255,102,0.35)";
+
+  const baseTrace = {
+    type: "scattergeo",
+    mode: "markers",
+    lat: [39],
+    lon: [-98],
+    hoverinfo: "skip",
+    marker: {
+      size: 1,
+      color: "rgba(0,0,0,0)",
+      line: { width: 0 },
+    },
+    showlegend: false,
+    name: "",
+  };
 
   const glowTrace = {
     type: "scattergeo",
@@ -146,7 +317,7 @@ export default function NorthAmericaMapModal({ open, onClose }) {
     hoverinfo: "skip",
     marker: {
       size: 8,
-      color: "rgba(255, 0, 0, 0.18)",
+      color: "rgba(255,0,0,0.18)",
       line: { width: 0 },
     },
     showlegend: false,
@@ -161,7 +332,7 @@ export default function NorthAmericaMapModal({ open, onClose }) {
     text: hoverTexts,
     marker: {
       size: 3,
-      color: "rgba(255, 40, 40, 1)",
+      color: "rgba(255,0,0,1)",
       line: { width: 0 },
     },
     hovertemplate: "%{text}<extra></extra>",
@@ -169,9 +340,10 @@ export default function NorthAmericaMapModal({ open, onClose }) {
     name: "",
   };
 
-  const plotData = [];
-  if (showGlow && showDots) plotData.push(glowTrace);
-  if (showDots) plotData.push(dotTrace);
+  const plotData =
+    filters.ALL || anyNonAllToggleOn
+      ? [baseTrace, glowTrace, dotTrace]
+      : [baseTrace];
 
   return (
     <div style={styles.backdrop} onMouseDown={() => onClose?.()}>
@@ -188,8 +360,7 @@ export default function NorthAmericaMapModal({ open, onClose }) {
         </div>
 
         <p style={styles.subtext}>
-          Customer locations loaded from database latitude/longitude values
-          linked to postal codes.
+          Customer locations filtered by package toggles.
         </p>
 
         {pointsErr && (
@@ -213,25 +384,18 @@ export default function NorthAmericaMapModal({ open, onClose }) {
                   projection: { type: "mercator" },
                   lataxis: { range: [18, 73] },
                   lonaxis: { range: [-170, -52] },
-
                   showocean: true,
                   oceancolor: HACKER_GREEN,
-
                   showland: true,
                   landcolor: LAND_BLACK,
-
                   showcountries: true,
-                  countrycolor: showBorders ? BORDER : "rgba(0,0,0,0)",
-
+                  countrycolor: BORDER,
                   showlakes: true,
                   lakecolor: HACKER_GREEN,
-
                   showcoastlines: true,
-                  coastlinecolor: showBorders ? BORDER : "rgba(0,0,0,0)",
-
+                  coastlinecolor: BORDER,
                   showsubunits: true,
-                  subunitcolor: showBorders ? BORDER : "rgba(0,0,0,0)",
-
+                  subunitcolor: BORDER,
                   bgcolor: "rgba(0,0,0,0)",
                 },
               }}
@@ -248,75 +412,44 @@ export default function NorthAmericaMapModal({ open, onClose }) {
           </div>
 
           <div style={styles.sidePanel}>
-            <div style={styles.sideTitle}>Controls</div>
+            <div style={styles.sideTitle}>Packages</div>
 
-            <div style={styles.overlayButtons}>
-              <button
-                style={styles.overlayBtn}
-                onClick={() => setShowDots(true)}
-                disabled={loadingPts}
-              >
-                Show All Dots
-              </button>
+            <div style={styles.filterViewport}>
+              <div style={styles.filterButtonGrid}>
+                {filterButtons.map((label) => {
+                  const isOn = !!filters[label];
 
-              <button
-                style={styles.overlayBtn}
-                onClick={() => setShowGlow((v) => !v)}
-                disabled={loadingPts || !showDots}
-              >
-                Toggle Glow
-              </button>
-
-              <button
-                style={styles.overlayBtn}
-                onClick={loadCustomerPoints}
-                disabled={loadingPts}
-              >
-                Refresh Data
-              </button>
-            </div>
-
-            <div style={styles.overlayChecks}>
-              <label style={styles.checkRow}>
-                <input
-                  type="checkbox"
-                  checked={showDots}
-                  onChange={(e) => setShowDots(e.target.checked)}
-                />
-                <span style={styles.checkText}>Show dots</span>
-              </label>
-
-              <label style={styles.checkRow}>
-                <input
-                  type="checkbox"
-                  checked={showGlow}
-                  disabled={!showDots}
-                  onChange={(e) => setShowGlow(e.target.checked)}
-                />
-                <span style={styles.checkText}>Glow</span>
-              </label>
-
-              <label style={styles.checkRow}>
-                <input
-                  type="checkbox"
-                  checked={showBorders}
-                  onChange={(e) => setShowBorders(e.target.checked)}
-                />
-                <span style={styles.checkText}>Borders</span>
-              </label>
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleFilter(label)}
+                      style={{
+                        ...styles.filterToggleBtn,
+                        ...(isOn
+                          ? styles.filterToggleBtnOn
+                          : styles.filterToggleBtnOff),
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div style={styles.status}>
-              {loadingPts && <div>Loading customer map points…</div>}
+              {loadingPts && <div>Loading...</div>}
+
               {!loadingPts && !pointsErr && (
-                <div style={{ opacity: 0.9 }}>
-                  Customers plotted: <b>{points.length}</b>
-                </div>
-              )}
-              {!loadingPts && !pointsErr && points.length === 0 && (
-                <div style={{ opacity: 0.8 }}>
-                  No customer coordinates were returned.
-                </div>
+                <>
+                  <div>
+                    Customers Loaded: <b>{customers.length}</b>
+                  </div>
+                  <div>
+                    Customers Plotted: <b>{filteredCustomers.length}</b>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -385,66 +518,71 @@ const styles = {
     background: "rgba(0,0,0,0.6)",
   },
   sidePanel: {
-    flex: "1 1 auto",
-    minWidth: 220,
+    flex: "0 0 260px",
+    width: 260,
+    height: 440,
     borderRadius: 12,
     padding: 12,
     background: "rgba(0,0,0,0.65)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.08)",
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    overflow: "hidden",
   },
   sideTitle: {
-    fontSize: 13,
-    opacity: 0.9,
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-    paddingBottom: 8,
+    fontWeight: 700,
+    marginBottom: 10,
+    color: "#00ff66",
+    flex: "0 0 auto",
   },
-  overlayButtons: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
+  filterViewport: {
+    flex: "1 1 auto",
+    minHeight: 0,
+    overflowY: "auto",
+    overflowX: "hidden",
+    paddingRight: 4,
+    marginBottom: 12,
   },
-  overlayBtn: {
-    padding: "8px 10px",
+  filterButtonGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: 10,
+  },
+  filterToggleBtn: {
+    padding: "10px 12px",
     borderRadius: 10,
     border: "1px solid rgba(0,255,102,0.35)",
-    background: "rgba(0,0,0,0.65)",
-    color: "white",
+    fontSize: 13,
+    fontWeight: 600,
     cursor: "pointer",
-    fontSize: 13,
-    opacity: 0.95,
+    transition: "all 0.15s ease",
+    textAlign: "left",
   },
-  overlayChecks: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-    borderTop: "1px solid rgba(255,255,255,0.08)",
-    paddingTop: 10,
+  filterToggleBtnOff: {
+    background: "#000000",
+    color: "#ffffff",
   },
-  checkRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    fontSize: 13,
-    opacity: 0.95,
-  },
-  checkText: {
-    lineHeight: 1.2,
+  filterToggleBtnOn: {
+    background: "#00ff66",
+    color: "#000000",
+    border: "1px solid #00ff66",
+    boxShadow: "0 0 10px rgba(0,255,102,0.25)",
   },
   status: {
-    borderTop: "1px solid rgba(255,255,255,0.08)",
+    flex: "0 0 auto",
     paddingTop: 10,
-    fontSize: 12,
-    opacity: 0.9,
-    marginTop: "auto",
+    borderTop: "1px solid rgba(255,255,255,0.08)",
+    fontSize: 13,
+    color: "rgba(255,255,255,0.9)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
   },
   footer: {
     display: "flex",
     justifyContent: "flex-end",
     gap: 10,
-    marginTop: 16,
+    marginTop: 14,
   },
   btnSecondary: {
     padding: "10px 14px",
