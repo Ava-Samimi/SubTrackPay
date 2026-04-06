@@ -18,31 +18,34 @@ const app = express();
 
 app.use(cors());
 
-// ✅ IMPORTANT: must be BEFORE routes, and only once
+// must be BEFORE routes, and only once
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Public health check (no auth)
+// Public static files
+app.use("/exports", express.static("/app/exports"));
+app.use("/snapshots", express.static("/app/client/public/snapshots"));
+
+// Public health check
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-// ✅ PUBLIC (no auth) — for demo / charts
+// Public routes
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/data", dataRoutes);
 app.use("/api/nightly", nightlyRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/metrics", metricsRoutes);
-app.use("/exports", express.static("/app/exports"));
 app.use("/api", seedRoutes);
 app.use("/api/customers", customersRouter);
+app.use("/api/packages", packagesRouter);
+app.use("/api/subscriptions", subscriptionsRouter);
+app.use("/api/payments", paymentsRouter);
 
-// ✅ Protect everything below this line (skip in tests)
+// Protect everything below this line
 if (process.env.NODE_ENV !== "test") {
   app.use("/api", requireFirebaseAuth);
 }
 
 
-app.use("/api/packages", packagesRouter);
-app.use("/api/subscriptions", subscriptionsRouter);
-app.use("/api/payments", paymentsRouter);
 
 export default app;
