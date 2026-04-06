@@ -39,6 +39,16 @@ function downloadTextFile({ filename, text, mime = "text/plain;charset=utf-8" })
   URL.revokeObjectURL(url);
 }
 
+// Sort indicator arrow component
+function SortArrow({ active, dir }) {
+  if (!active) return <span style={{ opacity: 0.3, marginLeft: 4, fontSize: "0.75em" }}>⇅</span>;
+  return (
+    <span style={{ marginLeft: 4, fontSize: "0.8em" }}>
+      {dir === "asc" ? "↑" : "↓"}
+    </span>
+  );
+}
+
 export default function CustomersPage() {
   const {
     customers,
@@ -138,13 +148,56 @@ export default function CustomersPage() {
   };
 
   // =========================
+  // ✅ SORTING
+  // =========================
+  const [sortKey, setSortKey] = useState(null); // "name" | "memberSince" | "subs"
+  const [sortDir, setSortDir] = useState("asc"); // "asc" | "desc"
+
+  function handleSort(key) {
+    if (sortKey === key) {
+      // Toggle direction if same column
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+    // Reset to page 1 when sorting changes
+    setPage(1);
+  }
+
+  const sortedCustomers = useMemo(() => {
+    if (!sortKey) return customers;
+
+    return [...customers].sort((a, b) => {
+      let aVal, bVal;
+
+      if (sortKey === "name") {
+        aVal = fullName(a).toLowerCase();
+        bVal = fullName(b).toLowerCase();
+      } else if (sortKey === "memberSince") {
+        aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      } else if (sortKey === "subs") {
+        aVal = subCounts[a.customerID] || 0;
+        bVal = subCounts[b.customerID] || 0;
+      } else {
+        return 0;
+      }
+
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [customers, subCounts, sortKey, sortDir]);
+
+  // =========================
   // ✅ PAGINATION (client-side)
   // =========================
   const PAGE_SIZE = 50;
 
   const [page, setPage] = useState(1);
 
-  const total = customers.length;
+  const total = sortedCustomers.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // If data changes and current page becomes invalid, clamp it.
@@ -154,8 +207,8 @@ export default function CustomersPage() {
 
   const paginatedCustomers = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return customers.slice(start, start + PAGE_SIZE);
-  }, [customers, page]);
+    return sortedCustomers.slice(start, start + PAGE_SIZE);
+  }, [sortedCustomers, page]);
 
   // Build page buttons like: 1 2 3 4 ... N (windowed)
   const pageButtons = useMemo(() => {
@@ -175,6 +228,16 @@ export default function CustomersPage() {
 
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }, [page, totalPages]);
+
+  // Sortable header cell style
+  const sortableHeaderStyle = {
+    cursor: "pointer",
+    userSelect: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    transition: "opacity 0.15s",
+  };
 
   return (
     <div className="entity-page">
@@ -326,10 +389,38 @@ export default function CustomersPage() {
           />
 
           <div className="entity-header" style={{ gridTemplateColumns: "1fr 1fr 160px 110px" }}>
-            <div>name</div>
+            {/* Sortable: name */}
+            <div
+              style={sortableHeaderStyle}
+              onClick={() => handleSort("name")}
+              title="Sort by name"
+            >
+              name
+              <SortArrow active={sortKey === "name"} dir={sortDir} />
+            </div>
+
+            {/* Not sortable: email */}
             <div>email</div>
-            <div>member since</div>
-            <div># of subs</div>
+
+            {/* Sortable: member since */}
+            <div
+              style={sortableHeaderStyle}
+              onClick={() => handleSort("memberSince")}
+              title="Sort by member since"
+            >
+              member since
+              <SortArrow active={sortKey === "memberSince"} dir={sortDir} />
+            </div>
+
+            {/* Sortable: # of subs */}
+            <div
+              style={sortableHeaderStyle}
+              onClick={() => handleSort("subs")}
+              title="Sort by # of subs"
+            >
+              # of subs
+              <SortArrow active={sortKey === "subs"} dir={sortDir} />
+            </div>
           </div>
 
           {loading ? (

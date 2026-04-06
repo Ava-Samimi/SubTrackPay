@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
 import EntityLeftHeader from "../../components/EntityLeftHeader.jsx"; // ✅ NEW
 import "../shared/EntityPage.css";
@@ -19,6 +19,16 @@ function subscriptionLabel(s, shortId) {
     shortId(s.packageID);
 
   return `${cust} → ${pkg}`;
+}
+
+// Sort indicator arrow component
+function SortArrow({ active, dir }) {
+  if (!active) return <span style={{ opacity: 0.3, marginLeft: 4, fontSize: "0.75em" }}>⇅</span>;
+  return (
+    <span style={{ marginLeft: 4, fontSize: "0.8em" }}>
+      {dir === "asc" ? "↑" : "↓"}
+    </span>
+  );
 }
 
 export default function PaymentsPage() {
@@ -68,6 +78,41 @@ export default function PaymentsPage() {
     );
     return (selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
   }, [items, selectedIds, shortId]);
+
+  // =========================
+  // ✅ SORTING
+  // =========================
+  const [sortDir, setSortDir] = useState(null); // null | "asc" | "desc"
+
+  function handleSort() {
+    setSortDir((d) => {
+      if (d === null) return "asc";
+      if (d === "asc") return "desc";
+      return null; // third click clears sort
+    });
+  }
+
+  const sortedItems = useMemo(() => {
+    if (!sortDir) return items;
+
+    return [...items].sort((a, b) => {
+      const aVal = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+      const bVal = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [items, sortDir]);
+
+  const sortableHeaderStyle = {
+    cursor: "pointer",
+    userSelect: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    transition: "opacity 0.15s",
+  };
 
   return (
     <div className="entity-page">
@@ -190,7 +235,17 @@ export default function PaymentsPage() {
             <div>#</div>
             <div>subscription</div>
             <div>status</div>
-            <div>due</div>
+
+            {/* Sortable: due */}
+            <div
+              style={sortableHeaderStyle}
+              onClick={handleSort}
+              title="Sort by due date"
+            >
+              due
+              <SortArrow active={sortDir !== null} dir={sortDir} />
+            </div>
+
             <div>paid</div>
           </div>
 
@@ -199,7 +254,7 @@ export default function PaymentsPage() {
           ) : items.length === 0 ? (
             <div className="entity-muted">No payments yet.</div>
           ) : (
-            items.map((p) => {
+            sortedItems.map((p) => {
               const id = p.paymentID;
               const selected = (selectedIds || []).includes(String(id));
 
