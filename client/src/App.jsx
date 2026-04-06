@@ -15,12 +15,15 @@ import SeedConfigModal from "./components/SeedConfigModal.jsx";
 import SnapshotModal from "./components/SnapshotModal.jsx";
 import NorthAmericaMapModal from "./components/NorthAmericaMapModal.jsx";
 import HelpModal from "./components/HelpModal.jsx";
+import CallModal from "./components/CallModal.jsx";
 
 function AuthedShell({
   children,
   seedOpen,
   setSeedOpen,
   snapshotOpen,
+  callOpen,
+  setCallOpen,
   setSnapshotOpen,
   naMapOpen,
   setNaMapOpen,
@@ -64,7 +67,7 @@ function AuthedShell({
           </button>
 
           <button
-            onClick={() => alert("Call Center (coming soon)")}
+            onClick={() => setCallOpen(true)}
             style={{
               padding: "10px 14px",
               borderRadius: 10,
@@ -137,6 +140,11 @@ function AuthedShell({
           onClose={() => setSnapshotOpen(false)}
         />
 
+        <CallModal
+          open={callOpen}
+          onClose={() => setCallOpen(false)}
+        />
+
         <HelpModal
           open={helpOpen}
           onClose={() => setHelpOpen(false)}
@@ -183,6 +191,7 @@ export default function App() {
   const [naMapOpen, setNaMapOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
 
   // "first" => initial seed (no reset)
   // "reseed" => wipe + seed from scratch
@@ -273,6 +282,8 @@ export default function App() {
     setSeedOpen,
     snapshotOpen,
     setSnapshotOpen,
+    callOpen,
+    setCallOpen,
     naMapOpen,
     setNaMapOpen,
     helpOpen,
