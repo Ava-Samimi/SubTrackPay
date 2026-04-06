@@ -1,5 +1,5 @@
 // client/src/pages/packages/PackagesPage.jsx
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
 import EntityLeftHeader from "../../components/EntityLeftHeader.jsx";
 import "../shared/EntityPage.css";
@@ -50,6 +50,16 @@ function downloadTextFile({ filename, text, mime = "text/plain;charset=utf-8" })
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+// Sort indicator arrow component
+function SortArrow({ active, dir }) {
+  if (!active) return <span style={{ opacity: 0.3, marginLeft: 4, fontSize: "0.75em" }}>⇅</span>;
+  return (
+    <span style={{ marginLeft: 4, fontSize: "0.8em" }}>
+      {dir === "asc" ? "↑" : "↓"}
+    </span>
+  );
 }
 
 export default function PackagesPage() {
@@ -121,6 +131,44 @@ export default function PackagesPage() {
       text: csv,
       mime: "text/csv;charset=utf-8",
     });
+  };
+
+  // =========================
+  // ✅ SORTING
+  // =========================
+  const [sortKey, setSortKey] = useState(null); // "monthlyCost" | "annualCost"
+  const [sortDir, setSortDir] = useState("asc"); // "asc" | "desc"
+
+  function handleSort(key) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
+  const sortedItems = useMemo(() => {
+    if (!sortKey) return items;
+
+    return [...items].sort((a, b) => {
+      const aVal = parseFloat(a[sortKey]) ?? 0;
+      const bVal = parseFloat(b[sortKey]) ?? 0;
+
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [items, sortKey, sortDir]);
+
+  // Sortable header cell style
+  const sortableHeaderStyle = {
+    cursor: "pointer",
+    userSelect: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    transition: "opacity 0.15s",
   };
 
   return (
@@ -247,8 +295,26 @@ export default function PackagesPage() {
           <div className="entity-header" style={{ gridTemplateColumns: "70px 1fr 140px 140px" }}>
             <div>#</div>
             <div>package</div>
-            <div>monthlyCost</div>
-            <div>annualCost</div>
+
+            {/* Sortable: monthlyCost */}
+            <div
+              style={sortableHeaderStyle}
+              onClick={() => handleSort("monthlyCost")}
+              title="Sort by monthly cost"
+            >
+              monthlyCost
+              <SortArrow active={sortKey === "monthlyCost"} dir={sortDir} />
+            </div>
+
+            {/* Sortable: annualCost */}
+            <div
+              style={sortableHeaderStyle}
+              onClick={() => handleSort("annualCost")}
+              title="Sort by annual cost"
+            >
+              annualCost
+              <SortArrow active={sortKey === "annualCost"} dir={sortDir} />
+            </div>
           </div>
 
           {loading ? (
@@ -256,7 +322,7 @@ export default function PackagesPage() {
           ) : items.length === 0 ? (
             <div className="entity-muted">No packages yet.</div>
           ) : (
-            items.map((p) => {
+            sortedItems.map((p) => {
               const id = p.packageID;
               const selected = (selectedIds || []).includes(String(id));
 
