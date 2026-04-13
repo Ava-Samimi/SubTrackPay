@@ -52,7 +52,6 @@ services:
     volumes:
       - ./data:/app/data
       - ./server/prisma:/app/prisma:ro
-      - ./server/data/db-info:/app/data/db-info
       - ./server/seeder/prisma_schema_to_json.py:/app/prisma_schema_to_json.py:ro
       - ./client/public/snapshots:/app/client/public/snapshots
     command: ["sh", "-lc", "python /app/prisma_schema_to_json.py && python /app/seed_db.py"]
@@ -69,7 +68,6 @@ services:
     volumes:
       - ./server/secrets/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
       - ./data:/app/data
-      - ./server/data/db-info:/app/data/db-info
       - ./server/exports:/app/exports
       - ./server/seeder:/app/seeder:ro
       - ./server/seeder/seed_db.py:/app/seed_db.py:ro
