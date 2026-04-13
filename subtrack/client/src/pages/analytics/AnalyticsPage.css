@@ -1,0 +1,263 @@
+/* Reset box-sizing for all elements */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Main page container */
+.analytics-page {
+  min-height: 100vh;
+  background: #000;
+  color: #cfcfcf;
+  padding: 20px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Error message styling */
+.analytics-error {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #ff6b6b;
+  border-radius: 10px;
+  color: #ffb3b3;
+  background: rgba(255, 0, 0, 0.08);
+}
+
+/* Layout with grid for left and right panels */
+.analytics-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* LEFT: Sidebar */
+.analytics-left {
+  background: #cfcfd3;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: #111;
+
+  /* Sticky form */
+  position: sticky;
+  top: 18px;
+  align-self: start;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.analytics-left-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.analytics-formcard {
+  background: #dedee3;
+  border-radius: 16px;
+  padding: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+.analytics-label {
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+.analytics-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+}
+
+.analytics-input-readonly {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  outline: none;
+  font-size: 14px;
+  background: #f3f3f3;
+  color: #444;
+}
+
+.analytics-bigbtn {
+  margin-top: 18px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #000;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.analytics-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.analytics-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #f6f6f6;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.analytics-btn-delete {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #ffe7e7;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.analytics-tip {
+  opacity: 0.8;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* RIGHT: Content area where the chart is displayed */
+.analytics-right {
+  padding: 20px;
+  min-height: 80vh; /* Set minimum height for the right panel */
+  background-color: #fff;
+  border-radius: 8px;
+  margin-left: 20px;
+  margin-top: 20px;
+  box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.1);
+  overflow: auto; /* Allow vertical scrolling if needed */
+}
+
+/* Chart container */
+.analytics-chart-container {
+  width: 100%; /* Ensure chart fits inside the container */
+  height: 600px; /* Set the height of the chart container */
+  margin-top: 20px;
+  overflow: hidden; /* Prevent horizontal scroll */
+}
+
+/* Navbar styling above the list */
+.analytics-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.analytics-navgroup {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analytics-navbtn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(57, 255, 20, 0.35);
+  background: #000;
+  color: #39ff14;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analytics-navbtn:hover {
+  filter: brightness(1.1);
+}
+
+.analytics-navbtn-active {
+  background: #39ff14;
+  color: #000;
+  border-color: #39ff14;
+}
+
+.analytics-navbtn-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* List button on far right */
+.analytics-listbtn {
+  margin-left: auto;
+}
+
+/* Table - ✅ NOW 4 COLUMNS ONLY */
+.analytics-header {
+  background: #000;
+  border-radius: 12px;
+  padding: 12px 10px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(240px, 1.6fr) 150px 90px;
+  gap: 10px;
+  color: #39ff14;
+  font-weight: 800;
+  align-items: center;
+  border: 1px solid rgba(57, 255, 20, 0.25);
+  min-width: 680px;
+}
+
+.analytics-row {
+  margin-top: 10px;
+  background: #cfcfcf;
+  border-radius: 12px;
+  padding: 12px 10px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(240px, 1.6fr) 150px 90px;
+  gap: 10px;
+  align-items: center;
+  color: #222;
+  cursor: pointer;
+  min-width: 680px;
+}
+
+.analytics-row-active {
+  outline: 2px solid #39ff14;
+  box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.15);
+}
+
+.analytics-row-selected {
+  outline: 3px solid #000;
+  box-shadow: inset 0 0 0 2px #39ff14;
+}
+
+.analytics-muted {
+  margin-top: 14px;
+  color: #aaa;
+}
+
+@media (max-width: 900px) {
+  .analytics-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-left {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
