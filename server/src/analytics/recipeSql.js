@@ -94,8 +94,7 @@ export function buildSqlForRecipe(recipeId, options = {}) {
 
   // --- common mapped fields ---
   // Models we expect:
-  // Customer, Subscription, Package, Payment (adjust if yours differ)
-  const Customer = "Customer";
+  // Subscription, Package, Payment (adjust if yours differ)
   const Subscription = "Subscription";
   const Package = "Package";
   const Payment = "Payment";

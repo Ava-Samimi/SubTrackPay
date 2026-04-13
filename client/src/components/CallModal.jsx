@@ -1,5 +1,5 @@
 // client/src/components/CallModal.jsx
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { listPayments, updatePayment } from "../pages/payments/paymentsApi.js";
 
 export default function CallModal({ open, onClose }) {

@@ -1,5 +1,5 @@
 // client/src/pages/customers/CustomersPage.jsx
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
 import EntityLeftHeader from "../../components/EntityLeftHeader.jsx";
 import "../shared/EntityPage.css";
@@ -56,7 +56,6 @@ export default function CustomersPage() {
     loading,
     error,
 
-    editingId,
     isEditing,
     selectedCustomer,
 
@@ -200,25 +199,23 @@ export default function CustomersPage() {
   const total = sortedCustomers.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // If data changes and current page becomes invalid, clamp it.
-  useEffect(() => {
-    setPage((p) => Math.min(Math.max(1, p), totalPages));
-  }, [totalPages]);
+  // Clamp page to valid range without a side-effect setState
+  const clampedPage = Math.min(Math.max(1, page), totalPages);
 
   const paginatedCustomers = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
+    const start = (clampedPage - 1) * PAGE_SIZE;
     return sortedCustomers.slice(start, start + PAGE_SIZE);
-  }, [sortedCustomers, page]);
+  }, [sortedCustomers, clampedPage]);
 
   // Build page buttons like: 1 2 3 4 ... N (windowed)
   const pageButtons = useMemo(() => {
-    const maxButtons = 7; // change if you want more/less
+    const maxButtons = 7;
     if (totalPages <= maxButtons) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
     const half = Math.floor(maxButtons / 2);
-    let start = Math.max(1, page - half);
+    let start = Math.max(1, clampedPage - half);
     let end = start + maxButtons - 1;
 
     if (end > totalPages) {
@@ -227,7 +224,7 @@ export default function CustomersPage() {
     }
 
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }, [page, totalPages]);
+  }, [clampedPage, totalPages]);
 
   // Sortable header cell style
   const sortableHeaderStyle = {
@@ -455,8 +452,8 @@ export default function CustomersPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage(1)}
-                  disabled={page === 1}
-                  style={{ opacity: page === 1 ? 0.5 : 1 }}
+                  disabled={clampedPage === 1}
+                  style={{ opacity: clampedPage === 1 ? 0.5 : 1 }}
                 >
                   {"<<"}
                 </button>
@@ -465,8 +462,8 @@ export default function CustomersPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  style={{ opacity: page === 1 ? 0.5 : 1 }}
+                  disabled={clampedPage === 1}
+                  style={{ opacity: clampedPage === 1 ? 0.5 : 1 }}
                 >
                   {"<"}
                 </button>
@@ -488,8 +485,8 @@ export default function CustomersPage() {
                     className="entity-btn"
                     onClick={() => setPage(p)}
                     style={{
-                      opacity: p === page ? 1 : 0.85,
-                      border: p === page ? "1px solid rgba(120,255,120,0.9)" : undefined,
+                      opacity: p === clampedPage ? 1 : 0.85,
+                      border: p === clampedPage ? "1px solid rgba(120,255,120,0.9)" : undefined,
                     }}
                     title={`Page ${p}`}
                   >
@@ -515,8 +512,8 @@ export default function CustomersPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  style={{ opacity: page === totalPages ? 0.5 : 1 }}
+                  disabled={clampedPage === totalPages}
+                  style={{ opacity: clampedPage === totalPages ? 0.5 : 1 }}
                 >
                   {">"}
                 </button>
@@ -525,14 +522,14 @@ export default function CustomersPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage(totalPages)}
-                  disabled={page === totalPages}
-                  style={{ opacity: page === totalPages ? 0.5 : 1 }}
+                  disabled={clampedPage === totalPages}
+                  style={{ opacity: clampedPage === totalPages ? 0.5 : 1 }}
                 >
                   {">>"}
                 </button>
 
                 <div style={{ opacity: 0.8, padding: "6px 6px" }}>
-                  Page {page} / {totalPages} • {total} rows
+                  Page {clampedPage} / {totalPages} • {total} rows
                 </div>
               </div>
             </>

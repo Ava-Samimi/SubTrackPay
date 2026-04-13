@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const DEFAULTS = {
   seedCustomers: 500,
@@ -30,26 +30,27 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
   const saved = useMemo(() => loadSaved(), []);
   const initial = saved ? { ...DEFAULTS, ...saved } : DEFAULTS;
 
-  const [seedCustomers, setSeedCustomers] = useState(initial.seedCustomers);
-  const [seedSubscriptions, setSeedSubscriptions] = useState(initial.seedSubscriptions);
-  const [seedRandomSeed, setSeedRandomSeed] = useState(initial.seedRandomSeed);
-  const [seedSkipIfExists, setSeedSkipIfExists] = useState(initial.seedSkipIfExists);
-  const [seedDistribution, setSeedDistribution] = useState(initial.seedDistribution);
-  const [seedPostalDistribution, setSeedPostalDistribution] = useState(
-    initial.seedPostalDistribution
-  );
+  const [form, setForm] = useState(initial);
 
+  // Re-sync form from localStorage each time the modal opens
   useEffect(() => {
     if (!open) return;
     const latest = loadSaved();
-    const init = latest ? { ...DEFAULTS, ...latest } : DEFAULTS;
-    setSeedCustomers(init.seedCustomers);
-    setSeedSubscriptions(init.seedSubscriptions);
-    setSeedRandomSeed(init.seedRandomSeed);
-    setSeedSkipIfExists(init.seedSkipIfExists);
-    setSeedDistribution(init.seedDistribution);
-    setSeedPostalDistribution(init.seedPostalDistribution);
+    setForm(latest ? { ...DEFAULTS, ...latest } : DEFAULTS);
   }, [open]);
+
+  const {
+    seedCustomers,
+    seedSubscriptions,
+    seedRandomSeed,
+    seedSkipIfExists,
+    seedDistribution,
+    seedPostalDistribution,
+  } = form;
+
+  function setField(key, value) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
 
   if (!open) return null;
 
@@ -106,7 +107,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
               min={1}
               max={200000}
               value={seedCustomers}
-              onChange={(e) => setSeedCustomers(Number(e.target.value))}
+              onChange={(e) => setField("seedCustomers", Number(e.target.value))}
               style={styles.input}
             />
           </label>
@@ -118,7 +119,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
               min={0}
               max={500000}
               value={seedSubscriptions}
-              onChange={(e) => setSeedSubscriptions(Number(e.target.value))}
+              onChange={(e) => setField("seedSubscriptions", Number(e.target.value))}
               style={styles.input}
             />
           </label>
@@ -129,7 +130,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
               type="text"
               placeholder="leave blank = random each run"
               value={seedRandomSeed}
-              onChange={(e) => setSeedRandomSeed(e.target.value.trim())}
+              onChange={(e) => setField("seedRandomSeed", e.target.value.trim())}
               style={styles.input}
             />
           </label>
@@ -138,7 +139,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
             Subscription distribution
             <select
               value={seedDistribution}
-              onChange={(e) => setSeedDistribution(e.target.value)}
+              onChange={(e) => setField("seedDistribution", e.target.value)}
               style={styles.input}
             >
               <option value="uniform">uniform</option>
@@ -152,7 +153,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
             Postal code distribution
             <select
               value={seedPostalDistribution}
-              onChange={(e) => setSeedPostalDistribution(e.target.value)}
+              onChange={(e) => setField("seedPostalDistribution", e.target.value)}
               style={styles.input}
             >
               <option value="urban_only">urban_only</option>
@@ -193,7 +194,7 @@ export default function SeedConfigModal({ open, onClose, onApply }) {
           <input
             type="checkbox"
             checked={seedSkipIfExists}
-            onChange={(e) => setSeedSkipIfExists(e.target.checked)}
+            onChange={(e) => setField("seedSkipIfExists", e.target.checked)}
           />
           <span style={{ marginLeft: 10 }}>
             Skip seeding if customers already exist (recommended)

@@ -1,5 +1,5 @@
 // client/src/App.jsx
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
 import AuthGate from "./AuthGate.jsx";
@@ -34,8 +34,6 @@ function AuthedShell({
   openReseed,
   handleSeedApply,
 }) {
-  const navigate = useNavigate();
-
   return (
     <AuthGate>
       <>

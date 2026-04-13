@@ -1,5 +1,5 @@
 // client/src/components/NorthAmericaMapModal.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Plot from "react-plotly.js";
 
 export default function NorthAmericaMapModal({ open, onClose }) {

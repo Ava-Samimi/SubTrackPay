@@ -79,10 +79,6 @@ export function createHandleShowClick({
 
     const title = getTitle(metric, basis);
 
-    // Limit the number of labels on the x-axis to avoid clutter
-    const step = Math.ceil(x.length / 10); // Adjust this number to control density of labels
-    const filteredX = x.filter((_, index) => index % step === 0); // Only show every `step`th label
-    const filteredLabels = filteredX; // Could also add custom text for labels if needed
 
     return {
       data: [

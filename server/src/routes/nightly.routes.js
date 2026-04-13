@@ -137,12 +137,11 @@ router.post("/jobs/run", async (req, res) => {
 /**
  * GET /api/nightly/jobs
  */
-router.get("/jobs", (req, res) => {
+router.get("/jobs", (_req, res) => {
   try {
     const jobs = loadJobs();
     res.json({ ok: true, jobs });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to load jobs" });
+  } catch (_err) {
   }
 });
 

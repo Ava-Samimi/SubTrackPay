@@ -127,15 +127,13 @@ export default function SubscriptionsPage() {
   const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // Clamp page when list size changes
-  useEffect(() => {
-    setPage((p) => Math.min(Math.max(1, p), totalPages));
-  }, [totalPages]);
+  // Clamp page to valid range without a side-effect setState
+  const clampedPage = Math.min(Math.max(1, page), totalPages);
 
   const paginatedItems = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
+    const start = (clampedPage - 1) * PAGE_SIZE;
     return items.slice(start, start + PAGE_SIZE);
-  }, [items, page]);
+  }, [items, clampedPage]);
 
   // Windowed page buttons
   const pageButtons = useMemo(() => {
@@ -145,7 +143,7 @@ export default function SubscriptionsPage() {
     }
 
     const half = Math.floor(maxButtons / 2);
-    let start = Math.max(1, page - half);
+    let start = Math.max(1, clampedPage - half);
     let end = start + maxButtons - 1;
 
     if (end > totalPages) {
@@ -154,7 +152,7 @@ export default function SubscriptionsPage() {
     }
 
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }, [page, totalPages]);
+  }, [clampedPage, totalPages]);
 
   // ✅ Selected rows lookup for export
   const selectedSubscriptions = useMemo(() => {
@@ -405,8 +403,8 @@ export default function SubscriptionsPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage(1)}
-                  disabled={page === 1}
-                  style={{ opacity: page === 1 ? 0.5 : 1 }}
+                  disabled={clampedPage === 1}
+                  style={{ opacity: clampedPage === 1 ? 0.5 : 1 }}
                 >
                   {"<<"}
                 </button>
@@ -415,8 +413,8 @@ export default function SubscriptionsPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  style={{ opacity: page === 1 ? 0.5 : 1 }}
+                  disabled={clampedPage === 1}
+                  style={{ opacity: clampedPage === 1 ? 0.5 : 1 }}
                 >
                   {"<"}
                 </button>
@@ -438,8 +436,8 @@ export default function SubscriptionsPage() {
                     className="entity-btn"
                     onClick={() => setPage(p)}
                     style={{
-                      opacity: p === page ? 1 : 0.85,
-                      border: p === page ? "1px solid rgba(120,255,120,0.9)" : undefined,
+                      opacity: p === clampedPage ? 1 : 0.85,
+                      border: p === clampedPage ? "1px solid rgba(120,255,120,0.9)" : undefined,
                     }}
                     title={`Page ${p}`}
                   >
@@ -465,8 +463,8 @@ export default function SubscriptionsPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  style={{ opacity: page === totalPages ? 0.5 : 1 }}
+                  disabled={clampedPage === totalPages}
+                  style={{ opacity: clampedPage === totalPages ? 0.5 : 1 }}
                 >
                   {">"}
                 </button>
@@ -475,14 +473,14 @@ export default function SubscriptionsPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => setPage(totalPages)}
-                  disabled={page === totalPages}
-                  style={{ opacity: page === totalPages ? 0.5 : 1 }}
+                  disabled={clampedPage === totalPages}
+                  style={{ opacity: clampedPage === totalPages ? 0.5 : 1 }}
                 >
                   {">>"}
                 </button>
 
                 <div style={{ opacity: 0.8, padding: "6px 6px" }}>
-                  Page {page} / {totalPages} • {total} rows
+                  Page {clampedPage} / {totalPages} • {total} rows
                 </div>
               </div>
             </>
