@@ -57,10 +57,11 @@ if (process.env.NODE_ENV !== "test") {
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/data", dataRoutes);
 app.use("/api/nightly", nightlyRoutes);
-// Strict rate limit on admin/seed endpoints — they trigger heavy DB operations
+// Strict rate limit on admin endpoints — they trigger heavy DB operations.
+// /api/admin/seed is also matched here since it starts with /api/admin.
 app.use("/api/admin", strictLimiter, adminRoutes);
 app.use("/api/metrics", metricsRoutes);
-app.use("/api", strictLimiter, seedRoutes);
+app.use("/api", seedRoutes);
 app.use("/api/customers", customersRouter);
 app.use("/api/packages", packagesRouter);
 app.use("/api/subscriptions", subscriptionsRouter);

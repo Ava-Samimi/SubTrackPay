@@ -35,44 +35,55 @@ export { helmetMiddleware as helmet };
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 
+const IS_TEST = process.env.NODE_ENV === "test";
+const passThrough = (_req, _res, next) => next();
+
 let generalLimiter;
 let strictLimiter;
 
-try {
-  const { rateLimit } = await import("express-rate-limit");
-
-  // General API limit: 100 requests per 15 minutes per IP
-  generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    standardHeaders: true,  // Return rate limit info in RateLimit-* headers
-    legacyHeaders: false,
-    message: { error: "Too many requests. Please try again later." },
-    handler(req, res, _next, options) {
-      log.warn("Rate limit exceeded", { ip: req.ip, path: req.path });
-      res.status(429).json(options.message);
-    },
-  });
-
-  // Strict limit for sensitive write operations: 10 requests per 15 minutes per IP
-  strictLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: "Too many requests to this endpoint. Please try again later." },
-    handler(req, res, _next, options) {
-      log.warn("Strict rate limit exceeded", { ip: req.ip, path: req.path });
-      res.status(429).json(options.message);
-    },
-  });
-
-  log.info("Rate limiting enabled", { generalMax: 100, strictMax: 10, windowMinutes: 15 });
-} catch {
-  log.warn("express-rate-limit package not found — rate limiting not applied. Run npm ci.");
-  const passThrough = (_req, _res, next) => next();
+// Rate limiting is disabled in test mode — the in-memory store accumulates
+// across test cases and causes tests to receive 429 instead of their expected
+// status codes once the limit is reached.
+if (IS_TEST) {
   generalLimiter = passThrough;
   strictLimiter = passThrough;
+  log.debug("Rate limiting disabled in test mode");
+} else {
+  try {
+    const { rateLimit } = await import("express-rate-limit");
+
+    // General API limit: 100 requests per 15 minutes per IP
+    generalLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: "Too many requests. Please try again later." },
+      handler(req, res, _next, options) {
+        log.warn("Rate limit exceeded", { ip: req.ip, path: req.path });
+        res.status(429).json(options.message);
+      },
+    });
+
+    // Strict limit for sensitive write operations: 10 requests per 15 minutes per IP
+    strictLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: "Too many requests to this endpoint. Please try again later." },
+      handler(req, res, _next, options) {
+        log.warn("Strict rate limit exceeded", { ip: req.ip, path: req.path });
+        res.status(429).json(options.message);
+      },
+    });
+
+    log.info("Rate limiting enabled", { generalMax: 100, strictMax: 10, windowMinutes: 15 });
+  } catch {
+    log.warn("express-rate-limit package not found — rate limiting not applied. Run npm ci.");
+    generalLimiter = passThrough;
+    strictLimiter = passThrough;
+  }
 }
 
 export { generalLimiter, strictLimiter };
