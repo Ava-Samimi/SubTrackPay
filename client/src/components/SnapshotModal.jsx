@@ -1,50 +1,17 @@
 // client/src/components/SnapshotModal.jsx
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export default function SnapshotModal({ open, onClose }) {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-  // Track the last open value to detect when modal transitions to open
-  const prevOpenRef = useRef(false);
-  const cacheBustRef = useRef(Date.now());
-  if (open && !prevOpenRef.current) {
-    cacheBustRef.current = Date.now();
-  }
-  prevOpenRef.current = open;
-  const cacheBust = cacheBustRef.current;
-
-  const images = useMemo(
-    () => [
-      {
-        src: `${API_BASE}/snapshots/snapshot_1_geo_distribution.png?v=${cacheBust}`,
-        alt: "Snapshot 1 - Geographic Distribution",
-      },
-      {
-        src: `${API_BASE}/snapshots/snapshot_2_country_split.png?v=${cacheBust}`,
-        alt: "Snapshot 2 - Country Split",
-      },
-      {
-        src: `${API_BASE}/snapshots/snapshot_3_package_distribution.png?v=${cacheBust}`,
-        alt: "Snapshot 3 - Package Distribution",
-      },
-      {
-        src: `${API_BASE}/snapshots/snapshot_4_subscription_status.png?v=${cacheBust}`,
-        alt: "Snapshot 4 - Subscription Status",
-      },
-      {
-        src: `${API_BASE}/snapshots/snapshot_5_billing_cycle.png?v=${cacheBust}`,
-        alt: "Snapshot 5 - Billing Cycle",
-      },
-      {
-        src: `${API_BASE}/snapshots/snapshot_6_customer_creation_timeline.png?v=${cacheBust}`,
-        alt: "Snapshot 6 - Customer Creation Timeline",
-      },
-    ],
-    [API_BASE, cacheBust]
-  );
+  // Increment a counter each time the modal opens to bust the browser cache.
+  // Mutating a ref inside useEffect is allowed — no impure calls in render.
+  const openCountRef = useRef(0);
 
   useEffect(() => {
     if (!open) return;
+
+    openCountRef.current += 1;
 
     const onKey = (e) => {
       if (e.key === "Escape") onClose?.();
@@ -55,6 +22,16 @@ export default function SnapshotModal({ open, onClose }) {
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const v = openCountRef.current;
+  const images = [
+    { src: `${API_BASE}/snapshots/snapshot_1_geo_distribution.png?v=${v}`, alt: "Snapshot 1 - Geographic Distribution" },
+    { src: `${API_BASE}/snapshots/snapshot_2_country_split.png?v=${v}`, alt: "Snapshot 2 - Country Split" },
+    { src: `${API_BASE}/snapshots/snapshot_3_package_distribution.png?v=${v}`, alt: "Snapshot 3 - Package Distribution" },
+    { src: `${API_BASE}/snapshots/snapshot_4_subscription_status.png?v=${v}`, alt: "Snapshot 4 - Subscription Status" },
+    { src: `${API_BASE}/snapshots/snapshot_5_billing_cycle.png?v=${v}`, alt: "Snapshot 5 - Billing Cycle" },
+    { src: `${API_BASE}/snapshots/snapshot_6_customer_creation_timeline.png?v=${v}`, alt: "Snapshot 6 - Customer Creation Timeline" },
+  ];
 
   return (
     <div style={styles.backdrop}>
