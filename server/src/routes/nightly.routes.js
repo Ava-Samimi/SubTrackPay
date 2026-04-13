@@ -142,6 +142,7 @@ router.get("/jobs", (_req, res) => {
     const jobs = loadJobs();
     res.json({ ok: true, jobs });
   } catch (_err) {
+    res.status(500).json({ error: "Failed to load jobs" });
   }
 });
 
