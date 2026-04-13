@@ -30,14 +30,21 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Public static files
+// ── Public static files (no auth required) ──────────────────────────────────
 app.use("/exports", express.static("/app/exports"));
 app.use("/snapshots", express.static("/app/client/public/snapshots"));
 
-// Public health check
-app.get("/api/health", (req, res) => res.json({ ok: true }));
+// ── Public endpoints (no auth required) ─────────────────────────────────────
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Public routes
+// ── Auth guard — everything mounted below this line requires a valid Firebase
+//    token. In test mode the guard is skipped so tests can run without
+//    credentials. ──────────────────────────────────────────────────────────
+if (process.env.NODE_ENV !== "test") {
+  app.use("/api", requireFirebaseAuth);
+}
+
+// ── Protected routes ─────────────────────────────────────────────────────────
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/data", dataRoutes);
 app.use("/api/nightly", nightlyRoutes);
@@ -49,12 +56,7 @@ app.use("/api/packages", packagesRouter);
 app.use("/api/subscriptions", subscriptionsRouter);
 app.use("/api/payments", paymentsRouter);
 
-// Protect everything below this line
-if (process.env.NODE_ENV !== "test") {
-  app.use("/api", requireFirebaseAuth);
-}
-
-// Global error handler
+// ── Global error handler ─────────────────────────────────────────────────────
 app.use((err, _req, res, _next) => {
   log.error("Unhandled error", err);
   res.status(500).json({ error: "Internal server error" });

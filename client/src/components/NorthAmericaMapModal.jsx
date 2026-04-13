@@ -1,11 +1,9 @@
 // client/src/components/NorthAmericaMapModal.jsx
 import { useEffect, useMemo, useState } from "react";
 import Plot from "react-plotly.js";
+import { apiGet } from "../api.js";
 
 export default function NorthAmericaMapModal({ open, onClose }) {
-  const API_BASE =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
-
   const [customers, setCustomers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -107,30 +105,11 @@ export default function NorthAmericaMapModal({ open, onClose }) {
       setPointsErr("");
 
       try {
-        const [customersRes, subscriptionsRes, packagesRes] = await Promise.all([
-          fetch(`${API_BASE}/api/customers`),
-          fetch(`${API_BASE}/api/subscriptions`),
-          fetch(`${API_BASE}/api/packages`),
+        const [customersJson, subscriptionsJson, packagesJson] = await Promise.all([
+          apiGet("/api/customers"),
+          apiGet("/api/subscriptions"),
+          apiGet("/api/packages"),
         ]);
-
-        if (!customersRes.ok) {
-          throw new Error(`Failed to load customers (HTTP ${customersRes.status})`);
-        }
-        if (!subscriptionsRes.ok) {
-          throw new Error(
-            `Failed to load subscriptions (HTTP ${subscriptionsRes.status})`
-          );
-        }
-        if (!packagesRes.ok) {
-          throw new Error(`Failed to load packages (HTTP ${packagesRes.status})`);
-        }
-
-        const [customersJson, subscriptionsJson, packagesJson] =
-          await Promise.all([
-            customersRes.json(),
-            subscriptionsRes.json(),
-            packagesRes.json(),
-          ]);
 
         if (cancelled) return;
 
@@ -168,7 +147,7 @@ export default function NorthAmericaMapModal({ open, onClose }) {
     return () => {
       cancelled = true;
     };
-  }, [open, API_BASE]);
+  }, [open]);
 
   const filterButtons = useMemo(() => {
     const packageButtons = packages
