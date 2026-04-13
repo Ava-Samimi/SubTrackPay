@@ -96,7 +96,7 @@ router.post("/", async (req, res) => {
     res.status(201).json(created);
   } catch (_e) {
     log.error("POST /payments failed", _e);
-    res.status(400).json({ error: "Failed to create payment (bad subscriptionID?)" });
+    res.status(500).json({ error: "Failed to create payment (bad subscriptionID?)" });
   }
 });
 
@@ -142,7 +142,7 @@ router.put("/:id", async (req, res) => {
     res.json(updated);
   } catch (_e) {
     log.error("PUT /payments/:id failed", _e);
-    res.status(400).json({ error: "Failed to update payment" });
+    res.status(500).json({ error: "Failed to update payment" });
   }
 });
 
@@ -159,7 +159,7 @@ router.delete("/:id", async (req, res) => {
     res.status(204).send();
   } catch (_e) {
     log.error("DELETE /payments/:id failed", _e);
-    res.status(400).json({ error: "Failed to delete payment" });
+    res.status(500).json({ error: "Failed to delete payment" });
   }
 });
 

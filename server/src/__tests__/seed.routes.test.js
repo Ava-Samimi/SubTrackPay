@@ -79,7 +79,7 @@ describe("Seed routes", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.ok).toBe(false);
-    expect(res.body.err).toContain("Import diagnostic failed");
+    expect(res.body.error).toContain("Import diagnostic failed");
     expect(spawnMock).toHaveBeenCalledTimes(1);
   });
 
@@ -106,7 +106,7 @@ describe("Seed routes", () => {
     expect(res.status).toBe(500);
     expect(res.body.ok).toBe(false);
     expect(res.body.code).toBe(2);
-    expect(res.body.err).toContain("Seeder error!");
+    expect(res.body.error).toContain("Seeder error!");
     expect(spawnMock).toHaveBeenCalledTimes(2);
   });
 
@@ -151,7 +151,7 @@ describe("Seed routes", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.ok).toBe(false);
-    expect(res.body.err).toContain("spawn crashed");
+    expect(res.body.error).toContain("spawn crashed");
     expect(spawnMock).toHaveBeenCalledTimes(1);
   });
 });

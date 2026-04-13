@@ -89,7 +89,7 @@ router.post("/admin/seed", async (req, res) => {
       return res.status(500).json({
         ok: false,
         code: diag.code,
-        err: "Import diagnostic failed:\n" + (diag.err || diag.out),
+        error: "Import diagnostic failed:\n" + (diag.err || diag.out),
       });
     }
 
@@ -104,14 +104,14 @@ router.post("/admin/seed", async (req, res) => {
       return res.status(500).json({
         ok: false,
         code: run.code,
-        err: run.err || run.out,
+        error: run.err || run.out,
       });
     }
 
     return res.json({ ok: true, out: run.out });
   } catch (e) {
     log.error("/api/admin/seed crashed:", e);
-    return res.status(500).json({ ok: false, err: String(e) });
+    return res.status(500).json({ ok: false, error: String(e) });
   }
 });
 

@@ -110,7 +110,7 @@ router.post("/", async (req, res) => {
     res.status(201).json(created);
   } catch (_e) {
     log.error("POST /subscriptions failed", _e);
-    res.status(400).json({
+    res.status(500).json({
       error: "Failed to create subscription (bad customerID/packageID?)",
     });
   }
@@ -167,7 +167,7 @@ router.put("/:id", async (req, res) => {
     res.json(updated);
   } catch (_e) {
     log.error("PUT /subscriptions/:id failed", _e);
-    res.status(400).json({ error: "Failed to update subscription" });
+    res.status(500).json({ error: "Failed to update subscription" });
   }
 });
 
@@ -184,7 +184,7 @@ router.delete("/:id", async (req, res) => {
     res.status(204).send();
   } catch (_e) {
     log.error("DELETE /subscriptions/:id failed", _e);
-    res.status(400).json({ error: "Failed to delete subscription" });
+    res.status(500).json({ error: "Failed to delete subscription" });
   }
 });
 
