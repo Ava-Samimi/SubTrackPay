@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
 import EntityLeftHeader from "../../components/EntityLeftHeader.jsx"; // ✅ NEW
 import AutocompleteInput from "../../components/AutocompleteInput.jsx";

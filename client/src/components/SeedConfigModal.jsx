@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 const DEFAULTS = {
   seedCustomers: 500,
@@ -27,17 +27,13 @@ function saveConfig(cfg) {
 }
 
 export default function SeedConfigModal({ open, onClose, onApply }) {
-  const saved = useMemo(() => loadSaved(), []);
-  const initial = saved ? { ...DEFAULTS, ...saved } : DEFAULTS;
+  // Load saved config synchronously — only used as initial state
+  const initial = (() => {
+    const saved = loadSaved();
+    return saved ? { ...DEFAULTS, ...saved } : DEFAULTS;
+  })();
 
   const [form, setForm] = useState(initial);
-
-  // Re-sync form from localStorage each time the modal opens
-  useEffect(() => {
-    if (!open) return;
-    const latest = loadSaved();
-    setForm(latest ? { ...DEFAULTS, ...latest } : DEFAULTS);
-  }, [open]);
 
   const {
     seedCustomers,

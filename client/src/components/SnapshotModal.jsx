@@ -1,14 +1,17 @@
 // client/src/components/SnapshotModal.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 export default function SnapshotModal({ open, onClose }) {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-  // Update cache-bust timestamp each time the modal opens
-  const [cacheBust, setCacheBust] = useState(() => Date.now());
-  useEffect(() => {
-    if (open) setCacheBust(Date.now());
-  }, [open]);
+  // Track the last open value to detect when modal transitions to open
+  const prevOpenRef = useRef(false);
+  const cacheBustRef = useRef(Date.now());
+  if (open && !prevOpenRef.current) {
+    cacheBustRef.current = Date.now();
+  }
+  prevOpenRef.current = open;
+  const cacheBust = cacheBustRef.current;
 
   const images = useMemo(
     () => [
