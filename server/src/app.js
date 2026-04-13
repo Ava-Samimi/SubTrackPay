@@ -13,10 +13,19 @@ import metricsRoutes from "./routes/metrics.routes.js";
 import seedRoutes from "./routes/seed.routes.js";
 
 import { requireFirebaseAuth } from "./middleware/requireFirebaseAuth.js";
+import { helmet, generalLimiter, strictLimiter } from "./middleware/security.js";
 import { createLogger } from "./logger.js";
 
 const log = createLogger("app");
 const app = express();
+
+// ── Defensive middleware ──────────────────────────────────────────────────────
+// Helmet sets secure HTTP headers (CSP, X-Frame-Options, X-Content-Type-Options,
+// Referrer-Policy, etc.) and removes the X-Powered-By fingerprinting header.
+app.use(helmet);
+
+// General rate limit: 100 requests per 15 minutes per IP across all API routes
+app.use("/api", generalLimiter);
 
 app.use(cors());
 
@@ -48,9 +57,10 @@ if (process.env.NODE_ENV !== "test") {
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/data", dataRoutes);
 app.use("/api/nightly", nightlyRoutes);
-app.use("/api/admin", adminRoutes);
+// Strict rate limit on admin/seed endpoints — they trigger heavy DB operations
+app.use("/api/admin", strictLimiter, adminRoutes);
 app.use("/api/metrics", metricsRoutes);
-app.use("/api", seedRoutes);
+app.use("/api", strictLimiter, seedRoutes);
 app.use("/api/customers", customersRouter);
 app.use("/api/packages", packagesRouter);
 app.use("/api/subscriptions", subscriptionsRouter);
