@@ -68,7 +68,7 @@ describe("Packages routes", () => {
   test("POST /api/packages returns 400 when monthlyCost is invalid", async () => {
     const res = await request(app)
       .post("/api/packages")
-      .send({ monthlyCost: -1, annualCost: 100 });
+      .send({ name: "Basic", monthlyCost: -1, annualCost: 100 });
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: "monthlyCost must be a non-negative integer" });
@@ -78,7 +78,7 @@ describe("Packages routes", () => {
   test("POST /api/packages returns 400 when annualCost is invalid", async () => {
     const res = await request(app)
       .post("/api/packages")
-      .send({ monthlyCost: 10, annualCost: "abc" });
+      .send({ name: "Basic", monthlyCost: 10, annualCost: "abc" });
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: "annualCost must be a non-negative integer" });
@@ -94,11 +94,11 @@ describe("Packages routes", () => {
 
     const res = await request(app)
       .post("/api/packages")
-      .send({ monthlyCost: "10", annualCost: "100" });
+      .send({ name: "Basic", monthlyCost: "10", annualCost: "100" });
 
     expect(res.status).toBe(201);
     expect(prisma.package.create).toHaveBeenCalledWith({
-      data: { monthlyCost: 10, annualCost: 100 },
+      data: { name: "Basic", monthlyCost: 10, annualCost: 100 },
     });
     expect(res.body.packageID).toBe(9);
   });
@@ -149,7 +149,9 @@ describe("Packages routes", () => {
 
   test("DELETE /api/packages/:id returns 400 when delete fails (in use)", async () => {
     prisma.package.findUnique.mockResolvedValue({ packageID: 3 });
-    prisma.package.delete.mockRejectedValue(new Error("Restrict"));
+    const p2003 = new Error("Foreign key constraint failed");
+    p2003.code = "P2003";
+    prisma.package.delete.mockRejectedValue(p2003);
 
     const res = await request(app).delete("/api/packages/3");
 

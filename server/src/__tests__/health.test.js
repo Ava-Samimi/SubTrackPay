@@ -1,5 +1,13 @@
+import { jest } from "@jest/globals";
 import request from "supertest";
-import app from "../app.test.js";
+
+jest.unstable_mockModule("@prisma/client", () => ({
+  PrismaClient: class {
+    constructor() { return {}; }
+  }
+}));
+
+const { default: app } = await import("../app.js");
 
 test("GET /api/health returns ok", async () => {
   const res = await request(app).get("/api/health");

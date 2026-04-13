@@ -1,5 +1,7 @@
 import { jest } from "@jest/globals";
 
+process.env.NODE_ENV = "test";
+
 jest.unstable_mockModule("@prisma/client", () => {
   const makeModel = () =>
     new Proxy(
