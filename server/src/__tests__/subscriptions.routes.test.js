@@ -191,4 +191,65 @@ describe("Subscriptions routes", () => {
       where: { subscriptionID: 9 },
     });
   });
+
+  test("POST /api/subscriptions returns 400 when packageID invalid", async () => {
+    const res = await request(app).post("/api/subscriptions").send({
+      customerID: 1,
+      packageID: "nope",
+      billingCycle: "MONTHLY",
+      status: "ACTIVE",
+      price: 10,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "packageID is required and must be an integer" });
+    expect(prisma.subscription.create).not.toHaveBeenCalled();
+  });
+
+  test("POST /api/subscriptions returns 400 when price is negative", async () => {
+    const res = await request(app).post("/api/subscriptions").send({
+      customerID: 1,
+      packageID: 1,
+      billingCycle: "MONTHLY",
+      status: "ACTIVE",
+      price: -5,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "price must be a non-negative integer" });
+    expect(prisma.subscription.create).not.toHaveBeenCalled();
+  });
+
+  test("POST /api/subscriptions returns 400 when endDate is invalid", async () => {
+    const res = await request(app).post("/api/subscriptions").send({
+      customerID: 1,
+      packageID: 1,
+      billingCycle: "MONTHLY",
+      status: "ACTIVE",
+      price: 10,
+      endDate: "not-a-date",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "endDate must be a valid date (or null)" });
+    expect(prisma.subscription.create).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /api/subscriptions/:id returns 400 for invalid id", async () => {
+    const res = await request(app).delete("/api/subscriptions/abc");
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Invalid subscription id" });
+    expect(prisma.subscription.delete).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /api/subscriptions/:id returns 404 when not found", async () => {
+    prisma.subscription.findUnique.mockResolvedValue(null);
+
+    const res = await request(app).delete("/api/subscriptions/99");
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: "Subscription not found" });
+    expect(prisma.subscription.delete).not.toHaveBeenCalled();
+  });
 });

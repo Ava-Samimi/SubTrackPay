@@ -177,4 +177,53 @@ describe("Payments routes", () => {
       where: { paymentID: 9 },
     });
   });
+
+  test("POST /api/payments returns 400 when paidAt is invalid date", async () => {
+    const res = await request(app).post("/api/payments").send({
+      subscriptionID: 1,
+      dueDate: "2030-01-01",
+      paidAt: "not-a-date",
+      status: "DUE",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "paidAt must be a valid date (or null)" });
+    expect(prisma.payment.create).not.toHaveBeenCalled();
+  });
+
+  test("PUT /api/payments/:id returns 400 for invalid id", async () => {
+    const res = await request(app).put("/api/payments/abc").send({ status: "PAID" });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Invalid payment id" });
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+  });
+
+  test("PUT /api/payments/:id returns 400 when status is invalid", async () => {
+    const res = await request(app)
+      .put("/api/payments/1")
+      .send({ status: "NOPE" });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "status must be DUE, PAID, FAILED, or VOID" });
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /api/payments/:id returns 400 for invalid id", async () => {
+    const res = await request(app).delete("/api/payments/abc");
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Invalid payment id" });
+    expect(prisma.payment.delete).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /api/payments/:id returns 404 when not found", async () => {
+    prisma.payment.findUnique.mockResolvedValue(null);
+
+    const res = await request(app).delete("/api/payments/99");
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: "Payment not found" });
+    expect(prisma.payment.delete).not.toHaveBeenCalled();
+  });
 });

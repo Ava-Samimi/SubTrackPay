@@ -161,4 +161,40 @@ describe("Packages routes", () => {
       code: "P2003",
     });
   });
+
+  test("POST /api/packages returns 400 when name is missing", async () => {
+    const res = await request(app)
+      .post("/api/packages")
+      .send({ monthlyCost: 10, annualCost: 100 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "name is required" });
+    expect(prisma.package.create).not.toHaveBeenCalled();
+  });
+
+  test("PUT /api/packages/:id returns 400 for invalid id", async () => {
+    const res = await request(app).put("/api/packages/abc").send({ monthlyCost: 10 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Invalid package id" });
+    expect(prisma.package.update).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /api/packages/:id returns 400 for invalid id", async () => {
+    const res = await request(app).delete("/api/packages/abc");
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Invalid package id" });
+    expect(prisma.package.delete).not.toHaveBeenCalled();
+  });
+
+  test("DELETE /api/packages/:id returns 404 when not found", async () => {
+    prisma.package.findUnique.mockResolvedValue(null);
+
+    const res = await request(app).delete("/api/packages/99");
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: "Package not found" });
+    expect(prisma.package.delete).not.toHaveBeenCalled();
+  });
 });
