@@ -2,35 +2,43 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install OS deps:
-# - netcat: wait for Postgres
-# - openssl/ca-certificates: TLS / Prisma engines
-# - python3: run the seeder
-# - py3-psycopg2: Postgres driver needed by the seeder (psycopg2)
 RUN apk add --no-cache \
   netcat-openbsd \
   openssl \
   ca-certificates \
   python3 \
-  py3-psycopg2
+  py3-pip \
+  py3-psycopg2 \
+  build-base \
+  musl-dev \
+  linux-headers \
+  freetype-dev \
+  libpng-dev \
+  jpeg-dev
 
-# Copy package.json and package-lock.json first for caching
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/seeder
+
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy Prisma schema and migrations, and app source
+COPY seeder/requirements.txt /app/seeder/requirements.txt
+
+RUN python3 -m pip install --break-system-packages --no-cache-dir --upgrade pip setuptools wheel
+RUN python3 -m pip install --break-system-packages --no-cache-dir -r /app/seeder/requirements.txt
+RUN python3 -m pip install --break-system-packages --no-cache-dir matplotlib pillow pandas numpy psycopg2-binary
+
 COPY prisma ./prisma
 COPY src ./src
+COPY seeder ./seeder
 
-# Copy the .env file into the container for dotenv to read
+RUN mkdir -p /app/client/public/snapshots
+
 COPY .env .env
 
-# Generate Prisma client at build time (faster startup)
 RUN npm run prisma:generate
 
 EXPOSE 3001
 
-# Wait for Postgres to be available before starting the server
 CMD sh -c 'until nc -z db 5432; do echo "Waiting for Postgres..."; sleep 1; done; npm run start'

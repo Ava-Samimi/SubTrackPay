@@ -9,5 +9,9 @@ COPY . .
 
 EXPOSE 5173
 
-# Vite must bind to 0.0.0.0 inside Docker
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+# Entrypoint lives outside /app so the ./client:/app volume mount doesn't wipe it
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["npm", "run", "dev"]
