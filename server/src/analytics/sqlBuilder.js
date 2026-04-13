@@ -7,7 +7,7 @@ export const pool = new Pool({
 });
 
 // ---------------------
-// Fixed schema constants (from your schema.prisma)
+// Schema constants matching schema.prisma
 // ---------------------
 const T = {
   Customer: `"Customer"`,
@@ -36,12 +36,12 @@ const C = {
   },
 };
 
-// ✅ Computed package label (NO DB change)
+// Compute a readable package label from cost fields
 function packageLabelExpr(pkgAlias = "p") {
   return `('Monthly: ' || ${pkgAlias}.${C.Package.monthlyCost} || ' / Annual: ' || ${pkgAlias}.${C.Package.annualCost})`;
 }
 
-// ✅ Active subscription filter
+// Active subscription filter expression
 function activeSubscriptionWhere(subAlias = "s") {
   return `${subAlias}.${C.Subscription.status} = 'ACTIVE'`;
 }

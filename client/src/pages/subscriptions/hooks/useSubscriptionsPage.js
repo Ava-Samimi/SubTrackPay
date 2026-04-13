@@ -67,13 +67,13 @@ export function useSubscriptionsPage() {
   // list mode hook
   const list = useListMode();
 
-  // ✅ keep clearSelection in a ref so it doesn't cause effect loops
+  // Keep clearSelection stable in a ref to avoid effect loops
   const clearSelectionRef = useRef(null);
   useEffect(() => {
     clearSelectionRef.current = list.clearSelection || null;
   }, [list.clearSelection]);
 
-  // ✅ flatten list-mode API (Customers-style)
+  // Flatten list-mode values from hook
   const listMode = list.listMode;
   const selectedIds = list.selectedIds || [];
   const selectedCount = list.selectedCount ?? selectedIds.length;
@@ -106,7 +106,7 @@ export function useSubscriptionsPage() {
     setPackages(Array.isArray(ps) ? ps : []);
   }, []);
 
-  // ✅ IMPORTANT: do NOT depend on `list` here (prevents infinite loop flicker)
+  // Omit list from deps to prevent infinite reload loop
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -214,7 +214,7 @@ export function useSubscriptionsPage() {
     }
   }
 
-  // ✅ Delete: edit-mode single delete OR list-mode bulk delete
+  // Delete: single record in edit mode, or bulk delete in list mode
   async function removeSelected() {
     setError("");
 

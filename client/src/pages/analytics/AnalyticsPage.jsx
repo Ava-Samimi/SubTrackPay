@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import Plotly from "plotly.js-dist-min";
 
-import "../shared/EntityPage.css"; // ✅ match other pages styling
+import "../shared/EntityPage.css"; // Shared page styles
 import "./AnalyticsPage.css";
 import LogoutButton from "../../components/LogoutButton.jsx";
 

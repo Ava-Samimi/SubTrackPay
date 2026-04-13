@@ -9,7 +9,7 @@ export function buildActiveSubscriptionsSnapshotSQL(basis = "monthly", yearsBack
   const unit = b === "weekly" ? "week" : b === "yearly" ? "year" : "month";
   const step = b === "weekly" ? "1 week" : b === "yearly" ? "1 year" : "1 month";
 
-  // We keep identifiers quoted to match your schema: "Subscription", "startDate", "endDate", "subscriptionID"
+  // Identifiers are quoted to match the Prisma schema casing
   return `
 WITH buckets AS (
   SELECT generate_series(

@@ -76,7 +76,7 @@ export default function PackagesPage() {
     toggleListMode,
     toggleRowSelection,
 
-    // ✅ NEW: name field
+    // Name field
     name,
     setName,
 
@@ -134,7 +134,7 @@ export default function PackagesPage() {
   };
 
   // =========================
-  // ✅ SORTING
+  // Sorting
   // =========================
   const [sortKey, setSortKey] = useState(null); // "monthlyCost" | "annualCost"
   const [sortDir, setSortDir] = useState("asc"); // "asc" | "desc"
@@ -182,7 +182,7 @@ export default function PackagesPage() {
 
           {!blackoutLeft ? (
             <form className="entity-card" onSubmit={submit}>
-              {/* ✅ NEW: package name */}
+              {/* Package name */}
               <div className="entity-label">name</div>
               <input
                 className="entity-input"

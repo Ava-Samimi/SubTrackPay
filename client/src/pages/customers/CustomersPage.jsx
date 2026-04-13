@@ -12,7 +12,7 @@ function fullName(c) {
   return name || "(no name)";
 }
 
-// ✅ CSV helpers
+// CSV export helpers
 function csvEscape(v) {
   if (v === null || v === undefined) return "";
   const s = String(v);
@@ -72,8 +72,8 @@ export default function CustomersPage() {
     setLastName,
     email,
     setEmail,
-    postalCode, // ✅ NEW
-    setPostalCode, // ✅ NEW
+    postalCode,
+    setPostalCode,
     ccExpiration,
     setCcExpiration,
 
@@ -96,7 +96,7 @@ export default function CustomersPage() {
     return (selectedIds || []).map((id) => map.get(String(id))).filter(Boolean);
   }, [customers, selectedIds]);
 
-  // ✅ Selected rows lookup for export
+  // Build selected rows list for export
   const selectedCustomers = useMemo(() => {
     const idSet = new Set((selectedIds || []).map((x) => String(x)));
     return customers.filter((c) => idSet.has(String(c.customerID)));
@@ -111,7 +111,7 @@ export default function CustomersPage() {
       "firstName",
       "lastName",
       "email",
-      "postalCode", // ✅ NEW
+      "postalCode",
       "createdAt",
       "ccExpiration",
       "subscriptionsCount",
@@ -124,7 +124,7 @@ export default function CustomersPage() {
         c.firstName || "",
         c.lastName || "",
         c.email || "",
-        c.postalCode || "", // ✅ NEW
+        c.postalCode || "",
         c.createdAt ? new Date(c.createdAt).toISOString() : "",
         c.ccExpiration ? new Date(c.ccExpiration).toISOString() : "",
         subCounts?.[id] ?? 0,
@@ -147,7 +147,7 @@ export default function CustomersPage() {
   };
 
   // =========================
-  // ✅ SORTING
+  // Sorting
   // =========================
   const [sortKey, setSortKey] = useState(null); // "name" | "memberSince" | "subs"
   const [sortDir, setSortDir] = useState("asc"); // "asc" | "desc"
@@ -190,7 +190,7 @@ export default function CustomersPage() {
   }, [customers, subCounts, sortKey, sortDir]);
 
   // =========================
-  // ✅ PAGINATION (client-side)
+  // Pagination (client-side)
   // =========================
   const PAGE_SIZE = 50;
 
@@ -243,7 +243,7 @@ export default function CustomersPage() {
       <div className="entity-layout">
         {/* LEFT */}
         <div className={`entity-left ${blackoutLeft ? "entity-left-blackout" : ""}`}>
-          {/* ✅ Logo + Title */}
+          {/* Logo and title */}
           <EntityLeftHeader title="Customer" logoSrc="/logo.png" />
 
           {!blackoutLeft ? (
@@ -272,7 +272,7 @@ export default function CustomersPage() {
                 placeholder="jdoe@gmail.com"
               />
 
-              {/* ✅ NEW: postal code */}
+              {/* Postal code */}
               <div className="entity-label">postal code</div>
               <input
                 className="entity-input"
@@ -314,7 +314,7 @@ export default function CustomersPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => {
-                    // ✅ optional: when you refresh, jump back to page 1
+                    // Reset to first page on refresh
                     setPage(1);
                     loadAll();
                   }}
@@ -446,7 +446,7 @@ export default function CustomersPage() {
                 );
               })}
 
-              {/* ✅ Pagination controls */}
+              {/* Pagination controls */}
               <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   type="button"

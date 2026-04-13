@@ -130,7 +130,7 @@ router.post("/save-chart-png", async (req, res) => {
 
     const buf = Buffer.from(m[1], "base64");
 
-    // ✅ Always save to this absolute path INSIDE the container
+    // Save to the exports directory mounted via Docker volume
     // (then mount /app/exports to your host with a docker volume)
     const outDir = "/app/exports/chart_pngs";
     fs.mkdirSync(outDir, { recursive: true });
@@ -147,7 +147,7 @@ router.post("/save-chart-png", async (req, res) => {
     const outPath = path.join(outDir, filename);
     fs.writeFileSync(outPath, buf);
 
-    log.info("✅ saved chart png:", outPath, "bytes:", buf.length);
+    log.info("saved chart png:", outPath, "bytes:", buf.length);
 
     return res.json({ ok: true, filename, bytes: buf.length });
   } catch (err) {

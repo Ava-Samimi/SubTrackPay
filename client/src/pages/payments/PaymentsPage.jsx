@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
-import EntityLeftHeader from "../../components/EntityLeftHeader.jsx"; // ✅ NEW
+import EntityLeftHeader from "../../components/EntityLeftHeader.jsx";
 import "../shared/EntityPage.css";
 import { usePaymentsPage } from "./hooks/usePaymentsPage.js";
 
@@ -40,7 +40,7 @@ export default function PaymentsPage() {
     editingId,
     isEditing,
 
-    // ✅ customers-style list mode
+    // List mode state
     listMode,
     selectedIds,
     selectedCount,
@@ -80,7 +80,7 @@ export default function PaymentsPage() {
   }, [items, selectedIds, shortId]);
 
   // =========================
-  // ✅ SORTING
+  // Sorting
   // =========================
   const [sortDir, setSortDir] = useState(null); // null | "asc" | "desc"
 
@@ -121,7 +121,7 @@ export default function PaymentsPage() {
       <div className="entity-layout">
         {/* LEFT */}
         <div className={`entity-left ${blackoutLeft ? "entity-left-blackout" : ""}`}>
-          {/* ✅ Logo + Title */}
+          {/* Logo and title */}
           <EntityLeftHeader title="Payment" logoSrc="/logo.png" />
 
           {!blackoutLeft ? (

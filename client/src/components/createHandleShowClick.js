@@ -8,8 +8,6 @@ export function createHandleShowClick({
   fetchActiveCustomersSnapshot,
   fetchActivePackagesSnapshot,
   fetchAvgAmountPaidAssumed,
-
-  // ✅ NEW: snapshot by package (no basis)
   fetchActiveSubscriptionsByPackageSnapshot,
 
   // setters from AnalyticsPage
@@ -38,8 +36,6 @@ export function createHandleShowClick({
     if (metric === "active_customers") return `Active Customers (${basis})`;
     if (metric === "active_packages") return `Active Packages (${basis})`;
     if (metric === "avg_amount_paid_assumed") return `Avg Amount Paid (${basis})`;
-
-    // ✅ NEW
     if (metric === "active_subscriptions_by_package") return "Active Subscriptions by Package (Now)";
     if (metric === "active_subscriptions_by_package_spider")
       return "Active Subscriptions by Package (SPIDER)";
@@ -49,7 +45,7 @@ export function createHandleShowClick({
 
   // Some metrics allow only certain bases
   function normalizeBasis(metric, basis) {
-    // ✅ basis irrelevant for this one
+    // No time basis for snapshot metrics
     if (metric === "active_subscriptions_by_package") return null;
     if (metric === "active_subscriptions_by_package_spider") return null;
 
@@ -124,8 +120,7 @@ export function createHandleShowClick({
     };
   }
 
-  /**
-   * ✅ Bar chart for: active_subscriptions_by_package
+  /** * Bar chart for: active_subscriptions_by_package
    * rows: [{ packageID, subs, pct }]
    */
   function buildActiveSubsByPackageBarSpec({ rows }) {
@@ -180,8 +175,7 @@ export function createHandleShowClick({
     };
   }
 
-  /**
-   * ✅ Spider / Radar chart for: active_subscriptions_by_package_spider
+  /** * Spider/radar chart for: active_subscriptions_by_package_spider
    * Uses SAME rows as bar version: [{ packageID, subs, pct }]
    *
    * Distributes points evenly around the circle by using numeric degrees for theta,
@@ -231,11 +225,11 @@ export function createHandleShowClick({
       };
     }
 
-    // ✅ evenly spaced degrees for each package
+    // Evenly spaced degrees for each package
     const thetaDeg = [];
     for (let i = 0; i < n; i++) thetaDeg.push((360 * i) / n);
 
-    // ✅ close polygon
+    // Close polygon by repeating first point
     const thetaClosed = [...thetaDeg, thetaDeg[0]];
     const rClosed = [...values, values[0]];
     const hoverClosed = [...hover, hover[0]];
@@ -269,7 +263,7 @@ export function createHandleShowClick({
             rangemode: "tozero",
           },
           angularaxis: {
-            // ✅ show package labels at those degrees (hide degree labels)
+            // Show package labels at computed degree positions
             tickmode: "array",
             tickvals: thetaDeg,
             ticktext: labels,
@@ -317,7 +311,7 @@ export function createHandleShowClick({
         metric === "active_subscriptions_by_package" ||
         metric === "active_subscriptions_by_package_spider"
       ) {
-        // ✅ SAME DATA FETCH for both bar + spider
+        // Both bar and spider use the same data source
         rows = await fetchActiveSubscriptionsByPackageSnapshot();
       } else {
         throw new Error(`Unknown metric: ${metric}`);
@@ -331,7 +325,7 @@ export function createHandleShowClick({
       const title = getTitle(metric, basis || "");
       setSelectedAnalyticsName(title);
 
-      // ✅ Choose plot type by metric
+      // Select plot builder based on metric type
       const plotSpec =
         metric === "active_subscriptions_by_package"
           ? buildActiveSubsByPackageBarSpec({ rows: safeRows })

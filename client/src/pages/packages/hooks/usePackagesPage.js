@@ -30,7 +30,7 @@ export function usePackagesPage() {
   const [editingId, setEditingId] = useState(null); // string id for safety with listMode
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
-  // ✅ NEW: name
+  
   const [name, setName] = useState("");
 
   const [monthlyCost, setMonthlyCost] = useState("");
@@ -80,7 +80,7 @@ export function usePackagesPage() {
   function selectRow(item) {
     setEditingId(item?.packageID != null ? String(item.packageID) : null);
 
-    // ✅ load name from API (your model is `name`)
+    // Load name from the package record
     setName(item?.name == null ? "" : String(item.name));
 
     setMonthlyCost(item?.monthlyCost == null ? "" : String(item.monthlyCost));

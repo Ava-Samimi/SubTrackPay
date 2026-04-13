@@ -12,7 +12,7 @@ export function fmtCcExp(d) {
   if (!d) return "-";
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return "-";
-  // For CC expiration, YYYY-MM is usually enough
+  // Format as YYYY-MM for display
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
   const yyyy = dt.getFullYear();
   return `${yyyy}-${mm}`;

@@ -45,13 +45,13 @@ export function usePaymentsPage() {
   // list mode
   const list = useListMode();
 
-  // ✅ prevent effect loops: keep clearSelection in a ref
+  // Keep clearSelection stable in a ref to avoid effect loops
   const clearSelectionRef = useRef(null);
   useEffect(() => {
     clearSelectionRef.current = list.clearSelection || null;
   }, [list.clearSelection]);
 
-  // ✅ flatten list-mode exports (Customers-style)
+  // Flatten list-mode values from hook
   const listMode = list.listMode;
   const selectedIds = list.selectedIds || [];
   const selectedCount = list.selectedCount ?? selectedIds.length;
@@ -124,7 +124,7 @@ export function usePaymentsPage() {
     }
   }
 
-  // ✅ Delete: edit-mode single delete OR list-mode bulk delete
+  // Delete: single record in edit mode, or bulk delete in list mode
   async function removeSelected() {
     setError("");
 
@@ -178,7 +178,7 @@ export function usePaymentsPage() {
     submit,
     removeSelected,
 
-    // ✅ Customers-style list-mode exports
+    // List mode exports
     listMode,
     selectedIds,
     selectedCount,
