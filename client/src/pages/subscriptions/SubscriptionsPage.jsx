@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import EntityNavBar from "../../components/EntityNavBar.jsx";
-import EntityLeftHeader from "../../components/EntityLeftHeader.jsx"; // ✅ NEW
+import EntityLeftHeader from "../../components/EntityLeftHeader.jsx";
 import AutocompleteInput from "../../components/AutocompleteInput.jsx";
 import "../shared/EntityPage.css";
 import { useSubscriptionsPage } from "./hooks/useSubscriptionsPage.js";
@@ -15,7 +15,7 @@ function customerLabel(c) {
 function packageLabel(p) {
   const id = p?.packageID ?? "";
 
-  // ✅ prefer real package name
+  // Prefer name field, fall back to other known aliases
   const name =
     (p?.name ?? "").trim() ||
     (p?.packageName ?? "").trim() ||
@@ -30,7 +30,7 @@ function packageLabel(p) {
   return `Pkg ${String(id).slice(0, 4)} • M ${m} • A ${a}`;
 }
 
-// ✅ CSV helpers
+// CSV export helpers
 function csvEscape(v) {
   if (v === null || v === undefined) return "";
   const s = String(v);
@@ -67,7 +67,7 @@ export default function SubscriptionsPage() {
     editingId,
     isEditing,
 
-    // ✅ customers-style list mode
+    // List mode state
     listMode,
     selectedIds,
     selectedCount,
@@ -119,7 +119,7 @@ export default function SubscriptionsPage() {
   }, [items, selectedIds, shortId]);
 
   // =========================
-  // ✅ PAGINATION (client-side)
+  // Pagination (client-side)
   // =========================
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(1);
@@ -154,7 +154,7 @@ export default function SubscriptionsPage() {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }, [clampedPage, totalPages]);
 
-  // ✅ Selected rows lookup for export
+  // Build selected rows list for export
   const selectedSubscriptions = useMemo(() => {
     const idSet = new Set((selectedIds || []).map((x) => String(x)));
     return items.filter((s) => idSet.has(String(s.subscriptionID)));
@@ -196,7 +196,7 @@ export default function SubscriptionsPage() {
       <div className="entity-layout">
         {/* LEFT */}
         <div className={`entity-left ${blackoutLeft ? "entity-left-blackout" : ""}`}>
-          {/* ✅ Logo + Title */}
+          {/* Logo and title */}
           <EntityLeftHeader title="Subscription" logoSrc="/logo.png" />
 
           {!blackoutLeft ? (
@@ -292,7 +292,7 @@ export default function SubscriptionsPage() {
                   type="button"
                   className="entity-btn"
                   onClick={() => {
-                    // ✅ optional: jump back to page 1 when refreshing
+                    // Reset to first page on refresh
                     setPage(1);
                     loadAll();
                   }}
@@ -328,7 +328,7 @@ export default function SubscriptionsPage() {
                 ))
               )}
 
-              {/* ✅ Export Button */}
+              {/* Export button */}
               <div style={{ marginTop: 12 }}>
                 <button
                   type="button"
@@ -397,7 +397,7 @@ export default function SubscriptionsPage() {
                 );
               })}
 
-              {/* ✅ Pagination controls */}
+              {/* Pagination controls */}
               <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   type="button"

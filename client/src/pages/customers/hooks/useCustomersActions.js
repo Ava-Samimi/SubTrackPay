@@ -20,7 +20,7 @@ export function useCustomersActions(state, loadAll) {
     // list mode
     listMode,
     setListMode,
-    selectedIds: _selectedIds, // intentionally unused for now
+    selectedIds: _selectedIds, 
     setSelectedIds,
 
     // fields
@@ -77,7 +77,7 @@ export function useCustomersActions(state, loadAll) {
     if (listMode) return;
 
     try {
-      // Option A: if user leaves postalCode blank, default it for testing
+      // Default postalCode if blank
       const pc = (postalCode || "").trim() || "H2X 1Y4";
 
       const payload = normalizeCustomerPayload({
@@ -88,7 +88,7 @@ export function useCustomersActions(state, loadAll) {
         postalCode: pc,
       });
 
-      // Ensure we never send empty strings for optional fields
+      // Normalise optional fields to null if blank
       payload.email = (payload.email || "").trim() ? payload.email.trim() : null;
       payload.ccExpiration = payload.ccExpiration ? payload.ccExpiration : null;
 

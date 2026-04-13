@@ -20,7 +20,7 @@ export function useCustomersState() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [postalCode, setPostalCode] = useState(""); // ✅ NEW (required in Prisma)
+  const [postalCode, setPostalCode] = useState("");
   const [ccExpiration, setCcExpiration] = useState(""); // string input (YYYY-MM-DD or blank)
 
   const selectedCustomer = useMemo(
@@ -57,8 +57,8 @@ export function useCustomersState() {
     setLastName,
     email,
     setEmail,
-    postalCode, // ✅ NEW
-    setPostalCode, // ✅ NEW
+    postalCode,
+    setPostalCode,
     ccExpiration,
     setCcExpiration,
   };

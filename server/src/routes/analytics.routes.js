@@ -5,14 +5,14 @@ import { createLogger } from "../logger.js";
 const log = createLogger("analytics.routes");
 import { PrismaClient } from "@prisma/client";
 
-// ✅ NEW: shared SQL builder + pool (moved out of nightly.routes.js)
+// Shared SQL builder and connection pool
 import { pool, buildSql } from "../analytics/sqlBuilder.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 /**
- * ✅ POST /api/analytics/run
+ * POST /api/analytics/run
  * Runs a recipe immediately and returns rows (and SQL for debugging).
  *
  * Body: { recipeId, querySpec, chartKey, sentence }

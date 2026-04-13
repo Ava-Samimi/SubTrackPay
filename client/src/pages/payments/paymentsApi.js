@@ -8,8 +8,7 @@ function normId(id) {
 
 // Payments CRUD
 export const listPayments = () =>
-  // If your backend supports include, this prevents extra lookups / undefined fields.
-  // Safe even if ignored by the server.
+  // Request nested relations for subscription, customer, and package.
   apiGet("/api/payments?include=1");
 
 export const createPayment = (payload) =>

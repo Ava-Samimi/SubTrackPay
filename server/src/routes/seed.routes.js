@@ -28,7 +28,7 @@ function runChild(command, args, options = {}) {
 
 // POST /api/admin/seed
 router.post("/admin/seed", async (req, res) => {
-  log.info("✅ /api/admin/seed POST hit", req.body);
+  log.info("/api/admin/seed POST hit", req.body);
 
   const {
     seedCustomers,
@@ -53,7 +53,7 @@ router.post("/admin/seed", async (req, res) => {
     PYTHONPATH: "/app/seeder",
   };
 
-  log.info("✅ Seeder env preview", {
+  log.info("Seeder env preview", {
     SEED_CUSTOMERS: env.SEED_CUSTOMERS,
     SEED_SUBSCRIPTIONS: env.SEED_SUBSCRIPTIONS,
     SEED_RANDOM_SEED: env.SEED_RANDOM_SEED,
@@ -85,7 +85,7 @@ router.post("/admin/seed", async (req, res) => {
     );
 
     if (diag.code !== 0) {
-      log.error("❌ Seeder import diagnostic failed:", diag.err || diag.out);
+      log.error("Seeder import diagnostic failed:", diag.err || diag.out);
       return res.status(500).json({
         ok: false,
         code: diag.code,
@@ -100,7 +100,7 @@ router.post("/admin/seed", async (req, res) => {
     });
 
     if (run.code !== 0) {
-      log.error("❌ Seeder failed:", run.err || run.out);
+      log.error("Seeder failed:", run.err || run.out);
       return res.status(500).json({
         ok: false,
         code: run.code,
@@ -110,7 +110,7 @@ router.post("/admin/seed", async (req, res) => {
 
     return res.json({ ok: true, out: run.out });
   } catch (e) {
-    log.error("❌ /api/admin/seed crashed:", e);
+    log.error("/api/admin/seed crashed:", e);
     return res.status(500).json({ ok: false, err: String(e) });
   }
 });

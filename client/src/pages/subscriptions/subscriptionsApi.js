@@ -9,8 +9,7 @@ function normId(id) {
 
 // Subscriptions CRUD
 export const listSubscriptions = () =>
-  // If your backend supports include, this ensures s.customer and s.package are present.
-  // If it doesn't, it will simply ignore the querystring.
+  // Request nested customer and package relations.
   apiGet("/api/subscriptions?include=1");
 
 export const createSubscription = (payload) =>
