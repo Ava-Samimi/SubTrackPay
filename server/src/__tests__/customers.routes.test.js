@@ -159,5 +159,42 @@ test("DELETE /api/customers/:id returns 204 when deleted", async () => {
   expect(prisma.customer.delete).toHaveBeenCalledWith({ where: { customerID: 9 } });
 });
 
+test("POST /api/customers returns 400 when lastName missing", async () => {
+  const res = await request(app)
+    .post("/api/customers")
+    .send({ firstName: "John", postalCode: "H2X 1Y4" });
+
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ error: "lastName is required" });
+  expect(prisma.customer.create).not.toHaveBeenCalled();
+});
+
+test("POST /api/customers returns 400 when postalCode missing", async () => {
+  const res = await request(app)
+    .post("/api/customers")
+    .send({ firstName: "John", lastName: "Smith" });
+
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ error: "postalCode is required" });
+  expect(prisma.customer.create).not.toHaveBeenCalled();
+});
+
+test("POST /api/customers returns 400 when ccExpiration is invalid date", async () => {
+  const res = await request(app)
+    .post("/api/customers")
+    .send({ firstName: "John", lastName: "Smith", postalCode: "H2X 1Y4", ccExpiration: "not-a-date" });
+
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ error: "ccExpiration must be a valid date (or null)" });
+  expect(prisma.customer.create).not.toHaveBeenCalled();
+});
+
+test("DELETE /api/customers/:id returns 400 for invalid id", async () => {
+  const res = await request(app).delete("/api/customers/abc");
+
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ error: "Invalid customer id" });
+  expect(prisma.customer.delete).not.toHaveBeenCalled();
+});
 
 });
