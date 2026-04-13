@@ -1,5 +1,8 @@
 // server/src/routes/data.routes.js
 import express from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("data.routes");
 import fs from "fs";
 import path from "path";
 
@@ -11,7 +14,7 @@ const DATA_DIR = path.resolve(process.env.DATA_DIR || "/app/data");
 try {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 } catch (err) {
-  console.warn("[data.routes] Could not ensure DATA_DIR exists:", DATA_DIR, err);
+  log.warn("[data.routes] Could not ensure DATA_DIR exists:", DATA_DIR, err);
 }
 
 // ---------- helpers ----------
@@ -58,7 +61,7 @@ router.get("/db/schema", (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     res.send(fs.readFileSync(filePath, "utf-8"));
   } catch (err) {
-    console.error("[data.routes] db/schema error:", err);
+    log.error("[data.routes] db/schema error:", err);
     res.status(500).json({ error: "Failed to read db schema JSON" });
   }
 });
@@ -77,7 +80,7 @@ router.get("/", (req, res) => {
 
     res.json({ files });
   } catch (err) {
-    console.error("[data.routes] list error:", err);
+    log.error("[data.routes] list error:", err);
     res.status(500).json({ error: "Failed to list data files" });
   }
 });
@@ -106,7 +109,7 @@ router.get("/_meta/:name", (req, res) => {
       modifiedAt: st.mtime.toISOString(),
     });
   } catch (err) {
-    console.error("[data.routes] meta error:", err);
+    log.error("[data.routes] meta error:", err);
     res.status(500).json({ error: "Failed to read metadata" });
   }
 });
@@ -134,7 +137,7 @@ router.get("/:name", (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     res.send(fs.readFileSync(filePath, "utf-8"));
   } catch (err) {
-    console.error("[data.routes] read error:", err);
+    log.error("[data.routes] read error:", err);
     res.status(500).json({ error: "Failed to read data file" });
   }
 });

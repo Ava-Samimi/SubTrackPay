@@ -1,5 +1,8 @@
 // server/src/routes/seed.routes.js
 import express from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("seed.routes");
 import { spawn } from "child_process";
 
 const router = express.Router();
@@ -25,7 +28,7 @@ function runChild(command, args, options = {}) {
 
 // POST /api/admin/seed
 router.post("/admin/seed", async (req, res) => {
-  console.log("✅ /api/admin/seed POST hit", req.body);
+  log.info("✅ /api/admin/seed POST hit", req.body);
 
   const {
     seedCustomers,
@@ -50,7 +53,7 @@ router.post("/admin/seed", async (req, res) => {
     PYTHONPATH: "/app/seeder",
   };
 
-  console.log("✅ Seeder env preview", {
+  log.info("✅ Seeder env preview", {
     SEED_CUSTOMERS: env.SEED_CUSTOMERS,
     SEED_SUBSCRIPTIONS: env.SEED_SUBSCRIPTIONS,
     SEED_RANDOM_SEED: env.SEED_RANDOM_SEED,
@@ -82,7 +85,7 @@ router.post("/admin/seed", async (req, res) => {
     );
 
     if (diag.code !== 0) {
-      console.error("❌ Seeder import diagnostic failed:", diag.err || diag.out);
+      log.error("❌ Seeder import diagnostic failed:", diag.err || diag.out);
       return res.status(500).json({
         ok: false,
         code: diag.code,
@@ -97,7 +100,7 @@ router.post("/admin/seed", async (req, res) => {
     });
 
     if (run.code !== 0) {
-      console.error("❌ Seeder failed:", run.err || run.out);
+      log.error("❌ Seeder failed:", run.err || run.out);
       return res.status(500).json({
         ok: false,
         code: run.code,
@@ -107,7 +110,7 @@ router.post("/admin/seed", async (req, res) => {
 
     return res.json({ ok: true, out: run.out });
   } catch (e) {
-    console.error("❌ /api/admin/seed crashed:", e);
+    log.error("❌ /api/admin/seed crashed:", e);
     return res.status(500).json({ ok: false, err: String(e) });
   }
 });

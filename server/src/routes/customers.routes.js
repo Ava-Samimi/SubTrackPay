@@ -1,5 +1,8 @@
 // server/src/routes/customers.routes.js
 import { Router } from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("customers.routes");
 import { prisma } from "../prisma.js";
 
 const router = Router();
@@ -53,7 +56,7 @@ router.get("/", async (_req, res) => {
     });
     res.json(customers);
   } catch (err) {
-    console.error("GET /customers failed:", err);
+    log.error("GET /customers failed:", err);
     res.status(500).json({ error: "Failed to fetch customers" });
   }
 });
@@ -68,7 +71,7 @@ router.get("/:id", async (req, res) => {
     if (!customer) return res.status(404).json({ error: "Customer not found" });
     res.json(customer);
   } catch (err) {
-    console.error("GET /customers/:id failed:", err);
+    log.error("GET /customers/:id failed:", err);
     res.status(500).json({ error: "Failed to fetch customer" });
   }
 });
@@ -104,7 +107,7 @@ router.post("/", async (req, res) => {
     });
     res.status(201).json(created);
   } catch (err) {
-    console.error("POST /customers failed:", err);
+    log.error("POST /customers failed:", err);
     const mapped = prismaErrorToResponse(err);
     res.status(mapped.status).json(mapped.body);
   }
@@ -149,7 +152,7 @@ router.put("/:id", async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    console.error("PUT /customers/:id failed:", err);
+    log.error("PUT /customers/:id failed:", err);
     const mapped = prismaErrorToResponse(err);
     res.status(mapped.status).json(mapped.body);
   }
@@ -167,7 +170,7 @@ router.delete("/:id", async (req, res) => {
     await prisma.customer.delete({ where: { customerID } });
     res.status(204).send();
   } catch (err) {
-    console.error("DELETE /customers/:id failed:", err);
+    log.error("DELETE /customers/:id failed:", err);
     const mapped = prismaErrorToResponse(err);
     res.status(mapped.status).json(mapped.body);
   }

@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { prisma } from "../prisma.js";
+import { createLogger } from "../logger.js";
 
 const router = Router();
+const log = createLogger("payments.routes");
 
 const STATUSES = new Set(["DUE", "PAID", "FAILED", "VOID"]);
 
@@ -29,6 +31,7 @@ router.get("/", async (_req, res) => {
     });
     res.json(rows);
   } catch (_e) {
+    log.error("GET /payments failed", _e);
     res.status(500).json({ error: "Failed to fetch payments" });
   }
 });
@@ -50,6 +53,7 @@ router.get("/:id", async (req, res) => {
     if (!row) return res.status(404).json({ error: "Payment not found" });
     res.json(row);
   } catch (_e) {
+    log.error("GET /payments/:id failed", _e);
     res.status(500).json({ error: "Failed to fetch payment" });
   }
 });
@@ -91,6 +95,7 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(created);
   } catch (_e) {
+    log.error("POST /payments failed", _e);
     res.status(400).json({ error: "Failed to create payment (bad subscriptionID?)" });
   }
 });
@@ -136,6 +141,7 @@ router.put("/:id", async (req, res) => {
 
     res.json(updated);
   } catch (_e) {
+    log.error("PUT /payments/:id failed", _e);
     res.status(400).json({ error: "Failed to update payment" });
   }
 });
@@ -152,6 +158,7 @@ router.delete("/:id", async (req, res) => {
     await prisma.payment.delete({ where: { paymentID } });
     res.status(204).send();
   } catch (_e) {
+    log.error("DELETE /payments/:id failed", _e);
     res.status(400).json({ error: "Failed to delete payment" });
   }
 });
