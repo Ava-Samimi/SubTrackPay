@@ -18,7 +18,6 @@ services:
       timeout: 3s
       retries: 30
 
-  # 1) Run Prisma migrations ONCE, then exit 0
   migrate:
     build: ./server
     environment:
@@ -31,46 +30,34 @@ services:
     command: ["sh", "-lc", "npx prisma migrate deploy"]
     restart: "no"
 
-  # 2) Seeder is MANUAL / ON-DEMAND (not part of normal startup)
-  # Run when needed:
-  #   docker compose --profile manual-seed run --rm seeder
   seeder:
     build: ./server/seeder
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/billing?schema=public
-
-      # Defaults (can be overridden when you run it manually)
       SEED_CUSTOMERS: "500"
       SEED_PACKAGES: "5"
       SEED_SUBSCRIPTIONS: "500"
       SEED_RANDOM_SEED: "0"
-      SEED_SKIP_IF_EXISTS: "0"
-      SEED_DISTRIBUTION: "uniform"   # uniform | popular_packages | heavy_monthly | realistic_default
-
+      SEED_SKIP_IF_EXISTS: "1"
+      SEED_DISTRIBUTION: "uniform"
       DATA_DIR: /app/data
       TZ: America/Montreal
-
-      # schema json generator config
       SCHEMA_PRISMA: /app/prisma/schema.prisma
       OUT_JSON: /app/data/db-info/db_schema.json
-
     depends_on:
       db:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-
     volumes:
       - ./data:/app/data
       - ./server/prisma:/app/prisma:ro
       - ./server/data/db-info:/app/data/db-info
       - ./server/seeder/prisma_schema_to_json.py:/app/prisma_schema_to_json.py:ro
-
+      - ./client/public/snapshots:/app/client/public/snapshots
     command: ["sh", "-lc", "python /app/prisma_schema_to_json.py && python /app/seed_db.py"]
     restart: "no"
-    profiles: ["manual-seed"]
 
-  # 3) API (can trigger seeding via /api/admin/seed)
   api:
     build: ./server
     environment:
@@ -84,11 +71,9 @@ services:
       - ./data:/app/data
       - ./server/data/db-info:/app/data/db-info
       - ./server/exports:/app/exports
-
-      # ✅ allow API to run the python seeder on-demand
       - ./server/seeder:/app/seeder:ro
       - ./server/seeder/seed_db.py:/app/seed_db.py:ro
-
+      - ./client/public/snapshots:/app/client/public/snapshots
     ports:
       - "3001:3001"
     depends_on:
@@ -96,25 +81,33 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      seeder:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health | grep -q ok"]
       interval: 3s
       timeout: 5s
       retries: 30
+    restart: unless-stopped
 
-  # 4) Web client (React)
   web:
     build: ./client
+    working_dir: /app
     environment:
-      # ✅ IMPORTANT: web container must call api container by service name
       VITE_API_BASE_URL: http://localhost:3001
       TZ: America/Montreal
     ports:
       - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
     depends_on:
       api:
         condition: service_healthy
-    restart: "no"
+    stdin_open: true
+    tty: true
+    init: true
+    restart: unless-stopped
 
 volumes:
   billing_db_data:

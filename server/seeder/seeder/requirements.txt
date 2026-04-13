@@ -1,2 +1,7 @@
 psycopg2-binary==2.9.9
 python-dotenv
+matplotlib
+pillow
+psycopg2-binary
+pandas
+numpy
