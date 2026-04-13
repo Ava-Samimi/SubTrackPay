@@ -158,6 +158,7 @@ describe("Packages routes", () => {
     expect(res.status).toBe(400);
     expect(res.body).toEqual({
       error: "Failed to delete package (it may be in use by subscriptions)",
+      code: "P2003",
     });
   });
 });

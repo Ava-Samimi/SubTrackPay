@@ -90,6 +90,7 @@ describe("Customers routes", () => {
         firstName: "  John  ",
         lastName: "  Smith ",
         email: "  john@x.com ",
+        postalCode: "H2X 1Y4",
         ccExpiration: "2030-01-01",
       });
 
@@ -101,6 +102,7 @@ describe("Customers routes", () => {
     expect(callArg.data.firstName).toBe("John");
     expect(callArg.data.lastName).toBe("Smith");
     expect(callArg.data.email).toBe("john@x.com");
+    expect(callArg.data.postalCode).toBe("H2X 1Y4");
     expect(callArg.data.ccExpiration).toBeInstanceOf(Date);
 
     expect(res.body.customerID).toBe(10);
