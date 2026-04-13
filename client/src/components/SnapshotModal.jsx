@@ -1,5 +1,5 @@
 // client/src/components/SnapshotModal.jsx
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 export default function SnapshotModal({ open, onClose }) {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
@@ -10,27 +10,27 @@ export default function SnapshotModal({ open, onClose }) {
   const images = useMemo(
     () => [
       {
-        src: `http://localhost:3001/snapshots/snapshot_1_geo_distribution.png?v=${cacheBust}`,
+        src: `${API_BASE}/snapshots/snapshot_1_geo_distribution.png?v=${cacheBust}`,
         alt: "Snapshot 1 - Geographic Distribution",
       },
       {
-        src: `http://localhost:3001/snapshots/snapshot_2_country_split.png?v=${cacheBust}`,
+        src: `${API_BASE}/snapshots/snapshot_2_country_split.png?v=${cacheBust}`,
         alt: "Snapshot 2 - Country Split",
       },
       {
-        src: `http://localhost:3001/snapshots/snapshot_3_package_distribution.png?v=${cacheBust}`,
+        src: `${API_BASE}/snapshots/snapshot_3_package_distribution.png?v=${cacheBust}`,
         alt: "Snapshot 3 - Package Distribution",
       },
       {
-        src: `http://localhost:3001/snapshots/snapshot_4_subscription_status.png?v=${cacheBust}`,
+        src: `${API_BASE}/snapshots/snapshot_4_subscription_status.png?v=${cacheBust}`,
         alt: "Snapshot 4 - Subscription Status",
       },
       {
-        src: `http://localhost:3001/snapshots/snapshot_5_billing_cycle.png?v=${cacheBust}`,
+        src: `${API_BASE}/snapshots/snapshot_5_billing_cycle.png?v=${cacheBust}`,
         alt: "Snapshot 5 - Billing Cycle",
       },
       {
-        src: `http://localhost:3001/snapshots/snapshot_6_customer_creation_timeline.png?v=${cacheBust}`,
+        src: `${API_BASE}/snapshots/snapshot_6_customer_creation_timeline.png?v=${cacheBust}`,
         alt: "Snapshot 6 - Customer Creation Timeline",
       },
     ],

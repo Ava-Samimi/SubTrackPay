@@ -1,5 +1,5 @@
 // client/src/pages/AnalyticsPage/AnalyticsPage.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import Plotly from "plotly.js-dist-min";
 
@@ -97,20 +97,7 @@ export default function AnalyticsPage() {
 
       setPopupPlot,
     });
-  }, [
-    fetchActiveSubscriptionsSnapshot,
-    fetchActiveCustomersSnapshot,
-    fetchActivePackagesSnapshot,
-    fetchAvgAmountPaidAssumed,
-    fetchActiveSubscriptionsByPackageSnapshot,
-    setSnapshotLoading,
-    setSnapshotError,
-    setSnapshotRows,
-    setSelectedAnalyticsName,
-    setPopupMode,
-    setShowChartPopup,
-    setPopupPlot,
-  ]);
+  }, []);
 
   // Reset save guards on every Show click, and refresh gallery shortly after
   const handleShowClickWithSaveReset = useMemo(() => {
