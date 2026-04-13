@@ -27,7 +27,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["sh", "-lc", "npx prisma migrate deploy"]
+    command: >
+      sh -lc "
+        echo 'Waiting for database to be fully ready...';
+        sleep 2;
+        for i in 1 2 3 4 5; do
+          npx prisma migrate deploy && break;
+          echo \"Migration attempt $${i} failed, retrying in 3s...\";
+          sleep 3;
+        done
+      "
     restart: "no"
 
   seeder:

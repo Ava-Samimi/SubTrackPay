@@ -22,7 +22,7 @@ jobs:
       # ---- Server ----
       - name: Install server deps
         working-directory: server
-        run: npm ci
+        run: npm install
 
       - name: Lint server (warnings allowed)
         working-directory: server

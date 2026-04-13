@@ -25,7 +25,9 @@
     "node-cron": "^4.2.1",
     "pg": "^8.18.0",
     "plotly.js-dist-min": "^3.3.1",
-    "puppeteer": "^24.36.1"
+    "puppeteer": "^24.36.1",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
