@@ -1,36 +1,37 @@
 // client/src/components/SnapshotModal.jsx
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function SnapshotModal({ open, onClose }) {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-  // Increment a counter each time the modal opens to bust the browser cache.
-  // Mutating a ref inside useEffect is allowed — no impure calls in render.
-  const openCountRef = useRef(0);
+  // Cache-bust counter — incremented each time the modal opens so browsers
+  // re-fetch the snapshot images. setState inside an effect is the only way
+  // to derive state from a prop change without reading refs or calling
+  // impure functions during render.
+  const [openCount, setOpenCount] = useState(0);
+  const prevOpenRef = useRef(false);
 
   useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      setOpenCount((c) => c + 1); // eslint-disable-line react-hooks/set-state-in-effect
+    }
+    prevOpenRef.current = open;
+
     if (!open) return;
-
-    openCountRef.current += 1;
-
-    const onKey = (e) => {
-      if (e.key === "Escape") onClose?.();
-    };
-
+    const onKey = (e) => { if (e.key === "Escape") onClose?.(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   if (!open) return null;
 
-  const v = openCountRef.current;
   const images = [
-    { src: `${API_BASE}/snapshots/snapshot_1_geo_distribution.png?v=${v}`, alt: "Snapshot 1 - Geographic Distribution" },
-    { src: `${API_BASE}/snapshots/snapshot_2_country_split.png?v=${v}`, alt: "Snapshot 2 - Country Split" },
-    { src: `${API_BASE}/snapshots/snapshot_3_package_distribution.png?v=${v}`, alt: "Snapshot 3 - Package Distribution" },
-    { src: `${API_BASE}/snapshots/snapshot_4_subscription_status.png?v=${v}`, alt: "Snapshot 4 - Subscription Status" },
-    { src: `${API_BASE}/snapshots/snapshot_5_billing_cycle.png?v=${v}`, alt: "Snapshot 5 - Billing Cycle" },
-    { src: `${API_BASE}/snapshots/snapshot_6_customer_creation_timeline.png?v=${v}`, alt: "Snapshot 6 - Customer Creation Timeline" },
+    { src: `${API_BASE}/snapshots/snapshot_1_geo_distribution.png?v=${openCount}`, alt: "Snapshot 1 - Geographic Distribution" },
+    { src: `${API_BASE}/snapshots/snapshot_2_country_split.png?v=${openCount}`, alt: "Snapshot 2 - Country Split" },
+    { src: `${API_BASE}/snapshots/snapshot_3_package_distribution.png?v=${openCount}`, alt: "Snapshot 3 - Package Distribution" },
+    { src: `${API_BASE}/snapshots/snapshot_4_subscription_status.png?v=${openCount}`, alt: "Snapshot 4 - Subscription Status" },
+    { src: `${API_BASE}/snapshots/snapshot_5_billing_cycle.png?v=${openCount}`, alt: "Snapshot 5 - Billing Cycle" },
+    { src: `${API_BASE}/snapshots/snapshot_6_customer_creation_timeline.png?v=${openCount}`, alt: "Snapshot 6 - Customer Creation Timeline" },
   ];
 
   return (
