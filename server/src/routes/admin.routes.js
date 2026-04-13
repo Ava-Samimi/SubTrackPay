@@ -1,5 +1,8 @@
 // src/routes/admin.routes.js
 import express from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("admin.routes");
 import { execFile } from "node:child_process";
 import path from "node:path";
 
@@ -33,7 +36,7 @@ router.post("/repopulate", async (req, res) => {
     const log = await runResetAndSeed();
     return res.json({ ok: true, message: "Database repopulated.", log });
   } catch (e) {
-    console.error("Repopulate failed:", e);
+    log.error("Repopulate failed:", e);
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });

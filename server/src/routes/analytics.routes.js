@@ -1,5 +1,8 @@
 // server/src/routes/analytics.routes.js
 import express from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("analytics.routes");
 import { PrismaClient } from "@prisma/client";
 
 // ✅ NEW: shared SQL builder + pool (moved out of nightly.routes.js)
@@ -48,7 +51,7 @@ router.post("/run", async (req, res) => {
       rows: result?.rows || [],
     });
   } catch (e) {
-    console.error("POST /api/analytics/run error:", e);
+    log.error("POST /api/analytics/run error:", e);
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });
@@ -61,7 +64,7 @@ router.get("/", async (req, res) => {
     });
     res.json(rows);
   } catch (e) {
-    console.error("GET /api/analytics error:", e);
+    log.error("GET /api/analytics error:", e);
     res.status(500).json({ error: "Failed to list analytics definitions" });
   }
 });
@@ -79,7 +82,7 @@ router.get("/:id", async (req, res) => {
     if (!row) return res.status(404).json({ error: "Not found" });
     res.json(row);
   } catch (e) {
-    console.error("GET /api/analytics/:id error:", e);
+    log.error("GET /api/analytics/:id error:", e);
     res.status(500).json({ error: "Failed to read analytics definition" });
   }
 });
@@ -109,7 +112,7 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(created);
   } catch (e) {
-    console.error("POST /api/analytics error:", e);
+    log.error("POST /api/analytics error:", e);
     res.status(500).json({ error: "Failed to create analytics definition" });
   }
 });
@@ -147,7 +150,7 @@ router.put("/:id", async (req, res) => {
     if (String(e?.code) === "P2025") {
       return res.status(404).json({ error: "Not found" });
     }
-    console.error("PUT /api/analytics/:id error:", e);
+    log.error("PUT /api/analytics/:id error:", e);
     res.status(500).json({ error: "Failed to update analytics definition" });
   }
 });
@@ -167,7 +170,7 @@ router.delete("/:id", async (req, res) => {
     if (String(e?.code) === "P2025") {
       return res.status(404).json({ error: "Not found" });
     }
-    console.error("DELETE /api/analytics/:id error:", e);
+    log.error("DELETE /api/analytics/:id error:", e);
     res.status(500).json({ error: "Failed to delete analytics definition" });
   }
 });

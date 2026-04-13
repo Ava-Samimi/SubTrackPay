@@ -1,5 +1,8 @@
 // server/src/routes/nightly.routes.js
 import express from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("nightly.routes");
 import fs from "fs";
 import path from "path";
 
@@ -84,7 +87,7 @@ router.post("/jobs", async (req, res) => {
     saveJobs(jobs);
     return res.json({ ok: true, saved: job });
   } catch (err) {
-    console.error("[nightly.routes] POST /jobs error:", err);
+    log.error("[nightly.routes] POST /jobs error:", err);
     return res.status(500).json({ error: "Failed to save nightly job" });
   }
 });
@@ -129,7 +132,7 @@ router.post("/jobs/run", async (req, res) => {
 
     return res.json({ ok: true, ranAt: now, rows: payload.rows.length, outFile });
   } catch (err) {
-    console.error("[nightly.routes] POST /jobs/run error:", err);
+    log.error("[nightly.routes] POST /jobs/run error:", err);
     return res.status(500).json({ error: String(err?.message || err) });
   }
 });

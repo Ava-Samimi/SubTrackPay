@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { prisma } from "../prisma.js";
+import { createLogger } from "../logger.js";
 
 const router = Router();
+const log = createLogger("subscriptions.routes");
 
 const BILLING_CYCLES = new Set(["MONTHLY", "ANNUAL"]);
 const STATUSES = new Set(["ACTIVE", "PAUSED", "CANCELED"]);
@@ -29,6 +31,7 @@ router.get("/", async (_req, res) => {
     });
     res.json(rows);
   } catch (_e) {
+    log.error("GET /subscriptions failed", _e);
     res.status(500).json({ error: "Failed to fetch subscriptions" });
   }
 });
@@ -50,6 +53,7 @@ router.get("/:id", async (req, res) => {
     if (!row) return res.status(404).json({ error: "Subscription not found" });
     res.json(row);
   } catch (_e) {
+    log.error("GET /subscriptions/:id failed", _e);
     res.status(500).json({ error: "Failed to fetch subscription" });
   }
 });
@@ -105,6 +109,7 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(created);
   } catch (_e) {
+    log.error("POST /subscriptions failed", _e);
     res.status(400).json({
       error: "Failed to create subscription (bad customerID/packageID?)",
     });
@@ -161,6 +166,7 @@ router.put("/:id", async (req, res) => {
 
     res.json(updated);
   } catch (_e) {
+    log.error("PUT /subscriptions/:id failed", _e);
     res.status(400).json({ error: "Failed to update subscription" });
   }
 });
@@ -177,6 +183,7 @@ router.delete("/:id", async (req, res) => {
     await prisma.subscription.delete({ where: { subscriptionID } });
     res.status(204).send();
   } catch (_e) {
+    log.error("DELETE /subscriptions/:id failed", _e);
     res.status(400).json({ error: "Failed to delete subscription" });
   }
 });

@@ -1,4 +1,7 @@
 import express from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("metrics.routes");
 import { pool } from "../db/pool.js";
 import fs from "fs";
 import path from "path";
@@ -38,7 +41,7 @@ router.get("/active-subscriptions", async (req, res) => {
       rows: result.rows,
     });
   } catch (err) {
-    console.error("metrics/active-subscriptions error:", err);
+    log.error("metrics/active-subscriptions error:", err);
     return res.status(400).json({ ok: false, error: String(err.message || err) });
   }
 });
@@ -59,7 +62,7 @@ router.get("/active-customers", async (req, res) => {
 
     return res.json({ ok: true, basis, years, rows: result.rows });
   } catch (err) {
-    console.error("metrics/active-customers error:", err);
+    log.error("metrics/active-customers error:", err);
     return res.status(400).json({ ok: false, error: String(err.message || err) });
   }
 });
@@ -85,7 +88,7 @@ router.get("/active-packages", async (req, res) => {
       rows: result.rows,
     });
   } catch (err) {
-    console.error("metrics/active-packages error:", err);
+    log.error("metrics/active-packages error:", err);
     return res.status(400).json({ ok: false, error: String(err.message || err) });
   }
 });
@@ -106,7 +109,7 @@ router.get("/avg-amount-paid", async (req, res) => {
 
     return res.json({ ok: true, basis, years, rows: result.rows });
   } catch (err) {
-    console.error("metrics/avg-amount-paid error:", err);
+    log.error("metrics/avg-amount-paid error:", err);
     return res.status(400).json({ ok: false, error: String(err.message || err) });
   }
 });
@@ -144,11 +147,11 @@ router.post("/save-chart-png", async (req, res) => {
     const outPath = path.join(outDir, filename);
     fs.writeFileSync(outPath, buf);
 
-    console.log("✅ saved chart png:", outPath, "bytes:", buf.length);
+    log.info("✅ saved chart png:", outPath, "bytes:", buf.length);
 
     return res.json({ ok: true, filename, bytes: buf.length });
   } catch (err) {
-    console.error("save-chart-png error:", err);
+    log.error("save-chart-png error:", err);
     return res.status(500).json({ ok: false, error: String(err.message || err) });
   }
 });
@@ -178,7 +181,7 @@ router.get("/chart-pngs", async (req, res) => {
 
     return res.json({ ok: true, files });
   } catch (err) {
-    console.error("metrics/chart-pngs error:", err);
+    log.error("metrics/chart-pngs error:", err);
     return res.status(500).json({ ok: false, error: String(err.message || err) });
   }
 });
@@ -193,7 +196,7 @@ router.get("/active-subscriptions-by-package", async (req, res) => {
       rows: result.rows,
     });
   } catch (err) {
-    console.error("metrics/active-subscriptions-by-package error:", err);
+    log.error("metrics/active-subscriptions-by-package error:", err);
     return res.status(400).json({ ok: false, error: String(err.message || err) });
   }
 });

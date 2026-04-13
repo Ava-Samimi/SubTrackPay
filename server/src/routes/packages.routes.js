@@ -1,5 +1,8 @@
 // server/src/routes/packages.routes.js
 import { Router } from "express";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("packages.routes");
 import { prisma } from "../prisma.js";
 
 const router = Router();
@@ -44,7 +47,7 @@ router.get("/", async (_req, res) => {
     });
     res.json(rows);
   } catch (err) {
-    console.error("GET /packages failed:", err);
+    log.error("GET /packages failed:", err);
     res.status(500).json({ error: "Failed to fetch packages" });
   }
 });
@@ -59,7 +62,7 @@ router.get("/:id", async (req, res) => {
     if (!row) return res.status(404).json({ error: "Package not found" });
     res.json(row);
   } catch (err) {
-    console.error("GET /packages/:id failed:", err);
+    log.error("GET /packages/:id failed:", err);
     res.status(500).json({ error: "Failed to fetch package" });
   }
 });
@@ -88,7 +91,7 @@ router.post("/", async (req, res) => {
     });
     res.status(201).json(created);
   } catch (err) {
-    console.error("POST /packages failed:", err);
+    log.error("POST /packages failed:", err);
     const mapped = prismaErrorToResponse(err);
     res.status(mapped.status).json(mapped.body);
   }
@@ -130,7 +133,7 @@ router.put("/:id", async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    console.error("PUT /packages/:id failed:", err);
+    log.error("PUT /packages/:id failed:", err);
     const mapped = prismaErrorToResponse(err);
     res.status(mapped.status).json(mapped.body);
   }
@@ -148,7 +151,7 @@ router.delete("/:id", async (req, res) => {
     await prisma.package.delete({ where: { packageID } });
     res.status(204).send();
   } catch (err) {
-    console.error("DELETE /packages/:id failed:", err);
+    log.error("DELETE /packages/:id failed:", err);
     const mapped = prismaErrorToResponse(err);
 
     // keep friendly message if it's likely "in use"

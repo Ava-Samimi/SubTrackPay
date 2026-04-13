@@ -13,7 +13,9 @@ import metricsRoutes from "./routes/metrics.routes.js";
 import seedRoutes from "./routes/seed.routes.js";
 
 import { requireFirebaseAuth } from "./middleware/requireFirebaseAuth.js";
+import { createLogger } from "./logger.js";
 
+const log = createLogger("app");
 const app = express();
 
 app.use(cors());
@@ -21,6 +23,12 @@ app.use(cors());
 // must be BEFORE routes, and only once
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// Request logging middleware
+app.use((req, _res, next) => {
+  log.info(`${req.method} ${req.path}`);
+  next();
+});
 
 // Public static files
 app.use("/exports", express.static("/app/exports"));
@@ -46,6 +54,10 @@ if (process.env.NODE_ENV !== "test") {
   app.use("/api", requireFirebaseAuth);
 }
 
-
+// Global error handler
+app.use((err, _req, res, _next) => {
+  log.error("Unhandled error", err);
+  res.status(500).json({ error: "Internal server error" });
+});
 
 export default app;
