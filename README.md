@@ -1,4 +1,4 @@
-SUBTRACKPAY APP IS DEPLOYED AT: https://subtrackpay.com/
+# SUBTRACKPAY APP IS DEPLOYED AT: https://subtrackpay.com/
 
 # Deploying SubTrackPay to a Linux VPS
 
