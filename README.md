@@ -1,3 +1,11 @@
+# IMPORTANS LINKS
+
+Run to the Release 3
+https://github.com/Ava-Samimi/SubTrackPay/wiki/RUN-TO-THE-FINAL-RELEASE-%E2%80%90-CAPSTONE-PROJECT
+
+Release 3 Document:
+https://github.com/Ava-Samimi/SubTrackPay/blob/main/docs/SubTrackPay_Release3.docx
+
 # SUBTRACKPAY APP IS DEPLOYED AT: https://subtrackpay.com/
 
 # Deploying SubTrackPay to a Linux VPS
