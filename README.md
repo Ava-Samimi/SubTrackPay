@@ -1,3 +1,113 @@
+SUBTRACKPAY APP IS DEPLOYED AT: https://subtrackpay.com/
+
+# Deploying SubTrackPay to a Linux VPS
+
+A step-by-step recap of how Er deployed my app to production — with help from Claude (AI-guided throughout).
+
+---
+
+## 1. Buying the Domain
+
+- Purchased **`subtrackpay.com`** through a domain registrar (GoDaddy)
+- Pointed the DNS records to my VPS IP:
+  - `A record` → `@` → `<VPS_IP>`
+  - `A record` → `www` → `<VPS_IP>`
+
+---
+
+## 2. Setting Up the VPS
+
+- Provisioned a Linux VPS (Ubuntu)
+- Connected via SSH:
+```bash
+  ssh root@<VPS_IP>
+```
+- Updated the system and installed essentials:
+```bash
+  apt update && apt upgrade -y
+  apt install nginx nodejs npm git certbot python3-certbot-nginx -y
+```
+
+---
+
+## 3. Deploying the App
+
+- Cloned the repo and installed dependencies:
+```bash
+  git clone https://github.com/me/subtrackpay.git
+  cd subtrackpay
+  npm install && npm run build
+```
+- Used **PM2** to keep the app running:
+```bash
+  npm install -g pm2
+  pm2 start server.js --name subtrackpay
+  pm2 save && pm2 startup
+```
+
+---
+
+## 4. Configuring Nginx (Reverse Proxy)
+
+Created `/etc/nginx/sites-available/subtrackpay`:
+
+```nginx
+server {
+    listen 80;
+    server_name subtrackpay.com www.subtrackpay.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Enabled and reloaded:
+```bash
+ln -s /etc/nginx/sites-available/subtrackpay /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+```
+
+---
+
+## 5. SSL Certificate (HTTPS)
+
+Used **Certbot** to get a free Let's Encrypt certificate:
+```bash
+certbot --nginx -d subtrackpay.com -d www.subtrackpay.com
+```
+
+Certbot automatically updated the Nginx config with HTTPS and set up auto-renewal. ✅
+
+---
+
+## 6. Result
+
+- App live at **https://subtrackpay.com**
+- HTTPS enabled with auto-renewing SSL
+- PM2 ensures the app restarts on crash or reboot
+
+---
+
+>  *This entire deployment was guided by [Claude](https://claude.ai) — from DNS setup to Nginx config and SSL certs.*
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### HOORAY, latest JEST test run resulted in ove 80%
 
 ## Results Summary (latest run)
