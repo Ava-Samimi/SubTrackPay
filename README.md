@@ -23,7 +23,7 @@ https://github.com/Ava-Samimi/SubTrackPay/blob/main/docs/SubTrackPay_UserFeedbac
 
 # Deploying SubTrackPay to a Linux VPS
 
-A step-by-step recap of how we deployed my app to production — with help from Claude (AI-guided throughout).
+A step-by-step recap of how we deployed the app to production — with help from Claude (AI-guided throughout).
 
 ---
 
