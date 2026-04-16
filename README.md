@@ -3,6 +3,8 @@
 
 # IMPORTANS LINKS
 
+Google Drive for full demo video + powerpoint : https://drive.google.com/drive/folders/1-IdC7X9ICEtnxk9zbEP2-uC1TJdaxR54?usp=drive_link
+
 Run to the Release 3
 https://github.com/Ava-Samimi/SubTrackPay/wiki/RUN-TO-THE-FINAL-RELEASE-%E2%80%90-CAPSTONE-PROJECT
 
