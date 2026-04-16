@@ -1,7 +1,7 @@
 
 
 
-# IMPORTANS LINKS
+# IMPORTANT LINKS
 
 Google Drive for 
 - Full Demo Video of SubTrackPay Website
