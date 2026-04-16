@@ -4,9 +4,9 @@
 # IMPORTANS LINKS
 
 Google Drive for 
--Full Demo Video of SubTrackPay Website
--PowerPoint video + Demo Video + Code Walkthrough vdeo 
--PowerPoint PDF 
+- Full Demo Video of SubTrackPay Website
+- PowerPoint video + Demo Video + Code Walkthrough vdeo 
+- PowerPoint PDF 
 
 https://drive.google.com/drive/folders/1-IdC7X9ICEtnxk9zbEP2-uC1TJdaxR54?usp=drive_link
 
