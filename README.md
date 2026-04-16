@@ -12,7 +12,7 @@ Release 3 Document:
 https://github.com/Ava-Samimi/SubTrackPay/blob/main/docs/SubTrackPay_Release3.docx
 
 Release 3 User Feedback:
-docs/SubTrackPay_UserFeedback.docx
+https://github.com/Ava-Samimi/SubTrackPay/blob/main/docs/SubTrackPay_UserFeedback.docx
 
 # SUBTRACKPAY APP IS DEPLOYED AT: https://subtrackpay.com/
 
