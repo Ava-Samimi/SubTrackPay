@@ -3,6 +3,18 @@
 
 # IMPORTANT LINKS
 
+Revised Video Presentation and PDF Slides on Google Drive :
+
+https://drive.google.com/drive/folders/12JGN1mLgw-oeG6JVZkrJ6semrhcpZ2d4?usp=drive_link
+
+
+-------------------------------------------------------------
+
+
+
+
+
+
 Google Drive for 
 - Full Demo Video of SubTrackPay Website
 - PowerPoint video + Demo Video + Code Walkthrough vdeo 
